@@ -1,3 +1,12 @@
+"""
+ahs.jl
+
+Types and functions for additive hard-sphere reference systems.
+
+Reference:
+* S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
+"""
+
 immutable AHS <: RefSystem
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
@@ -6,14 +15,13 @@ end # type
 @doc doc"""
 AHS(; kwargs...)
 
-Initializes an additive hard-sphere reference system. You may use one of possible combination of keyword arguments.
+Initializes an additive hard-sphere reference system.
+You may use one of possible combinations of keyword arguments.
 
 One-component case:
-
 * two out of σ, ρ, and η (all scalar)
 
 Multi-component case:
-
 * σ (vector) and ρ (vector)
 * ρ (scalar), σ (vector), and c (vector)
 * η (scalar), σ (vector), and c (vector)
@@ -155,11 +163,10 @@ end
 
 
 @doc doc"""
-psf(system::AHS)
+psf(sys::AHS)
 
-Returns a structure factor of additive hard-sphere system in wave-number space. Currently the cases where N = 1 or N = 2 are only supported.
-
-ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
+Returns a structure factor of additive hard-sphere system in wave-number space.
+Currently the cases where N = 1 or N = 2 are only supported.
 """ ->
 function psf(sys::AHS)
   if length(sys.σ) == 1

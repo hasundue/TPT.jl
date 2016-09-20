@@ -8,6 +8,8 @@ This package is at the beginning stage of development, and doesn't have enough f
 
 # Example
 
+## Reference system only
+
 Calculate the partial structure factors of a binary additive hard-sphere mixture with the same parameters as Fig. 1 in the classical paper by Ashcroft and Langreth (1967).
 
 ```julia
@@ -21,4 +23,13 @@ S is a 2x2 matrix of julia functions and you can use your favarite plotting pack
 ```julia
 using PyPlot
 plot([S[1,1], S[1,2], S[2,2]], 0, 20)
+```
+
+## Reference system + Perturbing system (not implemented yet)
+
+```julia
+refsys = WCA()
+pertsys = LJ612(ϵ = 1.0, σ = 1.0)
+system = TPTSystem(refsys, pertsys)
+g = prdf(system)
 ```

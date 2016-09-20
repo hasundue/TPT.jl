@@ -7,7 +7,7 @@ Reference:
 * S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
 """
 
-immutable AHS <: RefSystem
+immutable AHS <: IndependentRefSystem
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
 end # type

@@ -1,9 +1,5 @@
 abstract RefSystem
-immutable NoRef <: RefSystem
-end
+abstract IndependentRefSystem <: RefSystem
+abstract DependentRefSystem <: RefSystem
 
 abstract PertSystem
-immutable NoPert <: PertSystem
-end
-
-abstract TPTParam

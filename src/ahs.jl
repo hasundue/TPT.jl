@@ -3,8 +3,10 @@ ahs.jl
 
 Types and functions for additive hard-sphere reference systems.
 
-Reference:
+References:
+
 * S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
+
 """
 
 immutable AHS <: IndependentRefSystem
@@ -19,9 +21,11 @@ Initializes an additive hard-sphere reference system.
 You may use one of possible combinations of keyword arguments.
 
 One-component case:
+
 * two out of σ, ρ, and η (all scalar)
 
 Multi-component case:
+
 * σ (vector) and ρ (vector)
 * ρ (scalar), σ (vector), and c (vector)
 * η (scalar), σ (vector), and c (vector)

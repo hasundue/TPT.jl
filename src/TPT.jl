@@ -7,6 +7,7 @@ export TPTSystem,
 include("utils.jl")
 include("types.jl")
 include("tptsystem.jl")
+include("constants.jl")
 include("ahs.jl")
 
 end # module

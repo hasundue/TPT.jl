@@ -14,7 +14,7 @@ Calculate the partial structure factors of a binary additive hard-sphere mixture
 
 ```julia
 using TPT
-system = AHS(η = 0.45, c = [0.8, 0.2], σ = [0.9, 1.0])
+system = AHSSystem(η = 0.45, c = [0.8, 0.2], σ = [0.9, 1.0])
 S = psf(system)
 ```
 
@@ -28,8 +28,8 @@ plot([S[1,1], S[1,2], S[2,2]], 0, 20)
 ## Reference system + Perturbing system (not implemented yet)
 
 ```julia
-refsys = WCA()
-pertsys = LJ612(ϵ = 1.0, σ = 1.0)
+refsys = WCASystem()
+pertsys = LJ612System(ϵ = 1.0, σ = 1.0)
 system = TPTSystem(refsys, pertsys)
 g = prdf(system)
 ```

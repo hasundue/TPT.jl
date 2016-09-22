@@ -9,13 +9,13 @@ References:
 
 """
 
-immutable AHS <: IndependentRefSystem
+immutable AHSSystem <: IndependentRefSystem
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
 end # type
 
 @doc doc"""
-AHS(; kwargs...)
+AHSSystem(; kwargs...)
 
 Initializes an additive hard-sphere reference system.
 You may use one of possible combinations of keyword arguments.
@@ -32,7 +32,7 @@ Multi-component case:
 
 You may use sigma, rho, or eta instead of σ, ρ, or η, respectively.
 """ ->
-function AHS(; kwargs...)
+function AHSSystem(; kwargs...)
   keys, vals = expandkwargs(kwargs)
   @assert 2 ≤ length(keys) ≤ 3 "wrong number of arguments"
 
@@ -56,7 +56,7 @@ function AHS(; kwargs...)
       error("invalid arguments")
     end # if
 
-    return AHS([σ], [ρ])
+    return AHSSystem([σ], [ρ])
 
   else # Multi-component case
 
@@ -81,12 +81,12 @@ function AHS(; kwargs...)
     end
 
     @assert length(σ) == length(ρ) "invalid arguments"
-    return AHS(σ, ρ)
+    return AHSSystem(σ, ρ)
   end
 end
 
 # ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
-function lrdf(sys::AHS)
+function lrdf(sys::AHSSystem)
   if length(sys.σ) == 1
     lrdf1(sys)
   elseif length(sys.σ) == 2
@@ -96,7 +96,7 @@ function lrdf(sys::AHS)
   end
 end
 
-function lrdf1(sys::AHS)
+function lrdf1(sys::AHSSystem)
   σ = sys.σ[1]
   ρ = sys.ρ[1]
   η = π/6 * ρ * σ^3
@@ -117,7 +117,7 @@ function lrdf1(sys::AHS)
   return G
 end
 
-function lrdf2(sys::AHS)
+function lrdf2(sys::AHSSystem)
   σ = sys.σ
   ρ = sys.ρ
 
@@ -167,12 +167,12 @@ end
 
 
 @doc doc"""
-psf(sys::AHS)
+psf(sys::AHSSystem)
 
 Returns a structure factor of additive hard-sphere system in wave-number space.
 Currently the cases where N = 1 or N = 2 are only supported.
 """ ->
-function psf(sys::AHS)
+function psf(sys::AHSSystem)
   if length(sys.σ) == 1
     return psf1(sys)
   end
@@ -207,7 +207,7 @@ function psf(sys::AHS)
   return S
 end
 
-function psf1(sys::AHS)
+function psf1(sys::AHSSystem)
   G = lrdf(sys)
   ρ = sys.ρ[1]
 

@@ -1,7 +1,7 @@
 module TPT
 
 export TPTSystem,
-       AHS,
+       AHSSystem,
        NFESystem,
        psf,
        pairpotential,

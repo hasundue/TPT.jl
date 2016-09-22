@@ -10,6 +10,8 @@ References:
 * N. Jakse and J. L. Bretonnet: J. Phys.: Condens. Matter, 7 (1995), 3803-3815.
 """
 
+const qmax = 20.0
+
 immutable NFESystem <: PertSystem
   ρ::Float64 # number density
   c::Vector{Float64} # composition
@@ -131,7 +133,7 @@ function pairpotential(sys::NFESystem)
   for n in 1:length(u)
     i, j = ind2sub((N,N), n)
     u[i,j] = r -> begin
-      𝐹(r) = ∫(q -> F[i,j](q) * sin(q*r)/q, eps(Float64), 20)
+      𝐹(r) = ∫(q -> F[i,j](q) * sin(q*r)/q, eps(Float64), qmax)
       z[i]*z[j] / r * (1 - 2/π * 𝐹(r))
     end
   end

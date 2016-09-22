@@ -3,6 +3,7 @@ module TPT
 export TPTSystem,
        AHSSystem,
        NFESystem,
+       WHTBSystem,
        psf,
        pairpotential,
        fermiwavenumber,
@@ -17,5 +18,6 @@ include("tptsystem.jl")
 include("constants.jl")
 include("ahs.jl")
 include("nfe.jl")
+include("harrison.jl")
 
 end # module

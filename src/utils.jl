@@ -9,6 +9,15 @@ function expandkwargs(kwargs::Vector)
   return keys, vals
 end
 
+macro attach(obj, fields...)
+  block = Expr(:block)
+  for f in fields
+    e = :($f = $obj.$f)
+    push!(block.args, e)
+  end
+  return esc(:($block))
+end
+
 const greekdict = Dict(:σ => :sigma, :ρ => :rho, :η => :eta)
 
 function greekin(g::Symbol, c::AbstractArray)
@@ -35,4 +44,9 @@ function greekfind(c::AbstractArray, g::Symbol)
       return findfirst(c, s)
     end
   end
+end
+
+function ∫(f::Function, a::Number, b::Number; e::Float64=1e-6)
+  val, err = quadgk(f, a, b, reltol=e)
+  return val
 end

@@ -1,5 +1,5 @@
-abstract RefSystem
-abstract IndependentRefSystem <: RefSystem
-abstract DependentRefSystem <: RefSystem
+abstract ReferenceSystem
+abstract IndependentReferenceSystem <: ReferenceSystem
+abstract DependentReferenceSystem <: ReferenceSystem
 
-abstract PertSystem
+abstract Perturbation

@@ -2,8 +2,8 @@ module TPT
 
 export TPTSystem,
        AHSSystem,
-       NFESystem,
-       WHTBSystem,
+       NFE,
+       WHTB,
        psf,
        pairpotential,
        fermiwavenumber,

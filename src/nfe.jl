@@ -1,7 +1,7 @@
 """
 nfe.jl
 
-Types and functions for NFE (Nearly-Free Electrons) perturbing systems using
+Types and functions for NFE (Nearly-Free Electrons) perturbation using
 Bretonnet-Silbert psuedopotentials.
 
 References:
@@ -12,7 +12,7 @@ References:
 
 const qmax = 20.0
 
-immutable NFESystem <: PertSystem
+immutable NFE <: Perturbation
   ρ::Float64 # number density
   c::Vector{Float64} # composition
   T::Float64 # temperature
@@ -22,32 +22,32 @@ immutable NFESystem <: PertSystem
   a::Vector{Float64} # pseudopotential parameter
 end
 
-function NFESystem(ρ::Number, T::Number, m::Number, z::Number, rc::Number, a::Number)
-  NFESystem(ρ, [1.0], T, [m], [z], [rc], [a])
+function NFE(ρ::Number, T::Number, m::Number, z::Number, rc::Number, a::Number)
+  NFE(ρ, [1.0], T, [m], [z], [rc], [a])
 end
 
-function NFESystem(refsys::RefSystem; kwargs...)
+function NFE(refsys::RefSystem; kwargs...)
 end
 
-function fermiwavenumber(sys::NFESystem)
-  ρ = sys.ρ
-  z̄ = sum(sys.c .* sys.z)
+function fermiwavenumber(nfe::NFE)
+  ρ = nfe.ρ
+  z̄ = sum(nfe.c .* nfe.z)
 
   return (3 * z̄ * ρ * π^2) ^ (1/3)
 end
 
 # form factor of pseudopotential (Bretonnet-Silbert)
-function formfactor(sys::NFESystem)
-  # @attach(sys, ρ, z, rc, a)
-  ρ = sys.ρ
+function formfactor(nfe::NFE)
+  # @attach(nfe, ρ, z, rc, a)
+  ρ = nfe.ρ
 
-  N = length(sys.z)
+  N = length(nfe.z)
   ω = Array{Function}(N)
 
   for i = 1:N
-    z = sys.z[i]
-    rc = sys.rc[i]
-    a = sys.a[i]
+    z = nfe.z[i]
+    rc = nfe.rc[i]
+    a = nfe.a[i]
 
     B₁ = (z/rc) * (1 - 2a/rc) * exp(rc/a)
     B₂ = (2z/rc) * (a/rc - 1) * exp(0.5rc/a)
@@ -71,9 +71,9 @@ function formfactor(sys::NFESystem)
 end
 
 # Hartree dielectric function
-function dielectric(sys::NFESystem)
-  ρ = sys.ρ
-  z̄ = sum(sys.c .* sys.z)
+function dielectric(nfe::NFE)
+  ρ = nfe.ρ
+  z̄ = sum(nfe.c .* nfe.z)
 
   kF = (3 * z̄ * ρ * π^2) ^ (1/3) # Fermi wavenumber
 
@@ -84,9 +84,9 @@ function dielectric(sys::NFESystem)
 end
 
 # local-field exchange-correlation function (Vashishta-Singwi)
-function localfiled(sys::NFESystem)
-  ρ = sys.ρ
-  z̄ = sum(sys.c .* sys.z)
+function localfiled(nfe::NFE)
+  ρ = nfe.ρ
+  z̄ = sum(nfe.c .* nfe.z)
 
   kF = (3 * z̄ * ρ * π^2) ^ (1/3) # Fermi wavenumber
   rs = ((3/4π) / ρ / z̄)^(1/3) # electron distance
@@ -100,12 +100,12 @@ function localfiled(sys::NFESystem)
 end
 
 # normalized wavenumber-energy characteristic
-function wnechar(sys::NFESystem)
-  @attach(sys, ρ, z)
+function wnechar(nfe::NFE)
+  @attach(nfe, ρ, z)
 
-  ω = formfactor(sys)
-  ϵ = dielectric(sys)
-  G = localfiled(sys)
+  ω = formfactor(nfe)
+  ϵ = dielectric(nfe)
+  G = localfiled(nfe)
 
   N = length(z)
   F = Array{Function}(N,N)
@@ -120,12 +120,12 @@ function wnechar(sys::NFESystem)
   return F
 end
 
-function pairpotential(sys::NFESystem)
-  @attach(sys, ρ, c, z, rc, a)
+function pairpotential(nfe::NFE)
+  @attach(nfe, ρ, c, z, rc, a)
 
   z̄ = sum(c.*z)
 
-  F = wnechar(sys)
+  F = wnechar(nfe)
 
   N = length(c)
   u = Array{Function}(N,N)

@@ -9,7 +9,7 @@ References:
 
 """
 
-immutable AHSSystem <: IndependentRefSystem
+immutable AHSSystem <: IndependentReferenceSystem
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
 end # type

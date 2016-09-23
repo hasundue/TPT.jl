@@ -1,10 +1,10 @@
-type TPTSystem{Tr <: RefSystem, Tp <: PertSystem}
+type TPTSystem{Tr <: ReferenceSystem, Tp <: Perturbation}
   ref::Tr # reference system
   pert::Tp # perturbing system
 end
 
 function prdf(sys::TPTSystem)
-  if typeof(sys.ref) <: IndependentRefSystem
+  if typeof(sys.ref) <: IndependentReferenceSystem
     prdf(sys.ref)
   else
     prdf(sys.ref, sys.pert)
@@ -12,7 +12,7 @@ function prdf(sys::TPTSystem)
 end
 
 function psf(sys::TPTSystem)
-  if typeof(sys.ref) <: IndependentRefSystem
+  if typeof(sys.ref) <: IndependentReferenceSystem
     psf(sys.ref)
   else
     psf(sys.ref, sys.pert)
@@ -24,7 +24,7 @@ function pairpotential(sys::TPTSystem)
 end
 
 function freeenergy(sys::TPTSystem)
-  if typeof(sys.ref) <: IndependentRefSystem
+  if typeof(sys.ref) <: IndependentReferenceSystem
     F₀, rep0 = freeenergy(sys.ref)
   else
     F₀, rep0 = freeenergy(sys.ref, sys.pert)

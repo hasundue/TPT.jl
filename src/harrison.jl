@@ -1,13 +1,13 @@
 """
 harrison.jl
 
-Types and functions for perturbing system using Wills-Harrison's tight-binding
+Types and functions for perturbation using Wills-Harrison's tight-binding
 approach.
 
 References:
 """
 
-immutable WHTBSystem <: PertSystem
+immutable WHTB <: Perturbation
   ρ::Float64 # number density
   c::Vector{Float64} # composition
   T::Float64 # temperature
@@ -16,12 +16,12 @@ immutable WHTBSystem <: PertSystem
   rd::Vector{Float64} # d-state radius
 end
 
-function WHTBSystem(ρ::Number, T::Number, zd::Number, rd::Number)
-  WHTBSystem(ρ, [1.0], T, 12.0, [zd], [rd])
+function WHTB(ρ::Number, T::Number, zd::Number, rd::Number)
+  WHTB(ρ, [1.0], T, 12.0, [zd], [rd])
 end
 
 
-function pairpotential(whtb::WHTBSystem)
+function pairpotential(whtb::WHTB)
   @attach(whtb, c, n, zd, rd)
 
   z̄d = sum(c .* zd)

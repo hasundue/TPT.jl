@@ -16,8 +16,8 @@ include("utils.jl")
 include("types.jl")
 include("tptsystem.jl")
 include("constants.jl")
-include("ahs.jl")
-include("nfe.jl")
-include("harrison.jl")
+include(joinpath("reference", "ahs.jl"))
+include(joinpath("perturbation", "nfe.jl"))
+include(joinpath("perturbation", "harrison.jl"))
 
 end # module

@@ -26,9 +26,6 @@ function NFE(ρ::Number, T::Number, m::Number, z::Number, rc::Number, a::Number)
   NFE(ρ, [1.0], T, [m], [z], [rc], [a])
 end
 
-function NFE(refsys::RefSystem; kwargs...)
-end
-
 function fermiwavenumber(nfe::NFE)
   ρ = nfe.ρ
   z̄ = sum(nfe.c .* nfe.z)

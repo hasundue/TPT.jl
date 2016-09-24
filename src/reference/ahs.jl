@@ -219,7 +219,7 @@ function psf1(sys::AHSSystem)
   return [S]
 end
 
-function rdf(sys::AHSSystem)
+function rdf(sys::AHSSystem, nterm::Int=100)
   N = length(sys.σ)
   G = lrdf(sys)
   g = Array{Function}(N,N)
@@ -232,7 +232,7 @@ function rdf(sys::AHSSystem)
       elseif r == σ
         0.0
       else
-        inverselaplace(G[i,j], r, 100, 30) / r
+        inverselaplace(G[i,j], r, nterm, 30) / r
       end
     end
   end

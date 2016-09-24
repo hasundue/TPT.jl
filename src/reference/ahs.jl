@@ -114,7 +114,7 @@ function lrdf1(sys::AHSSystem)
   G(s::Complex{Float64}) = exp(-σ*s) / (2π*s^2) * (L⁰ + L¹*s) /
   (1 - ρ*(ϕ₂(σ*s)*σ^3*L⁰ + ϕ₁(σ*s)*σ^2*L¹))
 
-  return G
+  return [G]
 end
 
 function lrdf2(sys::AHSSystem)
@@ -216,12 +216,12 @@ function psf1(sys::AHSSystem)
 
   S(q) = 1 + ρ*h(q)
 
-  return S
+  return [S]
 end
 
 function rdf(sys::AHSSystem)
   N = length(sys.σ)
-  G = N == 1 ? [lrdf(sys)] : lrdf(sys)
+  G = lrdf(sys)
   g = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N

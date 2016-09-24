@@ -12,7 +12,7 @@ References:
 
 const qmax = 20.0
 
-immutable NFE <: Perturbation
+immutable NFE <: NFEPerturbation
   ρ::Float64 # number density
   c::Vector{Float64} # composition
   T::Float64 # temperature

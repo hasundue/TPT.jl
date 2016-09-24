@@ -18,6 +18,7 @@ include("types.jl")
 include("tptsystem.jl")
 include("constants.jl")
 include(joinpath("reference", "ahs.jl"))
+include(joinpath("perturbation", "nfetb.jl"))
 include(joinpath("perturbation", "nfe.jl"))
 include(joinpath("perturbation", "harrison.jl"))
 

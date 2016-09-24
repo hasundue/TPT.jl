@@ -7,7 +7,7 @@ approach.
 References:
 """
 
-immutable WHTB <: Perturbation
+immutable WHTB <: TBPerturbation
   ρ::Float64 # number density
   c::Vector{Float64} # composition
   T::Float64 # temperature
@@ -30,9 +30,7 @@ function pairpotential(whtb::WHTB)
   ub = Array{Function}(N,N)
   uc = Array{Function}(N,N)
 
-  for k in 1:length(ub)
-    i, j = ind2sub((N,N), k)
-
+  for i in 1:N, j in 1:N
     ub[i,j] = r -> -28.1/π * sqrt(12/n) * z̄d * (1 - z̄d/10) * (rd[i]*rd[j])^(3/2) / r^5
     uc[i,j] = r -> 225/π^2 * z̄d * (rd[i]*rd[j])^3 / r^8
   end

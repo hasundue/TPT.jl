@@ -8,7 +8,6 @@ References:
 """
 
 immutable WHTB <: TBPerturbation
-  ρ::Float64 # number density
   c::Vector{Float64} # composition
   T::Float64 # temperature
   n::Float64 # coordination number
@@ -16,8 +15,8 @@ immutable WHTB <: TBPerturbation
   rd::Vector{Float64} # d-state radius
 end
 
-function WHTB(ρ::Number, T::Number, zd::Number, rd::Number)
-  WHTB(ρ, [1.0], T, 12.0, [zd], [rd])
+function WHTB(T::Number, zd::Number, rd::Number)
+  WHTB([1.0], T, 12.0, [zd], [rd])
 end
 
 

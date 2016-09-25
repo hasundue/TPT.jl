@@ -2,8 +2,10 @@ module TPT
 
 export TPTSystem,
        AHSSystem,
+       WCASystem,
        NFE,
        WHTB,
+       NFETB,
        psf,
        prdf,
        pairpotential,

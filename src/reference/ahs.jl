@@ -85,6 +85,26 @@ function AHSSystem(; kwargs...)
   end
 end
 
+function pairpotential(sys::AHSSystem)
+  σ = sys.σ
+  N = length(σ)
+
+  ret = Array{Function}(N,N)
+
+  for i in N, j in N
+    function u(r) :: Float64
+      if r < (σ[i] + σ[j]) / 2
+        Inf
+      else
+        0
+      end
+    end
+    ret[i,j] = u
+  end
+
+  return ret
+end
+
 # ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
 function lrdf(sys::AHSSystem)
   if length(sys.σ) == 1

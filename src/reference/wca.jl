@@ -9,7 +9,7 @@ immutable WCASystem{T <: IndependentReferenceSystem} <: DependentReferenceSystem
   T::Float64 # Temperature
 end
 
-function rdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
+function prdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
   β = 1 / (kB * wca.T)
   σ₀ = wca.trial.σ
   ρ₀ = wca.trial.ρ
@@ -66,7 +66,7 @@ function rdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
   # the optimized hard-sphere diameters and the hard-sphere system
   σ_wca = N == 1 ? [Optim.minimizer(res)] : Optim.minimizer(res)
   ahs = AHSSystem(σ_wca, ρ₀)
-  g_hs = rdf(ahs, 500)
+  g_hs = prdf(ahs)
 
   ret = Array{Function}(N,N)
 

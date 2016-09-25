@@ -85,3 +85,24 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
 
   return fun1
 end
+
+function tablize(f::Function, a::Float64, b::Float64, N::Int) :: Function
+  @assert a < b "invalid arguments"
+
+  Δx = (b - a) / N
+  table = Vector{Float64}(N)
+  for i in 1:N
+    table[i] = f(a + i*Δx)
+  end
+
+  function ftab(x)
+    if x < a || x > b
+      error("the variable is out of the domain")
+    end
+    i = convert(Int, div(x - a, Δx))
+    dx = rem(x - a, Δx)
+    return table[i] + dx * (table[i+1] - table[i]) / Δx
+  end
+
+  return ftab
+end

@@ -11,13 +11,13 @@ end
 
 function pairpotential(nfetb::NFETB)
   u_nfe = pairpotential(nfetb.nfe)
-  u_b, u_c = pairpotential(nfetb.tb)
+  u_tb = pairpotential(nfetb.tb)
 
-  N, M = size(u_nfe)
-  u = Array{Function}(N,M)
+  N = size(u_nfe, 1)
+  u = Array{Function}(N,N)
 
-  for i in 1:N, j in 1:M
-    u[i,j] = r -> u_nfe[i,j](r) + u_b[i,j](r) + u_c[i,j](r)
+  for i in 1:N, j in 1:N
+    u[i,j] = r -> u_nfe[i,j](r) + u_tb[i,j](r)
   end
 
   return u

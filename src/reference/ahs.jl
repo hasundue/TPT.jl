@@ -239,7 +239,7 @@ function psf1(sys::AHSSystem)
   return [S]
 end
 
-function prdf(sys::AHSSystem, nterm::Int=200)
+function prdf(sys::AHSSystem, nterm::Int=500)
   N = length(sys.σ)
   G = lrdf(sys)
   g = Array{Function}(N,N)

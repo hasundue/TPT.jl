@@ -99,7 +99,7 @@ function tablize(f::Function, a::Float64, b::Float64, N::Int) :: Function
     if x < a || x > b
       error("the variable is out of the domain")
     end
-    i = convert(Int, div(x - a, Δx))
+    i = convert(Int, div(x - a, Δx)) + 1
     dx = rem(x - a, Δx)
     return table[i] + dx * (table[i+1] - table[i]) / Δx
   end

@@ -54,7 +54,7 @@ function prdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
   end
 
   if N == 1
-    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1], rmin[1], abs_tol=1e-6)
+    res = Optim.optimize(σ -> fopt([σ]), 0.9σ₀[1], rmin[1], abs_tol=1e-6)
   else
     res = Optim.optimize(fopt, σ₀, ftol=1e-6)
   end

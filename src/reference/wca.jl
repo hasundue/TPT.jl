@@ -26,6 +26,10 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   N = size(u, 1)
 
+  if N > 1
+    warn("WCA with a multi-component AHS system is not implemented yet")
+  end
+
   ut = Array{Function}(N)
   for i in 1:N
     ut[i] = tablize(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 100)
@@ -108,7 +112,6 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
       ret[i,j] = r -> r < σ_wca[i] ? 0.0 : g_hs[i,i](r) * exp(-β*u₀[i](r))
     else
       # Not implemented yet
-      warn("binary WCA is not implemented yet")
       ret[i,j] = g_hs[i,j]
     end
   end

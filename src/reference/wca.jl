@@ -94,7 +94,7 @@ function blipfunction(wca::OptimizedWCASystem)
   return B
 end
 
-function prdf(wca::OptimizedWCASystem{AHSSystem}, pert::Perturbation)
+function prdf(wca::OptimizedWCASystem{AHSSystem})
   β = 1 / (kB * wca.T)
   σ_wca = wca.trial.σ
   u₀ = wca.u₀

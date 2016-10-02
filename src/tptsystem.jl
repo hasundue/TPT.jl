@@ -4,19 +4,11 @@ type TPTSystem{Tr <: ReferenceSystem, Tp <: Perturbation}
 end
 
 function prdf(sys::TPTSystem)
-  if typeof(sys.ref) <: IndependentReferenceSystem
-    prdf(sys.ref)
-  else
-    prdf(sys.ref, sys.pert)
-  end
+  prdf(sys.ref)
 end
 
 function psf(sys::TPTSystem)
-  if typeof(sys.ref) <: IndependentReferenceSystem
-    psf(sys.ref)
-  else
-    psf(sys.ref, sys.pert)
-  end
+  psf(sys.ref)
 end
 
 function pairpotential(sys::TPTSystem)

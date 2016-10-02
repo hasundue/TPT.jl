@@ -5,3 +5,5 @@ abstract DependentReferenceSystem <: ReferenceSystem
 abstract Perturbation
 abstract NFEPerturbation <: Perturbation
 abstract TBPerturbation <: Perturbation
+
+abstract PseudoPotential

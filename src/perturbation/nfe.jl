@@ -1,8 +1,7 @@
 """
 nfe.jl
 
-Types and functions for NFE (Nearly-Free Electrons) perturbation using
-Bretonnet-Silbert psuedopotentials.
+Types and functions for NFE (Nearly-Free Electrons) perturbation.
 
 References:
 
@@ -12,18 +11,17 @@ References:
 
 const qmax = 20.0
 
-immutable NFE <: NFEPerturbation
+immutable NFE{T <: PseudoPotential} <: NFEPerturbation
   ρ::Float64 # number density
   c::Vector{Float64} # composition
   T::Float64 # temperature
   m::Vector{Float64} # mass
   z::Vector{Float64} # number of electrons
-  rc::Vector{Float64} # pseudopotential core radius
-  a::Vector{Float64} # pseudopotential parameter
+  pp::T # pseudopotential
 end
 
-function NFE(ρ::Number, T::Number, m::Number, z::Number, rc::Number, a::Number)
-  NFE(ρ, [1.0], T, [m], [z], [rc], [a])
+function NFE(ρ::Number, T::Number, m::Number, z::Number, pp::PseudoPotential)
+  NFE(ρ, [1.0], T, [m], [z], pp)
 end
 
 function fermiwavenumber(nfe::NFE)
@@ -31,40 +29,6 @@ function fermiwavenumber(nfe::NFE)
   z̄ = sum(nfe.c .* nfe.z)
 
   return (3 * z̄ * ρ * π^2) ^ (1/3)
-end
-
-# form factor of pseudopotential (Bretonnet-Silbert)
-function formfactor(nfe::NFE)
-  # @attach(nfe, ρ, z, rc, a)
-  ρ = nfe.ρ
-
-  N = length(nfe.z)
-  ω = Array{Function}(N)
-
-  for i = 1:N
-    z = nfe.z[i]
-    rc = nfe.rc[i]
-    a = nfe.a[i]
-
-    B₁ = (z/rc) * (1 - 2a/rc) * exp(rc/a)
-    B₂ = (2z/rc) * (a/rc - 1) * exp(0.5rc/a)
-
-    ω[i] = q -> begin
-      J₁(q) = 2 - exp(-rc/a) * (
-      (rc * (1 + a^2 * q^2) / a + 1 - a^2 * q^2) * sin(q*rc) / (a*q) +
-      (2 + rc * (1 + a^2 * q^2) / a) * cos(q*rc) )
-
-      J₂(q) = 2 - exp(-rc/2a) * (
-      (rc * (1 + 4 * a^2 * q^2) / 2a + 1 - 4 * a^2 * q^2) * sin(q*rc) / (2a*q) +
-      (2 + rc * (1 + 4 * a^2 * q^2) / 2a) * cos(q*rc) )
-
-      4π * ρ * a^3 * (
-      B₁ * J₁(q) / (1 + a^2 * q^2)^2 + 8B₂ * J₂(q) / (1 + 4 * a^2 * q^2)^2) -
-      (4π * z * ρ / q^2) * cos(q*rc)
-    end
-  end
-
-  return ω
 end
 
 # Hartree dielectric function
@@ -118,7 +82,7 @@ function wnechar(nfe::NFE)
 end
 
 function pairpotential(nfe::NFE)
-  @attach(nfe, ρ, c, z, rc, a)
+  @attach(nfe, ρ, c, z)
 
   z̄ = sum(c.*z)
 

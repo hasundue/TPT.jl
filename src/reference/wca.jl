@@ -9,7 +9,15 @@ immutable WCASystem{T <: IndependentReferenceSystem} <: DependentReferenceSystem
   T::Float64 # Temperature
 end
 
-function prdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
+immutable OptimizedWCASystem{T <: IndependentReferenceSystem} <: DependentReferenceSystem
+  trial::T # optimized trial system
+  T::Float64 # Temperature
+  rmin::Vector{Float64} # position of the minimum of perturbation pair-potential
+  u₀::Vector{Function} # WCA reference pair-potential
+  u₁::Vector{Function} # WCA perturbation pair-potential
+end
+
+function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   β = 1 / (kB * wca.T)
   σ₀ = wca.trial.σ
   ρ₀ = wca.trial.ρ
@@ -65,9 +73,20 @@ function prdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   # the optimized hard-sphere diameters and the hard-sphere system
   σ_wca = N == 1 ? [Optim.minimizer(res)] : Optim.minimizer(res)
-  ahs = AHSSystem(σ_wca, ρ₀)
-  g_hs = prdf(ahs)
 
+  ahs = AHSSystem(σ_wca, ρ₀)
+  optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, rmin, u₀, u₁)
+
+  return TPTSystem(optwca, pert)
+end
+
+function prdf(wca::OptimizedWCASystem{AHSSystem}, pert::Perturbation)
+  β = 1 / (kB * wca.T)
+  σ_wca = wca.trial.σ
+  u₀ = wca.u₀
+  g_hs = prdf(wca.trial)
+
+  N = length(σ_wca)
   ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N

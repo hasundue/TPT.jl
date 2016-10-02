@@ -46,7 +46,6 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
     u₁[i] = r -> r < rmin[i] ? umin : u[i,i](r)
   end
 
-  B = Vector{Function}(N)
   I = Vector{Float64}(N)
 
   function fopt(σ::Vector{Float64}) :: Float64
@@ -78,6 +77,21 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, rmin, u₀, u₁)
 
   return TPTSystem(optwca, pert)
+end
+
+function blipfunction(wca::OptimizedWCASystem)
+  β = 1 / (kB * wca.T)
+  u₀ = wca.u₀
+  u_hs = pairpotential(wca.trial)
+
+  N = length(wca.trial.σ)
+  B = Vector{Function}(N)
+
+  for i in 1:N
+    B[i] = r -> exp(-β*u₀[i](r)) - exp(-β*u_hs[i,i](r))
+  end
+
+  return B
 end
 
 function prdf(wca::OptimizedWCASystem{AHSSystem}, pert::Perturbation)

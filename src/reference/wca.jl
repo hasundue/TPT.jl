@@ -29,7 +29,7 @@ function prdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
   u₁ = Vector{Function}(N)
 
   for i in 1:N
-    opt = Optim.optimize(ut[i], σ₀[i], 1.5σ₀[i])
+    opt = Optim.optimize(ut[i], 0.5σ₀[i], 1.5σ₀[i])
     rmin[i] = Optim.minimizer(opt)
     umin = Optim.minimum(opt)
 
@@ -54,7 +54,7 @@ function prdf(wca::WCASystem{AHSSystem}, pert::Perturbation)
   end
 
   if N == 1
-    res = Optim.optimize(σ -> fopt([σ]), 0.9σ₀[1], rmin[1], abs_tol=1e-6)
+    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1], rmin[1], abs_tol=1e-6)
   else
     res = Optim.optimize(fopt, σ₀, ftol=1e-6)
   end

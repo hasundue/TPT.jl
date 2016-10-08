@@ -121,10 +121,6 @@ function lrdf1(sys::AHSSystem)
   ρ = sys.ρ[1]
   η = π/6 * ρ * σ^3
 
-  if η > π/(3*√2)
-    warn("unphysical packing fraction (η > 0.74)")
-  end
-
   L⁰ = 2π * (1 + 2η) / (1 - η)^2
   L¹ = 2π*σ * (1 + 1/2*η) / (1 - η)^2
 

@@ -32,7 +32,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   ut = Array{Function}(N)
   for i in 1:N
-    ut[i] = spline(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 64)
+    ut[i] = spline(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 128)
   end
 
   rmin = Vector{Float64}(N)
@@ -58,7 +58,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
     y_hs = cavityfunction(ahs)
 
     for i in 1:N
-      y = spline(y_hs[i,i], 0.5σ[i], rmin[i], 64)
+      y = spline(y_hs[i,i], 0.5σ[i], rmin[i], 128)
       B(r) = y(r) * (exp(-β*u₀t[i](r)) - exp(-β*u_hs[i,i](r)))
       I[i] = ∫(B, 0.5σ[i], rmin[i])
     end

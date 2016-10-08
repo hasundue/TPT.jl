@@ -20,6 +20,7 @@ export TPTSystem,
        wnechar
 
 import Optim
+using Dierckx
 
 include("utils.jl")
 include("types.jl")

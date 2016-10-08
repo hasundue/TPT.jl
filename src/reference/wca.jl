@@ -32,7 +32,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   ut = Array{Function}(N)
   for i in 1:N
-    ut[i] = tablize(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 100)
+    ut[i] = spline(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 64)
   end
 
   rmin = Vector{Float64}(N)
@@ -58,7 +58,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
     y_hs = cavityfunction(ahs)
 
     for i in 1:N
-      y = tablize(y_hs[i,i], 0.5σ[i], rmin[i], 100)
+      y = spline(y_hs[i,i], 0.5σ[i], rmin[i], 64)
       B(r) = y(r) * (exp(-β*u₀t[i](r)) - exp(-β*u_hs[i,i](r)))
       I[i] = ∫(B, 0.5σ[i], rmin[i])
     end
@@ -67,9 +67,9 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   end
 
   if N == 1
-    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1], rmin[1], abs_tol=1e-6)
+    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1], rmin[1], abs_tol=1e-3)
   else
-    res = Optim.optimize(fopt, σ₀, ftol=1e-6)
+    res = Optim.optimize(fopt, σ₀, ftol=1e-3)
   end
 
   if !Optim.converged(res)

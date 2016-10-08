@@ -55,10 +55,12 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   function fopt(σ::Vector{Float64}) :: Float64
     ahs = AHSSystem(σ, ρ₀)
     u_hs = pairpotential(ahs)
+    y_hs = cavityfunction(ahs)
 
     for i in 1:N
-      Δf(r) = exp(-β*u₀t[i](r)) - exp(-β*u_hs[i,i](r))
-      I[i] = ∫(Δf, 0.5σ[i], rmin[i])
+      y = tablize(y_hs[i,i], 0.5σ[i], rmin[i], 100)
+      B(r) = y(r) * (exp(-β*u₀t[i](r)) - exp(-β*u_hs[i,i](r)))
+      I[i] = ∫(B, 0.5σ[i], rmin[i])
     end
 
     return norm(I)
@@ -87,12 +89,13 @@ function blipfunction(wca::OptimizedWCASystem)
   β = 1 / (kB * wca.T)
   u₀ = wca.u₀
   u_hs = pairpotential(wca.trial)
+  y_hs = cavityfunction(wca.trial)
 
   N = length(wca.trial.σ)
   B = Vector{Function}(N)
 
   for i in 1:N
-    B[i] = r -> exp(-β*u₀[i](r)) - exp(-β*u_hs[i,i](r))
+    B[i] = r -> y_hs[i,i](r) * (exp(-β*u₀[i](r)) - exp(-β*u_hs[i,i](r)))
   end
 
   return B
@@ -103,13 +106,14 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
   σ_wca = wca.trial.σ
   u₀ = wca.u₀
   g_hs = prdf(wca.trial)
+  y_hs = cavityfunction(wca.trial)
 
   N = length(σ_wca)
   ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
     if i == j
-      ret[i,j] = r -> r < σ_wca[i] ? 0.0 : g_hs[i,i](r) * exp(-β*u₀[i](r))
+      ret[i,j] = r -> y_hs[i,j](r) * exp(-β*u₀[i](r))
     else
       # Not implemented yet
       ret[i,j] = g_hs[i,j]

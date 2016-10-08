@@ -259,3 +259,20 @@ function prdf(sys::AHSSystem, nterm::Int=500)
 
   return g
 end
+
+function cavityfunction(ahs::AHSSystem)
+  if length(ahs.σ) != 1
+    error("cavity function of multi-component system is not supported yet")
+  end
+  σ = ahs.σ[1]
+  ρ = ahs.ρ[1]
+  η = π/6 * ρ * σ^3
+
+  c(r) = (1+2η)^2 / (1-η)^4 - 6η*(1+η/2)^2 / (1-η)^4 * (r/σ) + η*(1+2η)^2 / 2 / (1-η)^4 * (r/σ)^3
+
+  g = prdf(ahs)[1,1]
+
+  y(r) = r ≤ σ ? c(r) : g(r)
+
+  return [y]
+end

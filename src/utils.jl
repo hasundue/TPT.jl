@@ -90,8 +90,8 @@ function tablize(f::Function, a::Float64, b::Float64, N::Int) :: Function
   @assert a < b "invalid arguments"
 
   Δx = (b - a) / N
-  table = Vector{Float64}(N)
-  for i in 1:N
+  table = Vector{Float64}(N+1)
+  for i in 1:N+1
     table[i] = f(a + i*Δx)
   end
 

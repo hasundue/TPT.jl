@@ -1,6 +1,6 @@
 # TPT.jl
 
-[![Build Status](https://travis-ci.com/hasundue/TPT.jl.svg?branch=master)](https://travis-ci.com/hasundue/TPT.jl)
+[![Build Status](https://travis-ci.com/hasundue/TPT.jl.svg?token=Bc5JTjkpgq1XmP3wKNoJ&branch=master)](https://travis-ci.com/hasundue/TPT.jl)
 
 TPT.jl is a framework for calculation related to thermodynamic perturbation theory (TPT) in Julia.
 

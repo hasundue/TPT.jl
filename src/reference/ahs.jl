@@ -263,7 +263,7 @@ function prdf(sys::AHSSystem; splined=true)
     g(r) = r < σᵢⱼ ? 0. : g_raw(r + Δσ)
 
     if splined
-      ret[i,j] = spline(g, σᵢⱼ, R_MAX, 32, bc="zero")
+      ret[i,j] = spline(g, σᵢⱼ, R_MAX, 64, bc="zero")
     else
       ret[i,j] = g
     end
@@ -285,7 +285,7 @@ function cavityfunction(ahs::AHSSystem)
 
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
-    ret[i,j] = spline(g[i,j], σᵢⱼ, R_MAX, 32, bc="extrapolate")
+    ret[i,j] = spline(g[i,j], σᵢⱼ, R_MAX, 64, bc="extrapolate")
   end
 
   return ret

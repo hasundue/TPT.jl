@@ -247,22 +247,32 @@ function prdf(sys::AHSSystem, nterm::Int=500)
 
   N = length(sys.σ)
   G = lrdf(sys)
-  g = Array{Function}(N,N)
+  ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
-    g[i,j] = r -> begin
-        val = inverselaplace(G[i,j], r, nterm, 30) / r
-        if val < eps(Float64)
-          return 0.
-        else
-          return val
-        end
+
+    g_raw = r -> inverselaplace(G[i,j], r, nterm, 30) / r
+
+    # Calibrate computational(?) error by an ugly way
+    res = Optim.optimize(r -> -g_raw(r), 0.9σᵢⱼ, 1.1σᵢⱼ)
+    @assert Optim.converged(res)
+    σ_raw = Optim.minimizer(res)
+
+    Δσ = σ_raw - σᵢⱼ
+
+    function g(r)::Float64
+      if r < σᵢⱼ
+        0
+      else
+        g_raw(r + Δσ)
       end
     end
+
+    ret[i,j] = g
   end
 
-  return g
+  return ret
 end
 
 function cavityfunction(ahs::AHSSystem)

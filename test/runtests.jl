@@ -12,9 +12,9 @@ ahs = AHSSystem(ρ = 1.0, η = 0.45)
 σ = ahs.σ[1]
 g = prdf(ahs)[1,1]
 
-res = optimize(r -> -g(r), 0.5σ, 1.5σ)
-σ_min = Optim.minimizer(res)
+res = optimize(r -> -g(r), 0.9σ, 1.1σ, rel_tol=1e-16)
+σ_max = Optim.minimizer(res)
 
 @testset "Unary AHS" begin
-  @test 0.97σ < σ_min < 1.03σ
+  @test σ ≈ σ_max
 end

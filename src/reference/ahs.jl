@@ -239,7 +239,6 @@ function prdf(sys::AHSSystem, nterm::Int=500)
   @attach(sys, ρ, σ)
 
   # scalar constans
-  ζ₁ = sum(ρ .* σ)
   ζ₂ = sum(ρ .* σ.^2)
   ζ₃ = sum(ρ .* σ.^3)
   η = (π/6) * ζ₃
@@ -251,16 +250,8 @@ function prdf(sys::AHSSystem, nterm::Int=500)
   g = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
-    σᵢⱼ = (sys.σ[i] + sys.σ[j]) / 2
-    g[i,j] = r -> begin
-      if r < σᵢⱼ
-        0.0
-      elseif r == σᵢⱼ
-        (λ + (λ′ * σ[i]*σ[j]) / 2σᵢⱼ + (λ′^2 * ((σ[i]*σ[j]) / σᵢⱼ)^2) / 18λ) / 2π
-      else
-        inverselaplace(G[i,j], r, nterm, 30) / r
-      end
-    end
+    σᵢⱼ = (σ[i] + σ[j]) / 2
+    g[i,j] = r -> inverselaplace(G[i,j], r, nterm, 30) / r
   end
 
   return g

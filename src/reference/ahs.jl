@@ -256,7 +256,7 @@ function prdf(sys::AHSSystem, nterm::Int=500)
       if r < σᵢⱼ
         0.0
       elseif r == σᵢⱼ
-        λ + (λ′ * σ[i]*σ[j]) / 2σᵢⱼ + (λ′^2 * (σ[i]*σ[j] / σᵢⱼ^2) / 18λ) / 2π
+        (λ + (λ′ * σ[i]*σ[j]) / 2σᵢⱼ + (λ′^2 * ((σ[i]*σ[j]) / σᵢⱼ)^2) / 18λ) / 2π
       else
         inverselaplace(G[i,j], r, nterm, 30) / r
       end

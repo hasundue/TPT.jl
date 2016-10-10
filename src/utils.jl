@@ -94,5 +94,5 @@ function spline(f::Function, a::Float64, b::Float64, N::Int; bc="extrapolate")
   𝐲 = [f(x) for x in 𝐱]
 
   spl = Spline1D(𝐱, 𝐲, k=3, bc=bc)
-  return ftab(x) = spl(x)
+  return x -> spl(x)
 end

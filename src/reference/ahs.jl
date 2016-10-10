@@ -235,7 +235,7 @@ function psf1(sys::AHSSystem)
   return [S]
 end
 
-function prdf(sys::AHSSystem, nterm::Int=500)
+function prdf(sys::AHSSystem; splined=true)
   @attach(sys, ρ, σ)
 
   # scalar constans
@@ -252,7 +252,7 @@ function prdf(sys::AHSSystem, nterm::Int=500)
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
 
-    g_raw = r -> inverselaplace(G[i,j], r, nterm, 30) / r
+    g_raw = r -> inverselaplace(G[i,j], r, 512, 30) / r
 
     # Calibrate computational(?) error by an ugly way
     res = Optim.optimize(r -> -g_raw(r), 0.9σᵢⱼ, 1.1σᵢⱼ)
@@ -260,34 +260,33 @@ function prdf(sys::AHSSystem, nterm::Int=500)
     σ_raw = Optim.minimizer(res)
 
     Δσ = σ_raw - σᵢⱼ
+    g(r) = r < σᵢⱼ ? 0. : g_raw(r + Δσ)
 
-    function g(r)::Float64
-      if r < σᵢⱼ
-        0
-      else
-        g_raw(r + Δσ)
-      end
+    if splined
+      ret[i,j] = spline(g, σᵢⱼ, R_MAX, 32, bc="zero")
+    else
+      ret[i,j] = g
     end
 
-    ret[i,j] = g
+    return ret
   end
 
   return ret
 end
 
+# cavity function near the contact distance
 function cavityfunction(ahs::AHSSystem)
-  if length(ahs.σ) != 1
-    error("cavity function of multi-component system is not supported yet")
+  @attach(ahs, σ)
+
+  g = prdf(ahs)
+
+  N = length(σ)
+  ret = Array{Function}(N,N)
+
+  for i in 1:N, j in 1:N
+    σᵢⱼ = (σ[i] + σ[j]) / 2
+    ret[i,j] = spline(g[i,j], σᵢⱼ, R_MAX, 32, bc="extrapolate")
   end
-  σ = ahs.σ[1]
-  ρ = ahs.ρ[1]
-  η = π/6 * ρ * σ^3
 
-  c(r) = (1+2η)^2 / (1-η)^4 - 6η*(1+η/2)^2 / (1-η)^4 * (r/σ) + η*(1+2η)^2 / 2 / (1-η)^4 * (r/σ)^3
-
-  g = prdf(ahs)[1,1]
-
-  y(r) = r ≤ σ ? c(r) : g(r)
-
-  return [y]
+  return ret
 end

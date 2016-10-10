@@ -22,3 +22,28 @@ function pairpotential(nfetb::NFETB)
 
   return u
 end
+
+function internalenergy(ref::ReferenceSystem, nfetb::NFETB)
+  g = prdf(ref)
+  u = pairpotential(nfetb)
+  ρ = numberdensity(ref)
+  c = composition(ref)
+  N = length(c)
+  I = Array{Float64}(N,N)
+
+  for i in 1:N, j in 1:N
+    if i > j
+      continue
+    end
+
+    I[i,j] = c[i]*c[j] * ∫(r -> u[i,j](r)*g[i,j](r)*r^2, eps(Float64), 20)
+  end
+
+  for i in 1:N, j in 1:N
+    if i > j
+      I[i,j] = I[j,i]
+    end
+  end
+
+  return 2π*ρ*sum(I)
+end

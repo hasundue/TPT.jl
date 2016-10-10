@@ -15,12 +15,12 @@ function pairpotential(sys::TPTSystem)
   pairpotential(sys.pert)
 end
 
-function freeenergy(sys::TPTSystem)
+function internalenergy(sys::TPTSystem)
   if typeof(sys.ref) <: IndependentReferenceSystem
-    F₀, rep0 = freeenergy(sys.ref)
+    F₀, rep0 = internalenergy(sys.ref)
   else
-    F₀, rep0 = freeenergy(sys.ref, sys.pert)
+    F₀, rep0 = internalenergy(sys.ref, sys.pert)
   end
-  F₁, rep1 = freeenergy(sys.ref, sys.pert)
+  F₁, rep1 = internalenergy(sys.ref, sys.pert)
   return F₀ + F₁, rep0, rep1
 end

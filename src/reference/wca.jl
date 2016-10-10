@@ -113,7 +113,14 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
 
   for i in 1:N, j in 1:N
     if i == j
-      ret[i,j] = r -> y_hs[i,j](r) * exp(-β*u₀[i](r))
+      ret[i,j] = r -> begin
+        val = y_hs[i,j](r) * exp(-β*u₀[i](r))
+        if abs(val) < eps(Float64)
+          return 0.
+        else
+          return val
+        end
+      end
     else
       # Not implemented yet
       ret[i,j] = g_hs[i,j]
@@ -121,4 +128,13 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
   end
 
   return ret
+end
+
+function numberdensity(wca::OptimizedWCASystem) :: Float64
+  return sum(wca.trial.ρ)
+end
+
+function composition(wca::OptimizedWCASystem) :: Vector{Float64}
+  ρ = numberdensity(wca)
+  return wca.trial.ρ / ρ
 end

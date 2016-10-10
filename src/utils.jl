@@ -86,13 +86,13 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
   return fun1
 end
 
-function spline(f::Function, a::Float64, b::Float64, N::Int)
+function spline(f::Function, a::Float64, b::Float64, N::Int; bc="extrapolate")
   @assert a < b "invalid arguments"
 
   Δx = (b - a) / N
   𝐱 = collect(a : Δx : b)
   𝐲 = [f(x) for x in 𝐱]
 
-  spl = Spline1D(𝐱, 𝐲, k=3, bc="extrapolate")
+  spl = Spline1D(𝐱, 𝐲, k=3, bc=bc)
   return ftab(x) = spl(x)
 end

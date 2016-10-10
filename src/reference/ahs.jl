@@ -251,7 +251,15 @@ function prdf(sys::AHSSystem, nterm::Int=500)
 
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
-    g[i,j] = r -> inverselaplace(G[i,j], r, nterm, 30) / r
+    g[i,j] = r -> begin
+        val = inverselaplace(G[i,j], r, nterm, 30) / r
+        if val < eps(Float64)
+          return 0.
+        else
+          return val
+        end
+      end
+    end
   end
 
   return g

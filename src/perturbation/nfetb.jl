@@ -23,7 +23,7 @@ function pairpotential(nfetb::NFETB)
   return u
 end
 
-function internalenergy(ref::ReferenceSystem, nfetb::NFETB)
+function potentialenergy(ref::ReferenceSystem, nfetb::NFETB)
   g = prdf(ref)
   u = pairpotential(nfetb)
   ρ = numberdensity(ref)
@@ -32,17 +32,10 @@ function internalenergy(ref::ReferenceSystem, nfetb::NFETB)
   I = Array{Float64}(N,N)
 
   for i in 1:N, j in 1:N
-    if i > j
-      continue
-    end
+    us = spline(u[i,j], R_MIN, R_MAX, 64)
 
-    I[i,j] = c[i]*c[j] * ∫(r -> u[i,j](r)*g[i,j](r)*r^2, eps(Float64), 20)
-  end
-
-  for i in 1:N, j in 1:N
-    if i > j
-      I[i,j] = I[j,i]
-    end
+    f = r -> g[i,j](r) == 0. ? 0. : g[i,j](r) * us(r) * r^2
+    I[i,j] = c[i]*c[j] * ∫(f, R_MIN, R_MAX)
   end
 
   return 2π*ρ*sum(I)

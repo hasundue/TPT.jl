@@ -10,6 +10,7 @@ export TPTSystem,
        NFETB,
        psf,
        prdf,
+       potentialenergy,
        cavityfunction,
        pairpotential,
        blipfunction,
@@ -17,7 +18,8 @@ export TPTSystem,
        formfactor,
        dielectric,
        localfiled,
-       wnechar
+       wnechar,
+       spline
 
 import Optim
 using Dierckx

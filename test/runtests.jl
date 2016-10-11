@@ -9,5 +9,5 @@ tests = [
 ]
 
 for test in tests
-  include(test)
+  @time include(test)
 end

@@ -13,7 +13,7 @@ notifications:
 # uncomment the following lines to override the default test script
 script:
  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
- - travis_fold:start:TPT-install
+ - echo "travis_fold:start:TPT-install"
  - julia -e 'Pkg.clone(pwd()); Pkg.build("TPT")'
- - travis_fold:end:TPT-install
+ - echo "travis_fold:end:TPT-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'

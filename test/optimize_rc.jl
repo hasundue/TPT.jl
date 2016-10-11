@@ -4,9 +4,7 @@ using Base.Test
 using DataFrames
 using Optim
 
-datadir = joinpath(pwd(), "test", "data")
-
-p = readtable(joinpath(datadir, "parameters", "parameters.csv"), separator='\t')
+p = readtable(joinpath("data", "parameters", "parameters.csv"), separator='\t')
 
 N = size(param, 1) # number of elements
 
@@ -16,7 +14,7 @@ for i in 1:N
     elem = p[:X][i]
     T = p[:T][i]
 
-    data = readtable(joinpath(datadir, "rdf", "$(elem)$(T).csv"), separator = '\t')
+    data = readtable(joinpath("data", "rdf", "$(elem)$(T).csv"), separator = '\t')
 
     M = size(data, 1)
 

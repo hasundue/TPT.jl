@@ -21,6 +21,15 @@ function ncomp(wca::WCASystem)
   ncomp(wca.trial)
 end
 
+function numberdensity(wca::OptimizedWCASystem) :: Float64
+  return sum(wca.trial.ρ)
+end
+
+function composition(wca::OptimizedWCASystem) :: Vector{Float64}
+  ρ = numberdensity(wca)
+  return wca.trial.ρ / ρ
+end
+
 function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   β = 1 / (kB * wca.T)
 
@@ -131,13 +140,4 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
   end
 
   return ret
-end
-
-function numberdensity(wca::OptimizedWCASystem) :: Float64
-  return sum(wca.trial.ρ)
-end
-
-function composition(wca::OptimizedWCASystem) :: Vector{Float64}
-  ρ = numberdensity(wca)
-  return wca.trial.ρ / ρ
 end

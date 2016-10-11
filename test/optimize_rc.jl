@@ -6,7 +6,7 @@ using Optim
 
 p = readtable(joinpath("data", "parameters", "parameters.csv"), separator='\t')
 
-N = size(param, 1) # number of elements
+N = size(p, 1) # number of elements
 
 g_exp = Vector{Vector{Tuple{Float64,Float64}}}(N)
 

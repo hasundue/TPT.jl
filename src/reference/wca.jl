@@ -32,7 +32,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   ut = Array{Function}(N)
   for i in 1:N
-    ut[i] = spline(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 8)
+    ut[i] = spline(u[i,i], 0.25σ₀[i], 1.5σ₀[i], 64)
   end
 
   rmin = Vector{Float64}(N)

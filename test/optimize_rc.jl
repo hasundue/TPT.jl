@@ -39,7 +39,7 @@ end
 res = Vector{Any}(N)
 rc = Vector{Float64}(N)
 
-for i in 1:N
+Threads.@threads for i in 1:N
     function fopt(rc::Float64)
         nfe = TPT.NFE(p[:ρ][i], p[:T][i], 0.0, p[:zs][i], TPT.Ashcroft(rc))
         nfetb = TPT.NFETB(nfe, tb[i])

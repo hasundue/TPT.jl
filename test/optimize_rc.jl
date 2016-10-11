@@ -70,5 +70,5 @@ end # testset
 
 println("The optimized values of rc:")
 for i in 1:N
-  @printf "%2s: %1.3f\n" p[:X][i] rc[i]
+  @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
 end

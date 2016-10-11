@@ -85,6 +85,26 @@ function AHSSystem(; kwargs...)
   end
 end
 
+function ncomp(sys::AHSSystem) :: Int
+  length(sys.σ)
+end
+
+function hsdiameter(sys::AHSSystem) :: Array{Float64,2}
+  N = ncomp(sys)
+
+  ret = Array{Float64}(N,N)
+
+  for i in 1:N, j in 1:N
+    if i == j
+      ret[i,j] = sys.σ[i]
+    else
+      ret[i,j] = (sys.σ[i] + sys.σ[j]) / 2
+    end
+  end
+
+  return ret
+end
+
 function pairpotential(sys::AHSSystem)
   σ = sys.σ
   N = length(σ)

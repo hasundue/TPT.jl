@@ -8,6 +8,7 @@ addons:
   apt:
     packages:
       - gfortran
+      - python-matplotlib
 notifications:
   email: false
 # uncomment the following lines to override the default test script
@@ -16,4 +17,8 @@ script:
  - echo "travis_fold:start:TPT-install"
  - julia -e 'Pkg.clone(pwd()); Pkg.build("TPT")'
  - echo "travis_fold:end:TPT-install"
+ - echo "travis_fold:start:DepPkg-install"
+ - julia -e 'Pkg.add("PyPlot"); Pkg.build("PyPlot")'
+ - julia -e 'Pkg.add("Plots"); Pkg.build("Plots")'
+ - echo "travis_fold:end:DepPkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'

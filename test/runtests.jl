@@ -5,7 +5,7 @@
 
 tests = [
   "unary.jl",
-  "optimize_rc.jl",
+  "tm_optim.jl",
   "tm_binary.jl"
 ]
 

@@ -20,7 +20,8 @@ script:
  - julia -e 'Pkg.clone(pwd()); Pkg.build("TPT")'
  - echo "travis_fold:end:TPT-install"
  - echo "travis_fold:start:Pkg-install"
- - julia -e 'Pkg.add("GR"); Pkg.build("GR"); using GR'
+ - julia -e 'Pkg.add("DataFrames"); Pkg.build("DataFrames"); using DataFrames'
  - julia -e 'Pkg.add("Plots"); Pkg.build("Plots"); using Plots'
+ - julia -e 'Pkg.add("GR"); Pkg.build("GR"); using GR'
  - echo "travis_fold:end:Pkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'

@@ -26,5 +26,7 @@ script:
  - echo "travis_fold:start:DepPkg-install"
  - julia -e 'Pkg.add("PyPlot"); Pkg.build("PyPlot")'
  - julia -e 'Pkg.add("Plots"); Pkg.build("Plots")'
+ - julia -e 'using PyPlot'
+ - julia -e 'using Plots'
  - echo "travis_fold:end:DepPkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'

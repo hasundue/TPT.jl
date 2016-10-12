@@ -4,7 +4,7 @@ using Base.Test
 
 using DataFrames
 using Optim
-using Plots; pyplot()
+using Plots; gr()
 
 # composition is fixed to 1:1
 N = 2

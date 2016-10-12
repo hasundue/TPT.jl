@@ -66,9 +66,9 @@ for i in 1:N
   @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
 end
 
-@testset "Optimization of rc" begin
+@testset "TM Optim" begin
   for i in 1:N
     @test Optim.converged(res[i])
-    @test 0.9 < rc[i] / rc₀[i] < 1.1
+    @test isapprox(rc[i], rc₀[i], atol=1e-3)
   end
 end # testset

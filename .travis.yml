@@ -4,6 +4,8 @@ os:
   - linux
 julia:
   - 0.5
+python:
+  - 3.5
 addons:
   apt:
     packages:

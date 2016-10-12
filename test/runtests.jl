@@ -4,7 +4,6 @@
 #
 
 tests = [
-  "unary.jl",
   "tm_optim.jl",
   "tm_binary.jl"
 ]

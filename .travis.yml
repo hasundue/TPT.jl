@@ -13,6 +13,7 @@ addons:
     packages:
       - gfortran
       - python-matplotlib
+      - python3
 notifications:
   email: false
 # uncomment the following lines to override the default test script

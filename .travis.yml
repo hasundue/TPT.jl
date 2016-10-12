@@ -12,9 +12,9 @@ addons:
   apt:
     packages:
       - gfortran
-      - python3
-      - libpython3
-      - python3-matplotlib
+      - python3.5
+      - libpython3.5
+      - python-matplotlib
 notifications:
   email: false
 # uncomment the following lines to override the default test script

@@ -6,8 +6,8 @@ julia:
   - 0.5
 env:
   global:
-    - JULIA_NUM_THREADS = 4
-    - PYTHON = python3
+    - JULIA_NUM_THREADS=4
+    - PYTHON=python3
 addons:
   apt:
     packages:

@@ -12,8 +12,8 @@ addons:
   apt:
     packages:
       - gfortran
-      - python3.5
-      - libpython3.5
+      - python3
+      - libpython3.2
       - python-matplotlib
 notifications:
   email: false

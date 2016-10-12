@@ -4,6 +4,8 @@ os:
   - linux
 julia:
   - 0.5
+sudo: required
+dist: trusty
 env:
   global:
     - JULIA_NUM_THREADS=4
@@ -13,8 +15,8 @@ addons:
     packages:
       - gfortran
       - python3
-      - libpython3.2
-      - python-matplotlib
+      - libpython3
+      - python3-matplotlib
 notifications:
   email: false
 # uncomment the following lines to override the default test script

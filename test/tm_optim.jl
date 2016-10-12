@@ -61,14 +61,14 @@ end
 
 rc₀ = p[:rc]
 
+println("The optimized values of rc:")
+for i in 1:N
+  @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
+end
+
 @testset "Optimization of rc" begin
   for i in 1:N
     @test Optim.converged(res[i])
     @test 0.9 < rc[i] / rc₀[i] < 1.1
   end
 end # testset
-
-println("The optimized values of rc:")
-for i in 1:N
-  @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
-end

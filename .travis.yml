@@ -12,7 +12,7 @@ addons:
   apt:
     packages:
       - gfortran
-      - python-matplotlib
+      - python3-matplotlib
       - python3
 notifications:
   email: false

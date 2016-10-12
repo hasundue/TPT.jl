@@ -4,8 +4,6 @@ os:
   - linux
 julia:
   - 0.5
-sudo: required
-dist: trusty
 env:
   global:
     - JULIA_NUM_THREADS=4
@@ -15,8 +13,8 @@ addons:
     packages:
       - gfortran
       - python3
-      - libpython3-stdlib
-      - python3-matplotlib
+      - libpython3.2
+      - python-matplotlib
 notifications:
   email: false
 # uncomment the following lines to override the default test script
@@ -28,7 +26,7 @@ script:
  - echo "travis_fold:start:DepPkg-install"
  - julia -e 'Pkg.add("PyPlot"); Pkg.build("PyPlot")'
  - julia -e 'Pkg.add("Plots"); Pkg.build("Plots")'
- - julia -e 'ENV["PYTHON"]="python3"; using PyPlot'
+ - julia -e 'using PyPlot'
  - julia -e 'using Plots'
  - echo "travis_fold:end:DepPkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'

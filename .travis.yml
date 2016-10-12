@@ -15,7 +15,7 @@ addons:
     packages:
       - gfortran
       - python3
-      - libpython3
+      - libpython3-stdlib
       - python3-matplotlib
 notifications:
   email: false

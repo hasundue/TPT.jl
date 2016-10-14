@@ -64,6 +64,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   for i in 1:N, j in 1:N
     i < j && continue
 
+    rmin[i,j] = rmin[j,i]
     u₀[i,j] = u₀[j,i]
     u₀t[i,j] = u₀t[j,i]
     u₁[i,j] = u₁[j,i]
@@ -87,7 +88,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   if N == 1
     res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1], rmin[1], abs_tol=1e-3)
   else
-    res = Optim.optimize(fopt, σ₀, ftol=1e-3)
+    res = Optim.optimize(fopt, σ₀, f_tol=1e-3, show_trace=true)
   end
 
   !Optim.converged(res) && error("WCA method couldn't converge")

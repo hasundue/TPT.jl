@@ -147,10 +147,13 @@ function lrdf1(sys::AHSSystem)
   ϕ₁(x) = x^-2 * (1 - x - exp(-x))
   ϕ₂(x) = x^-3 * (1 - x + x^2/2 - exp(-x))
 
-  G(s::Complex{Float64}) = exp(-σ*s) / (2π*s^2) * (L⁰ + L¹*s) /
+  G(s) = exp(-σ*s) / (2π*s^2) * (L⁰ + L¹*s) /
   (1 - ρ*(ϕ₂(σ*s)*σ^3*L⁰ + ϕ₁(σ*s)*σ^2*L¹))
 
-  return [G]
+  ret = Array{Function,2}(1,1)
+  ret[1,1] = G
+
+  return ret
 end
 
 function lrdf2(sys::AHSSystem)
@@ -244,15 +247,18 @@ function psf(sys::AHSSystem)
 end
 
 function psf1(sys::AHSSystem)
-  G = lrdf(sys)
-  ρ = sys.ρ[1]
+  G::Function = lrdf(sys)[1,1]
+  ρ::Float64 = sys.ρ[1]
 
   F(s) = (s^2 * G(s) - 1) / s^3
   h(q) = -4π * real(F(im*q))
 
   S(q) = 1 + ρ*h(q)
 
-  return [S]
+  ret = Array{Function,2}(1,1)
+  ret[1,1] = S
+
+  return ret
 end
 
 function prdf(sys::AHSSystem; splined=true)

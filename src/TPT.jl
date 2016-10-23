@@ -22,6 +22,7 @@ export TPTSystem,
        spline
 
 import Optim
+using NLopt
 using Dierckx
 
 include("utils.jl")

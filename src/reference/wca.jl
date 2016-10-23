@@ -72,7 +72,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   I = Vector{Float64}(N)
 
-  function fopt(σ::Vector{Float64}) :: Float64
+  function fopt(σ::Vector{Float64}, g)::Float64
     ahs = AHSSystem(σ, ρ₀)
     u_hs::Array{Function,2} = pairpotential(ahs)
     y_hs::Array{Function,2} = cavityfunction(ahs)
@@ -82,19 +82,20 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
       I[i] = ∫(B, 0.5σ[i], rmin[i,i])
     end
 
-    return norm(I)
+    return norm(I, 1)
   end
 
-  if N == 1
-    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1], rmin[1], abs_tol=1e-3)
-  else
-    res = Optim.optimize(fopt, σ₀, f_tol=1e-3, show_trace=true)
-  end
+  σ₀d::Vector{Float64} = [σ₀[i,i] for i in 1:N]
+  rmind::Vector{Float64} = [rmin[i,i] for i in 1:N]
 
-  !Optim.converged(res) && error("WCA method couldn't converge")
+  opt = Opt(:LN_BOBYQA, N)
+  min_objective!(opt, fopt)
+  lower_bounds!(opt, 0.5σ₀d)
+  upper_bounds!(opt, rmind)
+  initial_step!(opt, 0.1σ₀d)
+  xtol_rel!(opt, 1e-3)
 
-  # the optimized hard-sphere diameters and the hard-sphere system
-  σ_wca = N == 1 ? [Optim.minimizer(res)] : Optim.minimizer(res)
+  (fmin, σ_wca, ret) = optimize(opt, rmind)
 
   ahs = AHSSystem(σ_wca, ρ₀)
   optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, rmin, u₀, u₁)
@@ -141,4 +142,10 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
   end
 
   return ret
+end
+
+function psf(wca::OptimizedWCASystem)
+  Sref = psf(wca.trial)
+  ρ = numberdensity(wca.trial)
+  B = blipfunction(wca)
 end

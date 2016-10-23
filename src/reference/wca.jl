@@ -17,7 +17,11 @@ immutable OptimizedWCASystem{T <: IndependentReferenceSystem} <: DependentRefere
   u₁::Array{Function,2} # WCA perturbation pair-potential
 end
 
-function ncomp(wca::WCASystem)
+function ncomp(wca::WCASystem)::Int
+  ncomp(wca.trial)
+end
+
+function ncomp(wca::OptimizedWCASystem)::Int
   ncomp(wca.trial)
 end
 
@@ -144,8 +148,27 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
   return ret
 end
 
-function psf(wca::OptimizedWCASystem)
-  Sref = psf(wca.trial)
-  ρ = numberdensity(wca.trial)
-  B = blipfunction(wca)
+function psf(wca::OptimizedWCASystem)::Array{Function,2}
+  N::Int = ncomp(wca)
+  c::Vector{Float64} = composition(wca)
+
+  Sref::Array{Function,2} = psf(wca.trial)
+  ρ::Float64 = numberdensity(wca)
+  b::Array{Function,2} = blipfunction(wca)
+
+  ret = Array{Function,2}(N,N)
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+    B(q) = ∫(r -> b[i,j](r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.rmin[i,j], e=1e-3)
+    S(q) = Sref[i,j](q) + 4π*ρ * √(c[i]*c[j]) * B(q)
+    ret[i,j] = S
+  end
+
+  for i in 1:N, j in 1:N
+    i < j && continue
+    ret[i,j] = ret[j,i]
+  end
+
+  return ret
 end

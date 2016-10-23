@@ -111,7 +111,7 @@ function pairpotential(sys::AHSSystem)
 
   ret = Array{Function}(N,N)
 
-  for i in N, j in N
+  for i in 1:N, j in 1:N
     function u(r) :: Float64
       if r < (σ[i] + σ[j]) / 2
         Inf
@@ -287,8 +287,6 @@ function prdf(sys::AHSSystem; splined=true)
     else
       ret[i,j] = g
     end
-
-    return ret
   end
 
   return ret

@@ -97,12 +97,9 @@ for i in 1:N
   u_tb = TPT.pairpotential(sys[i].pert.tb)[1,1]
   u_tot = TPT.pairpotential(sys[i].pert)[1,1]
 
-  rmin::Float64 = sys[i].ref.rmin[1,1]
-  σhs::Float64 = sys[i].ref.trial.σ[1]
-
   plot([u_nfe, u_tb, u_tot], 2, 20, ylims=(-0.1, 0.1), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
-  vline!([rmin], label="r_min")
-  vline!([σhs], label="HS dia.")
+  vline!([rmin[i]], label="r_min")
+  vline!([σ_hs[i]], label="HS dia.")
   png(joinpath(resdir, "$(i)-$(p[:X][i])"))
 end
 

@@ -74,6 +74,7 @@ println("Optimized hard-sphere diameters by AHS:")
 
 ahs = TPT.AHSSystem(ρ = ρ, σ = [σ₁, σ₂], c = c)
 Sahs = TPT.psf(ahs)
+g_ahs = TPT.prdf(ahs)
 
 for (i,j) in [(1,1), (1,2), (2,2)]
   plot(q, Sexp[i,j], label="exp")
@@ -131,7 +132,7 @@ for (i,j) in [(1,1), (1,2), (2,2)]
   png(path)
 
   # RDF
-  plot(g_wca[i,j], 2, 20, label="WCA", ylims=(0, 3))
+  plot([g_ahs[i,j], g_wca[i,j]], 2, 20, label="WCA")
   file = string("Fe-Ni_WCA_g", i, j)
   path = joinpath(resdir, file)
   png(path)

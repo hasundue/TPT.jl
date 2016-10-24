@@ -71,23 +71,6 @@ for (i,j) in [(1,1), (1,2), (2,2)]
   png(path)
 end
 
-#
-# AHS-WCA
-#
-T = 1769.0
-function fopt(ρ::Float64)::Float64
-  ahs = TPT.AHSSystem(ρ = ρ::Float64, σ = σ₀::Vector, c = c::Vector)
-  pp = TPT.Ashcroft([p[:rc][5], p[:rc][7]])
-  nfe = TPT.NFE(ρ, c, T, zeros(2), [p[:rc][5], p[:rc][7]], pp)
-  tb = TPT.WHTB(c, T, 12.0, [p[:zd][5], p[:zd][7]], [p[:rd][5], p[:rd][7]])
-  nfetb = TPT.NFETB(nfe, tb)
-  wca = TPT.WCASystem(ahs, T)
-  sys = TPT.TPTSystem(wca, nfetb)
-
-  0.0
-end
-
-fopt(ρ₀)
 
 @testset "TM Binary" begin
   @testset "AHS" begin

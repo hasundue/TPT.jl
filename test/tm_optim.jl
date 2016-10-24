@@ -79,6 +79,8 @@ for i in 1:N
   @printf "  %2s: %1.3f\n" p[:X][i] σ_hs[i]
 end
 
+!isdir("results") && mkdir("results")
+
 resdir = joinpath("results", "tm_optim")
 !isdir(resdir) && mkdir(resdir)
 

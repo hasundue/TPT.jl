@@ -96,10 +96,10 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   min_objective!(opt, fopt)
   lower_bounds!(opt, 0.5σ₀d)
   upper_bounds!(opt, rmind)
-  initial_step!(opt, 0.1σ₀d)
+  initial_step!(opt, 0.1rmind)
   xtol_rel!(opt, 1e-3)
 
-  (fmin, σ_wca, ret) = optimize(opt, rmind)
+  (fmin, σ_wca, ret) = optimize(opt, 0.8rmind)
 
   ahs = AHSSystem(σ_wca, ρ₀)
   optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, rmin, u₀, u₁)

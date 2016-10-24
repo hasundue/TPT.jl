@@ -278,10 +278,10 @@ function cavityfunction(sys::AHSSystem)
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
 
-    g_raw = r -> inverselaplace(G[i,j], r, 512, 30) / r
+    g_raw = r -> inverselaplace(G[i,j], r, 128, 30) / r
 
     # Calibrate computational(?) error by an ugly way
-    res = Optim.optimize(r -> -g_raw(r), 0.9σᵢⱼ, 1.1σᵢⱼ)
+    res = Optim.optimize(r -> -g_raw(r), 0.9σᵢⱼ, 1.1σᵢⱼ, rel_tol=1e-3)
     @assert Optim.converged(res)
     σ_raw = Optim.minimizer(res)
 

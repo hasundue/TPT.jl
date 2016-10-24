@@ -38,13 +38,14 @@ end
 
 res = Vector{Any}(N)
 rc = Vector{Float64}(N)
+sys = Vector{TPT.TPTSystem}(N)
 
 Threads.@threads for i in 1:N
     function fopt(rc::Float64)
         nfe = TPT.NFE(p[:ρ][i], p[:T][i], 0.0, p[:zs][i], TPT.Ashcroft(rc))
         nfetb = TPT.NFETB(nfe, tb[i])
-        sys = TPT.TPTSystem(wca[i], nfetb)
-        g = TPT.prdf(sys)[1,1]
+        sys[i] = TPT.TPTSystem(wca[i], nfetb)
+        g = TPT.prdf(sys[i])[1,1]
 
         residue::Float64 = 0.0
 
@@ -66,9 +67,48 @@ for i in 1:N
   @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
 end
 
+println("The positions of minimum of pairpotentials:")
+for i in 1:N
+  @printf "  %2s: %1.3f\n" p[:X][i] sys[i].ref.rmin[1,1]
+end
+
+println("The effective hard-sphere diameters:")
+for i in 1:N
+  @printf "  %2s: %1.3f\n" p[:X][i] sys[i].ref.trial.σ[1]
+end
+
+resdir = joinpath("results", "tm_optim", "u")
+!isdir(resdir) && mkdir(resdir)
+
+for i in 1:N
+  # pairpotentials
+  u_nfe = TPT.pairpotential(sys[i].pert.nfe)[1,1]
+  u_tb = TPT.pairpotential(sys[i].pert.tb)[1,1]
+  u_tot = TPT.pairpotential(sys[i].pert)[1,1]
+
+  rmin::Float64 = sys[i].ref.rmin[1,1]
+  σhs::Float64 = sys[i].ref.trial.σ[1]
+
+  plot([u_nfe, u_tb, u_tot], 2, 20, ylims=(-0.1, 0.1), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
+  vline!([rmin], label="r_min")
+  vline!([σhs], label="HS dia.")
+  png(joinpath(resdir, "$(i)-$(p[:X][i])"))
+end
+
+resdir = joinpath("results", "tm_optim", "g")
+!isdir(resdir) && mkdir(resdir)
+
+for i in 1:N
+  g_hs = TPT.prdf(ahs[i])[1,1]
+  g_wca = TPT.prdf(sys[i])[1,1]
+
+  plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)")
+  plot!(g_exp[i], label="exp", xlims=(2,20))
+  png(joinpath(resdir, "$(i)-$(p[:X][i])"))
+end
+
 @testset "TM Optim" begin
   for i in 1:N
-    @test Optim.converged(res[i])
     @test isapprox(rc[i], rc₀[i], atol=1e-3)
   end
 end # testset

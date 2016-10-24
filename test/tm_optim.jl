@@ -60,22 +60,31 @@ Threads.@threads for i in 1:N
     rc[i] = Optim.minimizer(res[i])
 end
 
-rc₀ = p[:rc]
-
 println("The optimized values of rc:")
 for i in 1:N
   @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
 end
 
+rmin = Vector{Float64}(N)
 println("The positions of minimum of pairpotentials:")
 for i in 1:N
-  @printf "  %2s: %1.3f\n" p[:X][i] sys[i].ref.rmin[1,1]
+  rmin[i] = sys[i].ref.rmin[1,1]
+  @printf "  %2s: %1.3f\n" p[:X][i] rmin[i]
 end
 
+σ_hs = Vector{Float64}(N)
 println("The effective hard-sphere diameters:")
 for i in 1:N
-  @printf "  %2s: %1.3f\n" p[:X][i] sys[i].ref.trial.σ[1]
+  σ_hs[i] = sys[i].ref.trial.σ[1]
+  @printf "  %2s: %1.3f\n" p[:X][i] σ_hs[i]
 end
+
+resdir = joinpath("results", "tm_optim")
+!isdir(resdir) && mkdir(resdir)
+
+df = DataFrame(X = p[:X], rc = rc, rmin = rmin, σ_hs = σ_hs)
+writetable(joinpath(resdir, "results.csv"), df)
+
 
 resdir = joinpath("results", "tm_optim", "u")
 !isdir(resdir) && mkdir(resdir)
@@ -106,6 +115,8 @@ for i in 1:N
   plot!(g_exp[i], label="exp", xlims=(2,20))
   png(joinpath(resdir, "$(i)-$(p[:X][i])"))
 end
+
+rc₀ = p[:rc]
 
 @testset "TM Optim" begin
   for i in 1:N

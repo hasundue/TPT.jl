@@ -5,6 +5,8 @@ using DataFrames
 using Optim
 using Plots; gr()
 
+println("--- TM Optim ---")
+
 p = readtable(joinpath("data", "parameters", "parameters.csv"), separator='\t')
 
 N = size(p, 1) # number of elements

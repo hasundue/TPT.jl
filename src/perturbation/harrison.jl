@@ -23,12 +23,12 @@ end
 function pairpotential(whtb::WHTB)
   @attach(whtb, c, n, zd, rd)
 
-  z̄d = sum(c .* zd)
-
   N = length(c)
   u = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
+    z̄d = (zd[i] + zd[j]) / 2
+
     u[i,j] = r -> -28.1/π * sqrt(12/n) * z̄d * (1 - z̄d/10) * (rd[i]*rd[j])^(3/2) / r^5 + 225/π^2 * z̄d * (rd[i]*rd[j])^3 / r^8
   end
 

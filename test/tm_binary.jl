@@ -93,15 +93,27 @@ nfetb = TPT.NFETB(nfe, tb)
 wca = TPT.WCASystem(ahs, T)
 sys = TPT.TPTSystem(wca, nfetb)
 
-Swca = TPT.psf(sys)
 σ_wca = sys.ref.trial.σ
 
+Swca = TPT.psf(sys)
+
+u_nfe = TPT.pairpotential(sys.pert.nfe)
+u_tb = TPT.pairpotential(sys.pert.tb)
+u_tot = TPT.pairpotential(sys.pert)
+
 for (i,j) in [(1,1), (1,2), (2,2)]
+  # structure factor
   plot(q, Sexp[i,j], label="exp")
   plot!(Swca[i,j], qmin, qmax, label="WCA")
   xlabel!("q (a.u.)")
   ylabel!("S")
   file = string("Fe-Ni_WCA_S", i, j)
+  path = joinpath(resdir, file)
+  png(path)
+
+  # pair-potential
+  plot([u_nfe[i,j], u_tb[i,j], u_tot[i,j]], 2, 20, ylims=(-0.1, 0.1), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u_$(i)$(j) (r) (a.u.)")
+  file = string("Fe-Ni_WCA_u", i, j)
   path = joinpath(resdir, file)
   png(path)
 end

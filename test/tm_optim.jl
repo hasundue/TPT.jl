@@ -3,7 +3,7 @@ using Base.Test
 
 using DataFrames
 using Optim
-using Plots
+using Plots; gr()
 
 p = readtable(joinpath("data", "parameters", "parameters.csv"), separator='\t')
 

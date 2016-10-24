@@ -4,6 +4,7 @@ using Base.Test
 
 using DataFrames
 using Optim
+using Dierckx
 using Plots; gr()
 
 println("--- TM Binary ---")
@@ -20,6 +21,9 @@ c = [0.5, 0.5]
 
 p = readtable(joinpath("data", "parameters", "parameters.csv"), separator='\t')
 
+σ₀ = [p[:σ][5], p[:σ][7]]
+ρ₀ = (p[:ρ][5] + p[:ρ][7]) / 2
+
 data = readtable(joinpath("data", "sf", "Fe-Ni.csv"))
 
 q = data[:q] * 0.5291 # convert Å to a.u.
@@ -28,10 +32,26 @@ qmin = q[1]
 qmax = q[ndata]
 
 # convert Faber-Ziman to Ashcroft-Langreth:
-Sexp = Array{Any}(N,N)
+Sexp = Array{Any,2}(N,N)
 Sexp[1,1] = 1 + √(c[1]*c[1]) * (data[:S11] - 1)
 Sexp[1,2] = Sexp[2,1] = √(c[1]*c[2]) * (data[:S12] - 1)
 Sexp[2,2] = 1 + √(c[2]*c[2]) * (data[:S22] - 1)
+
+# We use Faber-Ziman for obtaining RDF
+S = Array{Any,2}(N,N)
+S[1,1] = Spline1D(q, data[:S11], k=3, bc="zero")
+S[1,2] = S[2,1] = Spline1D(q, data[:S12], k=3, bc="zero")
+S[2,2] = Spline1D(q, data[:S22], k=3, bc="zero")
+
+g_exp = Array{Function,2}(N,N)
+for (i,j) in [(1,1), (1,2), (2,2)]
+  function g(r)::Float64
+    val, err = quadgk(q -> (S[i,j](q) - 1) * sin(q*r) / r * q, qmin, qmax)
+    1 + val / (2π^2 * ρ₀)
+  end
+  g_exp[i,j] = g
+end
+g_exp[2,1] = g_exp[1,2]
 
 #
 # Fitting S with additive hard-sphere
@@ -59,9 +79,6 @@ function fopt(x::Vector{Float64})::Float64
 
   return norm(R)
 end
-
-σ₀ = [p[:σ][5], p[:σ][7]]
-ρ₀ = (p[:ρ][5] + p[:ρ][7]) / 2
 
 x₀ = [ρ₀, σ₀[1], σ₀[2]]
 res = optimize(fopt, x₀)
@@ -132,7 +149,7 @@ for (i,j) in [(1,1), (1,2), (2,2)]
   png(path)
 
   # RDF
-  plot([g_ahs[i,j], g_wca[i,j]], 2, 20, label="WCA")
+  plot([g_exp[i,j], g_ahs[i,j], g_wca[i,j]], 2, 20, labels=["exp" "AHS" "WCA"])
   file = string("Fe-Ni_WCA_g", i, j)
   path = joinpath(resdir, file)
   png(path)

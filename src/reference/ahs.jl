@@ -261,7 +261,7 @@ function psf1(sys::AHSSystem)
   return ret
 end
 
-function prdf(sys::AHSSystem; splined=true)
+function cavityfunction(sys::AHSSystem)
   @attach(sys, ρ, σ)
 
   # scalar constans
@@ -288,28 +288,30 @@ function prdf(sys::AHSSystem; splined=true)
     Δσ = σ_raw - σᵢⱼ
     g(r) = r < σᵢⱼ ? 0. : g_raw(r + Δσ)
 
-    if splined
-      ret[i,j] = spline(g, σᵢⱼ, R_MAX, 64, bc="zero")
-    else
-      ret[i,j] = g
-    end
+    ret[i,j] = spline(g, σᵢⱼ, R_MAX, 64, bc="extrapolate")
   end
 
   return ret
 end
 
-# cavity function near the contact distance
-function cavityfunction(ahs::AHSSystem)
+function prdf(ahs::AHSSystem)
   @attach(ahs, σ)
 
-  g = prdf(ahs)
+  N::Int = ncomp(ahs)
+  y::Array{Function,2} = cavityfunction(ahs)
 
-  N = length(σ)
   ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
-    ret[i,j] = spline(g[i,j], σᵢⱼ, R_MAX, 64, bc="extrapolate")
+    function g(r)::Float64
+      if r < σᵢⱼ
+        0
+      else
+        y[i,j](r)
+      end
+    end
+    ret[i,j] = g
   end
 
   return ret

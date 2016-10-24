@@ -158,8 +158,8 @@ end
 @testset "TM Binary" begin
   @testset "AHS" begin
     @test isapprox(ρ, 0.0113, atol=1e-4)
-    @test isapprox(σ₁, 4.33, atol=1e-2)
-    @test isapprox(σ₂, 4.21, atol=1e-2)
+    @test isapprox(σ₁, 4.32, atol=1e-2)
+    @test isapprox(σ₂, 4.23, atol=1e-2)
   end
   @testset "AHS-WCA" begin
     @test isapprox(σ_wca[1], 4.33, atol=1e-2)

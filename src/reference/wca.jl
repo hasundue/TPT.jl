@@ -131,6 +131,7 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
 
   N::Int = ncomp(wca.trial)
 
+  σ₀::Array{Float64,2} = hsdiameter(wca.trial)
   u₀::Array{Function,2} = wca.u₀
   g_hs::Array{Function,2} = prdf(wca.trial)
   y_hs::Array{Function,2} = cavityfunction(wca.trial)
@@ -138,8 +139,9 @@ function prdf(wca::OptimizedWCASystem{AHSSystem})
   ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
+    u₀t = spline(u₀[i,j], 0.5σ₀[i,j], R_MAX, 256)
     function g(r)
-      val = y_hs[i,j](r) * exp(-β*u₀[i,j](r))
+      val = y_hs[i,j](r) * exp(-β*u₀t(r))
       return abs(val) < eps(Float64) ? 0. : val
     end
     ret[i,j] = g
@@ -160,7 +162,8 @@ function psf(wca::OptimizedWCASystem)::Array{Function,2}
 
   for i in 1:N, j in 1:N
     i > j && continue
-    B(q) = ∫(r -> b[i,j](r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.rmin[i,j], e=1e-3)
+    bt = spline(b[i,j], R_MIN, wca.rmin[i,j], 64)
+    B(q) = ∫(r -> bt(r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.rmin[i,j], e=1e-3)
     S(q) = Sref[i,j](q) + 4π*ρ * √(c[i]*c[j]) * B(q)
     ret[i,j] = S
   end

@@ -61,13 +61,18 @@ res = optimize(fopt, x₀)
 
 (ρ, σ₁, σ₂) = Optim.minimizer(res)
 
+!isdir("results") && mkdir("results")
+
+resdir = joinpath("results", "tm_binary")
+!isdir(resdir) && mkdir(resdir)
+
 for (i,j) in [(1,1), (1,2), (2,2)]
   plot(Scal[i,j], qmin, qmax, label="calculation (AHS)")
   plot!(q, Sexp[i,j], label="experimental")
   xlabel!("q (a.u.)")
   ylabel!("S")
   file = string("Fe-Ni_AHS_S", i, j)
-  path = joinpath("results", "tm_binary", file)
+  path = joinpath(resdir, file)
   png(path)
 end
 

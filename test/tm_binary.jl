@@ -6,6 +6,8 @@ using DataFrames
 using Optim
 using Plots; gr()
 
+println("--- TM Binary ---")
+
 # setting up results directory
 !isdir("results") && mkdir("results")
 
@@ -66,6 +68,10 @@ res = optimize(fopt, x₀)
 
 (ρ, σ₁, σ₂) = Optim.minimizer(res)
 
+println("Optimized hard-sphere diameters by AHS:")
+@printf "  %2s: %1.3f\n" p[:X][5] σ₁
+@printf "  %2s: %1.3f\n" p[:X][7] σ₂
+
 ahs = TPT.AHSSystem(ρ = ρ, σ = [σ₁, σ₂], c = c)
 Sahs = TPT.psf(ahs)
 
@@ -95,7 +101,12 @@ sys = TPT.TPTSystem(wca, nfetb)
 
 σ_wca = sys.ref.trial.σ
 
+println("WCA hard-sphere diameters:")
+@printf "  %2s: %1.3f\n" p[:X][5] σ_wca[1]
+@printf "  %2s: %1.3f\n" p[:X][7] σ_wca[2]
+
 Swca = TPT.psf(sys)
+g_wca = TPT.prdf(sys)
 
 u_nfe = TPT.pairpotential(sys.pert.nfe)
 u_tb = TPT.pairpotential(sys.pert.tb)
@@ -113,7 +124,15 @@ for (i,j) in [(1,1), (1,2), (2,2)]
 
   # pair-potential
   plot([u_nfe[i,j], u_tb[i,j], u_tot[i,j]], 2, 20, ylims=(-0.1, 0.1), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u_$(i)$(j) (r) (a.u.)")
+  vline!([sys.ref.rmin[i,j]], label="r_min")
+  vline!([(σ_wca[i]+σ_wca[j])/2], label="r_min")
   file = string("Fe-Ni_WCA_u", i, j)
+  path = joinpath(resdir, file)
+  png(path)
+
+  # RDF
+  plot(g_wca[i,j], 2, 20, label="WCA", ylims=(0, 3))
+  file = string("Fe-Ni_WCA_g", i, j)
   path = joinpath(resdir, file)
   png(path)
 end
@@ -125,7 +144,7 @@ end
     @test isapprox(σ₂, 4.21, atol=1e-2)
   end
   @testset "AHS-WCA" begin
-    @test isapprox(σ_wca[1], 4.53, atol=1e-2)
-    @test isapprox(σ_wca[2], 3.80, atol=1e-2)
+    @test isapprox(σ_wca[1], 4.33, atol=1e-2)
+    @test isapprox(σ_wca[2], 4.24, atol=1e-2)
   end
 end

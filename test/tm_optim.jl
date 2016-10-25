@@ -7,7 +7,7 @@ using Plots; gr()
 
 println("--- TM Optim ---")
 
-p = readtable(joinpath("data", "parameters", "parameters.csv"), separator='\t')
+p = readtable(joinpath("data", "parameters", "tm_optim.csv"), separator='\t')
 
 N = size(p, 1) # number of elements
 
@@ -87,7 +87,7 @@ end
 resdir = joinpath("results", "tm_optim")
 !isdir(resdir) && mkdir(resdir)
 
-df = DataFrame(X = p[:X], rc = rc, rmin = rmin, σ_hs = σ_hs)
+df = DataFrame(X = p[:X], rc = round(rc, 3), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
 writetable(joinpath(resdir, "results.csv"), df)
 
 

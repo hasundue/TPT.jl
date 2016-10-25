@@ -49,8 +49,6 @@ Threads.@threads for k in 1:(M^2)
   # Skip if file does not exist
   !isfile(psffile) && continue
 
-  push!(sysname, string(A, '-', B))
-
   # Initial guess for HS diameters and number density
   T = (p[:T][a] + p[:T][b]) / 2
   σ₀ = [p[:σ][a], p[:σ][b]]

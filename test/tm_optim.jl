@@ -3,7 +3,7 @@ using Base.Test
 
 using DataFrames
 using Optim
-using Plots; gr()
+using Plots; pyplot()
 
 println("--- TM Optim ---")
 

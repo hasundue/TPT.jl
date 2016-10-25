@@ -22,6 +22,6 @@ script:
  - echo "travis_fold:start:Pkg-install"
  - julia -e 'Pkg.add("DataFrames"); Pkg.build("DataFrames"); using DataFrames'
  - julia -e 'Pkg.add("Plots"); Pkg.build("Plots"); using Plots'
- - julia -e 'Pkg.add("GR"); Pkg.build("GR"); using GR'
+ - julia -e 'ENV["PYTHON"] = ""; Pkg.add("PyPlot"); Pkg.build("PyPlot"); using PyPlot'
  - echo "travis_fold:end:Pkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'

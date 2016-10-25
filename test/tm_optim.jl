@@ -122,6 +122,6 @@ rc₀ = p[:rc]
 
 @testset "TM Optim" begin
   for i in 1:N
-    @test isapprox(rc[i], rc₀[i], atol=1e-3)
+    @test isapprox(rc[i], rc₀[i], atol=2e-3)
   end
 end # testset

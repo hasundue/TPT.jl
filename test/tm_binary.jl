@@ -165,9 +165,9 @@ for a in 1:M, b in 1:M
   σ_ahs = round(ahs[a,b].σ, 3)
 
   println("  AHS:")
-  @printf "    %4s: %1.4f\n" "ρ" ρ_ahs
-  @printf "    %4s: %1.3f\n" "σ_$A" σ_ahs[1]
-  @printf "    %4s: %1.3f\n" "σ_$B" σ_ahs[2]
+  @printf "    ρ: %1.4f\n" ρ_ahs
+  @printf "    %-4s: %1.3f\n" "σ_$A" σ_ahs[1]
+  @printf "    %-4s: %1.3f\n" "σ_$B" σ_ahs[2]
 
   #
   # Parameters for AHS-WCA
@@ -175,8 +175,8 @@ for a in 1:M, b in 1:M
   σ_wca = round(sys[a,b].ref.trial.σ, 3)
 
   println("  AHS-WCA:")
-  @printf "    %4s: %1.3f\n" "σ_$A" σ_wca[1]
-  @printf "    %4s: %1.3f\n" "σ_$B" σ_wca[2]
+  @printf "    %-4s: %1.3f\n" "σ_$A" σ_wca[1]
+  @printf "    %-4s: %1.3f\n" "σ_$B" σ_wca[2]
 
   # push the results to the DataFrame
   push!(res, ["$(A)-$(B)" ρ_ahs σ_ahs[1] σ_ahs[2] σ_wca[1] σ_wca[2]])

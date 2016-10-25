@@ -91,15 +91,16 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
   σ₀d::Vector{Float64} = [σ₀[i,i] for i in 1:N]
   rmind::Vector{Float64} = [rmin[i,i] for i in 1:N]
+  σ_init::Vector{Float64} = [min(σ₀d[i], rmind[i]) for i in 1:N]
 
   opt = Opt(:LN_BOBYQA, N)
   min_objective!(opt, fopt)
-  lower_bounds!(opt, 0.5σ₀d)
+  lower_bounds!(opt, 0.8σ_init)
   upper_bounds!(opt, rmind)
-  initial_step!(opt, 0.1rmind)
+  initial_step!(opt, 0.01σ_init)
   xtol_rel!(opt, 1e-3)
 
-  (fmin, σ_wca, ret) = optimize(opt, 0.8rmind)
+  (fmin, σ_wca, ret) = optimize(opt, σ_init)
 
   ahs = AHSSystem(σ_wca, ρ₀)
   optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, rmin, u₀, u₁)

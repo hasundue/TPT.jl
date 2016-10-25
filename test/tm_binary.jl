@@ -140,7 +140,7 @@ end
 #
 # Prepare DataFrame for tabular output
 #
-res = DataFrame(System = AbstractString[], ρ_AHS = Float64[], σ₁_AHS = Float64[], σ₂_AHS = Float64[], σ₁_WCA = Float64[], σ₂_WCA = Float64[])
+res = DataFrame(System = AbstractString[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
 
 
 #
@@ -247,15 +247,15 @@ l = size(ans, 1)
 @testset "TM Binary" begin
   @testset "AHS" begin
     for i in 1:l
-      @test isapprox(res[:ρ_AHS][i], ans[:ρ_AHS][i], atol=1e-4)
-      @test isapprox(res[:σ₁_AHS][i], ans[:σ₁_AHS][i], atol=1e-3)
-      @test isapprox(res[:σ₂_AHS][i], ans[:σ₂_AHS][i], atol=1e-3)
+      @test isapprox(res[:ρ_ahs][i], ans[:ρ_ahs][i], atol=1e-4)
+      @test isapprox(res[:σ₁_ahs][i], ans[:σ₁_ahs][i], atol=1e-3)
+      @test isapprox(res[:σ₂_ahs][i], ans[:σ₂_ahs][i], atol=1e-3)
     end
   end
   @testset "AHS-WCA" begin
     for i in 1:l
-      @test isapprox(res[:σ₁_WCA][i], ans[:σ₁_WCA][i], atol=1e-3)
-      @test isapprox(res[:σ₂_WCA][i], ans[:σ₂_WCA][i], atol=1e-3)
+      @test isapprox(res[:σ₁_wca][i], ans[:σ₁_wca][i], atol=1e-3)
+      @test isapprox(res[:σ₂_wca][i], ans[:σ₂_wca][i], atol=1e-3)
     end
   end
 end

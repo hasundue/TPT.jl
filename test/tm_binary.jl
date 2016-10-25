@@ -211,6 +211,7 @@ for a in 1:M, b in 1:M
 
     # Pair distribution functions gᵢⱼ(r)
     plot([g_exp[a,b][i,j], g_ahs[i,j], g_wca[i,j]], 2, 20, labels=["exp" "AHS" "WCA"])
+    ylims!(0, 4.5)
     xlabel!("r (a.u.)")
     ylabel!("g(r)")
     file = string("$(A)-$(B)_g", i, j)

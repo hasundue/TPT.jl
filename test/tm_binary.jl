@@ -24,6 +24,9 @@ c = [0.5, 0.5]
 # Elemental parameters
 p = readtable(joinpath("data", "parameters", "tm_optim.csv"), separator='\t')
 
+# Binary parameters
+ans = readtable(joinpath("data", "parameters", "tm_binary.csv"))
+
 # number of elements available
 M = size(p, 1)
 
@@ -49,8 +52,11 @@ Threads.@threads for k in 1:(M^2)
   # Skip if file does not exist
   !isfile(psffile) && continue
 
+  # Temperature
+  entry = ans[ans[:System] .== "$(A)-$(B)", :T]
+  T = entry[1]
+
   # Initial guess for HS diameters and number density
-  T = (p[:T][a] + p[:T][b]) / 2
   σ₀ = [p[:σ][a], p[:σ][b]]
   ρ₀ = (p[:ρ][a] + p[:ρ][b]) / 2
 
@@ -138,7 +144,7 @@ end
 #
 # Prepare DataFrame for tabular output
 #
-res = DataFrame(System = AbstractString[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
+res = DataFrame(System = AbstractString[], T = Float64[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
 
 
 #
@@ -153,6 +159,10 @@ for a in 1:M, b in 1:M
   !isfile(psffile) && continue
 
   println("$(A)-$(B):")
+
+  # Temperature
+  T = ans[ans[:System] .== "$(A)-$(B)", :T][1]
+  @printf "  T: %4.0f K\n" T
 
   # Experimental data
   ndata = length(q_exp[a,b])
@@ -179,7 +189,7 @@ for a in 1:M, b in 1:M
   @printf "    %-4s: %1.3f\n" "σ_$B" σ_wca[2]
 
   # push the results to the DataFrame
-  push!(res, ["$(A)-$(B)" ρ_ahs σ_ahs[1] σ_ahs[2] σ_wca[1] σ_wca[2]])
+  push!(res, ["$(A)-$(B)" T ρ_ahs σ_ahs[1] σ_ahs[2] σ_wca[1] σ_wca[2]])
 
   #
   # Individual uᵢⱼ, Sᵢⱼ and gᵢⱼn comparison with experimental data
@@ -238,9 +248,6 @@ writetable(joinpath(resdir, "results.csv"), res)
 #
 # Performing the tests
 #
-
-# read the answers
-ans = readtable(joinpath("data", "parameters", "tm_binary.csv"))
 l = size(ans, 1)
 
 @testset "TM Binary" begin

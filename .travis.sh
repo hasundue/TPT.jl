@@ -1,8 +1,10 @@
 #!/bin/bash -xe
 
+set +x
 echo "machine github.com" >> ~/.netrc
 echo "login $GH_LOGIN"    >> ~/.netrc
 echo "password $GH_TOKEN" >> ~/.netrc
+set -x
 
 git config --global user.email 'travis@travis-ci.org'
 git config --global user.name 'travis'

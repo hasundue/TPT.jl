@@ -7,6 +7,8 @@ julia:
 env:
   global:
     - JULIA_NUM_THREADS=4
+    - secure: "szTFeKxp0PaJFQ0c3hljmAx3a6y3T1wq7IliJUIsV9dGPKg7lQad7dTjBwS5zYVpGN3TD0h5Wf8AAOgSgg5SvS+L3e2NKfjs9lfs5qTxRSbAv6DFNf8XfNii5UnJcP1BDk8j2ZgN1gYye0uXg1Ptie71Lbr0LHizsIOdPvPvg65lW7kb3io4mMFf4wExzGKuY1QFa3fJkXJCLTKwGqhwLGNtYyy1nnD0rlaDxEliEg/CBd70opPHp0/Dv/+SSLgCQLWRYkLysa+xE4U1kL5TLCld4eDyI0NjFNp3QqTqqbESuMvbZpvSYv4yxrkI/3CXRZGNKphwl/oZk1PRTtjZjrWFWO5VS3nFSg5L9OSTZFzxfTh1R3J7QP+974naP10bqQs+Xc3IdOC/NIG2LnkqlMT46zr4ngT0zsar86wjhKILwO+oMza4P+eg0AvfNScfGK6n55B+8ir6rRA9f+yaCJKw5mPd/4S67ZEg+n2H6oQ/+tVBkGG3S9aCULSBZCXW7WPcfQWt1EhyGrOIHknj7mBm1vUWFbPSzg43uNx0t0HZA1CNZNwzt/0SGV6CI7pIkoy5+x+C2rgwonzRFZHq+ZH3fystFP9D58eVvoTvFDtx3LU2/By2qlLKKceF207cK5PBmDbbSsr/AS1FBg1Wh0oMsKoxFv7yHIvJVbD4XH8="
+    - secure: "szTFeKxp0PaJFQ0c3hljmAx3a6y3T1wq7IliJUIsV9dGPKg7lQad7dTjBwS5zYVpGN3TD0h5Wf8AAOgSgg5SvS+L3e2NKfjs9lfs5qTxRSbAv6DFNf8XfNii5UnJcP1BDk8j2ZgN1gYye0uXg1Ptie71Lbr0LHizsIOdPvPvg65lW7kb3io4mMFf4wExzGKuY1QFa3fJkXJCLTKwGqhwLGNtYyy1nnD0rlaDxEliEg/CBd70opPHp0/Dv/+SSLgCQLWRYkLysa+xE4U1kL5TLCld4eDyI0NjFNp3QqTqqbESuMvbZpvSYv4yxrkI/3CXRZGNKphwl/oZk1PRTtjZjrWFWO5VS3nFSg5L9OSTZFzxfTh1R3J7QP+974naP10bqQs+Xc3IdOC/NIG2LnkqlMT46zr4ngT0zsar86wjhKILwO+oMza4P+eg0AvfNScfGK6n55B+8ir6rRA9f+yaCJKw5mPd/4S67ZEg+n2H6oQ/+tVBkGG3S9aCULSBZCXW7WPcfQWt1EhyGrOIHknj7mBm1vUWFbPSzg43uNx0t0HZA1CNZNwzt/0SGV6CI7pIkoy5+x+C2rgwonzRFZHq+ZH3fystFP9D58eVvoTvFDtx3LU2/By2qlLKKceF207cK5PBmDbbSsr/AS1FBg1Wh0oMsKoxFv7yHIvJVbD4XH8="
 addons:
   apt:
     packages:
@@ -25,3 +27,5 @@ script:
  - julia -e 'ENV["PYTHON"] = ""; Pkg.add("PyPlot"); Pkg.build("PyPlot"); using PyPlot'
  - echo "travis_fold:end:Pkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'
+after_success:
+  - ./.travis.sh

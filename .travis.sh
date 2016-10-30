@@ -6,7 +6,7 @@ echo "login $GH_LOGIN"    >> ~/.netrc
 echo "password $GH_TOKEN" >> ~/.netrc
 set -x
 
-git config --global user.email 'travis@travis-ci.org'
+git config --global user.email 'travis@travis-ci.com'
 git config --global user.name 'travis'
 git clone --quiet "https://github.com/hasundue/TPT-test.git"
 cd TPT-test

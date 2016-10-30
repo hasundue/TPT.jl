@@ -28,4 +28,4 @@ script:
  - echo "travis_fold:end:Pkg-install"
  - julia -e 'Pkg.test("TPT"; coverage=false)'
 after_success:
-  - ./.travis.sh
+ - ./.travis.sh

@@ -15,6 +15,6 @@ cp -a /home/travis/.julia/v0.5/TPT/test/results "$TRAVIS_JOB_NUMBER"
 git add "$TRAVIS_JOB_NUMBER"
 
 git commit -q -m "Automatically updated by Travis build #$TRAVIS_JOB_NUMBER"
-git push
+git push origin master
 
 rm -f ~/.netrc

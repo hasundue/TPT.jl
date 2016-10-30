@@ -11,7 +11,8 @@ git config --global user.name 'travis'
 git clone --quiet "https://github.com/hasundue/TPT-test.git"
 cd TPT-test
 
-cp -a ../test/results "$TRAVIS_JOB_NUMBER"
+ls ../
+cp -a ../results "$TRAVIS_JOB_NUMBER"
 git add "$TRAVIS_JOB_NUMBER"
 
 git commit -q -m "Automatically updated by Travis build #$TRAVIS_JOB_NUMBER"

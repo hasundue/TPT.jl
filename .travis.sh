@@ -11,7 +11,7 @@ git config --global user.name 'travis'
 git clone --quiet "https://github.com/hasundue/TPT-test.git"
 cd TPT-test
 
-if [ $TRAVIS_TEST_RESULT = 1 ]; then
+if [ $TRAVIS_TEST_RESULT = 0 ]; then
   RESULT="passed"
 else
   RESULT="failed"

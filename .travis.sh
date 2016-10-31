@@ -18,7 +18,7 @@ else
 fi
 
 RESDIR=${TRAVIS_JOB_NUMBER}_${RESULT}
-
+[ -d $RESDIR ] && rm -rf $RESDIR
 cp -a /home/travis/.julia/v0.5/TPT/test/results $RESDIR
 git add $RESDIR
 

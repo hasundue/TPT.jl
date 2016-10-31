@@ -11,8 +11,16 @@ git config --global user.name 'travis'
 git clone --quiet "https://github.com/hasundue/TPT-test.git"
 cd TPT-test
 
-cp -a /home/travis/.julia/v0.5/TPT/test/results "$TRAVIS_JOB_NUMBER"
-git add "$TRAVIS_JOB_NUMBER"
+if $TRAVIS_TEST_RESULT; then
+  RESULT="passed"
+else
+  RESULT="failed"
+fi
+
+RESDIR=${TRAVIS_JOB_NUMBER}_${RESULT}
+
+cp -a /home/travis/.julia/v0.5/TPT/test/results $RESDIR
+git add $RESDIR
 
 git commit -q -m "Automatically updated by Travis build #$TRAVIS_JOB_NUMBER"
 git push origin master

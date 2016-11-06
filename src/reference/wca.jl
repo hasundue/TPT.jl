@@ -83,7 +83,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
     for i in 1:N
       B(r) = y_hs[i,i](r) * (exp(-β*u₀t[i,i](r)) - exp(-β*u_hs[i,i](r)))
-      I[i] = ∫(B, 0.5σ[i], rmin[i,i])
+      I[i] = ∫(r -> B(r)*r^2, 0.5σ[i], rmin[i,i])
     end
 
     return norm(I, 1)

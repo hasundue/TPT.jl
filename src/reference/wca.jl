@@ -165,7 +165,7 @@ function psf(wca::OptimizedWCASystem)::Array{Function,2}
     i > j && continue
     bt = spline(b[i,j], R_MIN, wca.rmin[i,j], 64)
     B(q) = ∫(r -> bt(r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.rmin[i,j], e=1e-3)
-    S(q) = Sref[i,j](q) + 4π*ρ * √(c[i]*c[j]) * B(q)
+    S(q) = Sref[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * Sref[i,j](q) * B(q))
     ret[i,j] = S
   end
 

@@ -22,7 +22,7 @@ N = 2
 c = [0.5, 0.5]
 
 # Elemental parameters
-p = readtable(joinpath("data", "parameters", "tm_optim.csv"), separator='\t')
+p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
 
 # Binary parameters
 ans = readtable(joinpath("data", "parameters", "tm_binary.csv"))

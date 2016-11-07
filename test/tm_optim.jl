@@ -7,7 +7,7 @@ using Plots; pyplot()
 
 println("--- TM Optim ---")
 
-p = readtable(joinpath("data", "parameters", "tm_optim.csv"), separator='\t')
+p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
 
 N = size(p, 1) # number of elements
 
@@ -17,7 +17,7 @@ for i in 1:N
     elem = p[:X][i]
     T = p[:T][i]
 
-    data = readtable(joinpath("data", "rdf", "$(elem)$(T).csv"), separator = '\t')
+    data = readtable(joinpath("data", "rdf", "$(elem)$(T).csv"))
 
     M = size(data, 1)
 

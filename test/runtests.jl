@@ -4,6 +4,10 @@
 #
 
 tests = [
+  # Unit tests
+  "unit_ahs.jl",
+
+  # Investigational calculations
   "tm_optim.jl",
   "tm_binary.jl"
 ]

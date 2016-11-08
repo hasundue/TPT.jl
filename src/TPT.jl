@@ -1,24 +1,51 @@
 module TPT
 
 export TPTSystem,
-       AHSSystem,
-       WCASystem,
-       NFE,
-       Ashcroft,
-       BretonnetSilbert,
-       WHTB,
-       NFETB,
+
+       # Basic information
+       ncomp,
+       composition,
+       numberdensity,
+       totalnumberdensity,
+
+       # Structural properties
        psf,
        prdf,
-       potentialenergy,
        cavityfunction,
+
+       # Interatomic interaction
        pairpotential,
+
+       # Thermodynamic properties
+       entropy,
+
+       # Reference systems
+       AHSSystem,
+       WCASystem,
+
+       # Hard-sphere system
+       hsdiameter,
+       packingfraction,
+       totalpackingfraction,
+
+       # Perturbation
+       NFE,
+       WHTB,
+       NFETB,
+
+       # WCA
        blipfunction,
+
+       # NFE
+       Ashcroft,
+       BretonnetSilbert,
        fermiwavenumber,
        formfactor,
        dielectric,
        localfiled,
        wnechar,
+
+       # utils
        spline
 
 import Optim

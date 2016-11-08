@@ -6,13 +6,22 @@ Types and functions for additive hard-sphere reference systems.
 References:
 
 * S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
+* K. Hoshino. and W. H. Young: J. Phys. F: Metal Phys., Vol. 10 (1980), 1365-1374.
 
 """
 
 immutable AHSSystem <: IndependentReferenceSystem
+  N::Int # number of components
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
+  m::Vector{Float64} # mass
+  T::Float64 # temperature
 end # type
+
+function AHSSystem(σ::Vector, ρ::Vector)
+  N = length(σ)
+  return AHSSystem(N, σ, ρ, zeros(N), 0.)
+end
 
 @doc doc"""
 AHSSystem(; kwargs...)
@@ -85,11 +94,23 @@ function AHSSystem(; kwargs...)
   end
 end
 
-function ncomp(sys::AHSSystem) :: Int
-  length(sys.σ)
+function ncomp(ahs::AHSSystem)::Int
+  length(ahs.σ)
 end
 
-function hsdiameter(sys::AHSSystem) :: Array{Float64,2}
+function composition(ahs::AHSSystem)::Vector{Float64}
+  ahs.ρ / sum(ahs.ρ)
+end
+
+function numberdensity(ahs::AHSSystem)::Float64
+  sum(ahs.ρ)
+end
+
+function totalnumberdensity(ahs::AHSSystem)::Float64
+  sum(ahs.ρ)
+end
+
+function hsdiameter(sys::AHSSystem)::Array{Float64,2}
   N = ncomp(sys)
 
   ret = Array{Float64}(N,N)
@@ -103,6 +124,16 @@ function hsdiameter(sys::AHSSystem) :: Array{Float64,2}
   end
 
   return ret
+end
+
+function packingfraction(ahs::AHSSystem)::Vector{Float64}
+  @attach(ahs, ρ, σ)
+  return (π/6) * ρ .* σ.^3
+end
+
+function totalpackingfraction(ahs::AHSSystem)::Float64
+  η = packingfraction(ahs)
+  return sum(η)
 end
 
 function pairpotential(sys::AHSSystem)
@@ -315,4 +346,40 @@ function prdf(ahs::AHSSystem)
   end
 
   return ret
+end
+
+# Ref: K. Hoshino. and W. H. Young: J. Phys. F: Metal Phys. 10 (1980) 1365-1374.
+function entropy(ahs::AHSSystem)::Float64
+  @attach(ahs, σ, m, T)
+
+  N::Int = ncomp(ahs)
+  c::Vector{Float64} = composition(ahs)
+  η::Vector{Float64} = packingfraction(ahs)
+  ζ::Float64 = 1 / (1 - sum(η))
+  Ω::Float64 = 1 / totalnumberdensity(ahs)
+
+  y₁::Float64 = 0.
+  y₂::Float64 = 0.
+
+  for i in 1:N, j in 1:N
+    i ≥ j && continue
+
+    σ_sum = sum(c .* σ)
+
+    y₁ += c[i]*c[j] * (σ[i] + σ[j]) * (σ[i] - σ[j])^2 / σ_sum^3
+    y₂ += c[i]*c[j] * σ[i]*σ[j] * (σ[i] - σ[j])^2 / σ_sum^6 * sum(c .* σ.^2)
+  end
+
+  #
+  # Note that all S_xxx are divided by N*kB
+  #
+  S_gas = 5/2 + log(Ω * (prod(m.^c) * kB*T / 2π)^(3/2))
+
+  S_c = - sum(c .* log(c))
+
+  S_η = - (ζ - 1)*(ζ + 3)
+
+  S_σ = (3/2*(ζ^2 - 1) - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₁ + (3/2*(ζ - 1)^2 - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₂
+
+  S = S_gas + S_c + S_η + S_σ
 end

@@ -29,6 +29,10 @@ function numberdensity(wca::OptimizedWCASystem) :: Float64
   return sum(wca.trial.ρ)
 end
 
+function totalnumberdensity(wca::OptimizedWCASystem)::Float64
+  return totalnumberdensity(wca.trial)
+end
+
 function composition(wca::OptimizedWCASystem) :: Vector{Float64}
   ρ = numberdensity(wca)
   return wca.trial.ρ / ρ
@@ -175,4 +179,32 @@ function psf(wca::OptimizedWCASystem)::Array{Function,2}
   end
 
   return ret
+end
+
+function helmholtz(wca::OptimizedWCASystem, pert::Perturbation)::Float64
+  N = ncomp(wca)
+
+  hs = wca.trial
+  σ::Array{Float64,2} = hsdiameter(hs)
+  r_min::Array{Float64,2} = wca.rmin
+  ρ::Float64 = totalnumberdensity(wca)
+  u::Array{Function,2} = pairpotential(pert)
+  u₀::Array{Function,2} = wca.u₀
+  g_HS::Array{Function,2} = prdf(hs)
+
+  @show F_HS::Float64 = helmholtz(hs)
+  F_add::Float64 = 0.
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    m = i == j ? 1 : 2
+
+    u₀t = spline(u₀[i,j], σ[i,j], r_min[i,j], 16)
+
+    F_add += m * 2π*ρ * ∫(r -> u[i,j](r)*g_HS[i,j](r)*r^2, σ[i,j], R_MAX)
+    F_add -= m * 2π*ρ * ∫(r -> u₀t(r)*g_HS[i,j](r)*r^2, σ[i,j], r_min[i,j])
+  end
+
+  F = F_HS + F_add
 end

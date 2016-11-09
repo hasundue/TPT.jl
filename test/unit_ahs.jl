@@ -22,8 +22,10 @@ T = 373.
 
 ahs = TPT.AHSSystem(N, σ, ρ, m, T)
 
-S = TPT.entropy(ahs)
+S = TPT.entropy(ahs) # divided by kB
+F = TPT.helmholtz(ahs)
 
 @testset "AHS" begin
   @test isapprox(S, 9.44, atol=1e-2)
+  @test isapprox(F, -0.00938, atol=1e-5)
 end

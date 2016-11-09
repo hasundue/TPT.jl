@@ -136,6 +136,10 @@ function totalpackingfraction(ahs::AHSSystem)::Float64
   return sum(η)
 end
 
+function temperature(ahs::AHSSystem)::Float64
+  return ahs.T
+end
+
 function pairpotential(sys::AHSSystem)
   σ = sys.σ
   N = length(σ)
@@ -382,4 +386,10 @@ function entropy(ahs::AHSSystem)::Float64
   S_σ = (3/2*(ζ^2 - 1) - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₁ + (3/2*(ζ - 1)^2 - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₂
 
   S = S_gas + S_c + S_η + S_σ
+end
+
+function helmholtz(ahs::AHSSystem)::Float64
+  T = temperature(ahs)
+  S = kB * entropy(ahs)
+  F = 3/2*kB*T - T*S
 end

@@ -18,6 +18,7 @@ export TPTSystem,
 
        # Thermodynamic properties
        entropy,
+       helmholtz,
 
        # Reference systems
        AHSSystem,

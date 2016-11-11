@@ -83,10 +83,18 @@ function entropy(sys::TPTSystem)::Float64
   S = S_gas + S_conf + S_ref + S_pert
 end
 
+function internal(sys::TPTSystem)::Float64
+  U₀ = internal(sys.ref)
+  U₁ = internal(sys.pert, sys.ref)
+
+  U = U₀ + U₁
+end
+
 function helmholtz(sys::TPTSystem)::Float64
   T = temperature(sys)
   K = kinetic(sys)
+  U = internal(sys)
   S = entropy(sys)
 
-  F = K - kB*T*S
+  F = K + U - kB*T*S
 end

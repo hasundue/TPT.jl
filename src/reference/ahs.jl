@@ -374,3 +374,7 @@ function entropy(ahs::AHSSystem)::Float64
 
   S = S_η + S_σ
 end
+
+function internal(ahs::AHSSystem)::Float64
+  U = 0
+end

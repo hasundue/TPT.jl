@@ -19,6 +19,7 @@ export TPTSystem,
        # Thermodynamic properties
        kinetic,
        entropy,
+       internal,
        helmholtz,
 
        # Reference systems

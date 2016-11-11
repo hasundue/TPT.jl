@@ -11,17 +11,9 @@ References:
 """
 
 immutable AHSSystem <: IndependentReferenceSystem
-  N::Int # number of components
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
-  m::Vector{Float64} # mass
-  T::Float64 # temperature
 end # type
-
-function AHSSystem(σ::Vector, ρ::Vector)
-  N = length(σ)
-  return AHSSystem(N, σ, ρ, zeros(N), 0.)
-end
 
 @doc doc"""
 AHSSystem(; kwargs...)
@@ -354,13 +346,12 @@ end
 
 # Ref: K. Hoshino. and W. H. Young: J. Phys. F: Metal Phys. 10 (1980) 1365-1374.
 function entropy(ahs::AHSSystem)::Float64
-  @attach(ahs, σ, m, T)
+  @attach(ahs, σ)
 
   N::Int = ncomp(ahs)
   c::Vector{Float64} = composition(ahs)
-  η::Vector{Float64} = packingfraction(ahs)
-  ζ::Float64 = 1 / (1 - sum(η))
-  Ω::Float64 = 1 / totalnumberdensity(ahs)
+  η::Float64= totalpackingfraction(ahs)
+  ζ::Float64 = 1 / (1 - η)
 
   y₁::Float64 = 0.
   y₂::Float64 = 0.
@@ -377,19 +368,9 @@ function entropy(ahs::AHSSystem)::Float64
   #
   # Note that all S_xxx are divided by N*kB
   #
-  S_gas = 5/2 + log(Ω * (prod(m.^c) * kB*T / 2π)^(3/2))
-
-  S_c = - sum(c .* log(c))
-
   S_η = - (ζ - 1)*(ζ + 3)
 
   S_σ = (3/2*(ζ^2 - 1) - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₁ + (3/2*(ζ - 1)^2 - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₂
 
-  S = S_gas + S_c + S_η + S_σ
-end
-
-function helmholtz(ahs::AHSSystem)::Float64
-  T = temperature(ahs)
-  S = kB * entropy(ahs)
-  F = 3/2*kB*T - T*S
+  S = S_η + S_σ
 end

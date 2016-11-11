@@ -17,6 +17,7 @@ export TPTSystem,
        pairpotential,
 
        # Thermodynamic properties
+       kinetic,
        entropy,
        helmholtz,
 
@@ -59,6 +60,7 @@ include("tptsystem.jl")
 include("constants.jl")
 include(joinpath("reference", "ahs.jl"))
 include(joinpath("reference", "wca.jl"))
+include(joinpath("perturbation", "nullpert.jl"))
 include(joinpath("perturbation", "nfetb.jl"))
 include(joinpath("perturbation", "nfe.jl"))
 include(joinpath("perturbation", "ashcroft.jl"))

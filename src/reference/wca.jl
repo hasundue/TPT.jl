@@ -9,12 +9,13 @@ immutable WCASystem{T <: IndependentReferenceSystem} <: DependentReferenceSystem
   T::Float64 # Temperature
 end
 
-immutable OptimizedWCASystem{T <: IndependentReferenceSystem} <: DependentReferenceSystem
+immutable OptimizedWCASystem{T <: IndependentReferenceSystem} <: IndependentReferenceSystem
   trial::T # optimized trial system
-  T::Float64 # Temperature
-  rmin::Array{Float64,2} # position of the minimum of perturbation pair-potential
-  u₀::Array{Function,2} # WCA reference pair-potential
-  u₁::Array{Function,2} # WCA perturbation pair-potential
+  temp::Float64 # temperature
+  u_pert::Array{Function,2} # pair-potential given by perturbation
+  r_min::Array{Float64,2} # positionof the minimum of pair-potential
+  u_repu::Array{Function,2} # harsh repulsive part of pair-potential
+  u_tail::Array{Function,2} # tail part of pair-potentia
 end
 
 function ncomp(wca::WCASystem)::Int
@@ -52,7 +53,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
     ut[i,j] = spline(u[i,j], 0.25σ₀[i,j], 1.5σ₀[i,j], 64)
   end
 
-  rmin = Array{Float64}(N,N)
+  r_min = Array{Float64}(N,N)
   u₀ = Array{Function}(N,N)
   u₀t = Array{Function}(N,N)
   u₁ = Array{Function}(N,N)
@@ -61,18 +62,18 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
     i > j && continue
 
     opt = Optim.optimize(ut[i,j], 0.5σ₀[i,j], 1.5σ₀[i,j])
-    rmin[i,j] = Optim.minimizer(opt)
+    r_min[i,j] = Optim.minimizer(opt)
     umin::Float64 = Optim.minimum(opt)
 
-    u₀[i,j] = r -> r < rmin[i,j] ? u[i,j](r) - umin : 0.0
-    u₀t[i,j] = r -> r < rmin[i,j] ? ut[i,j](r) - umin : 0.0
-    u₁[i,j] = r -> r < rmin[i,j] ? umin : u[i,j](r)
+    u₀[i,j] = r -> r < r_min[i,j] ? u[i,j](r) - umin : 0.0
+    u₀t[i,j] = r -> r < r_min[i,j] ? ut[i,j](r) - umin : 0.0
+    u₁[i,j] = r -> r < r_min[i,j] ? umin : u[i,j](r)
   end
 
   for i in 1:N, j in 1:N
     i < j && continue
 
-    rmin[i,j] = rmin[j,i]
+    r_min[i,j] = r_min[j,i]
     u₀[i,j] = u₀[j,i]
     u₀t[i,j] = u₀t[j,i]
     u₁[i,j] = u₁[j,i]
@@ -87,14 +88,14 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
 
     for i in 1:N
       B(r) = y_hs[i,i](r) * (exp(-β*u₀t[i,i](r)) - exp(-β*u_hs[i,i](r)))
-      I[i] = ∫(r -> B(r)*r^2, 0.5σ[i], rmin[i,i])
+      I[i] = ∫(r -> B(r)*r^2, 0.5σ[i], r_min[i,i])
     end
 
     return norm(I, 1)
   end
 
   σ₀d::Vector{Float64} = [σ₀[i,i] for i in 1:N]
-  rmind::Vector{Float64} = [rmin[i,i] for i in 1:N]
+  rmind::Vector{Float64} = [r_min[i,i] for i in 1:N]
   σ_init::Vector{Float64} = [min(σ₀d[i], rmind[i]) for i in 1:N]
 
   opt = Opt(:LN_BOBYQA, N)
@@ -107,7 +108,7 @@ function TPTSystem(wca::WCASystem{AHSSystem}, pert::Perturbation)
   (fmin, σ_wca, ret) = optimize(opt, σ_init)
 
   ahs = AHSSystem(σ_wca, ρ₀)
-  optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, rmin, u₀, u₁)
+  optwca = OptimizedWCASystem{AHSSystem}(ahs, wca.T, u, r_min, u₀, u₁)
 
   return TPTSystem(optwca, pert)
 end
@@ -167,8 +168,8 @@ function psf(wca::OptimizedWCASystem)::Array{Function,2}
 
   for i in 1:N, j in 1:N
     i > j && continue
-    bt = spline(b[i,j], R_MIN, wca.rmin[i,j], 64)
-    B(q) = ∫(r -> bt(r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.rmin[i,j], e=1e-3)
+    bt = spline(b[i,j], R_MIN, wca.r_min[i,j], 64)
+    B(q) = ∫(r -> bt(r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.r_min[i,j], e=1e-3)
     S(q) = Sref[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * Sref[i,j](q) * B(q))
     ret[i,j] = S
   end
@@ -181,12 +182,38 @@ function psf(wca::OptimizedWCASystem)::Array{Function,2}
   return ret
 end
 
-function helmholtz(wca::OptimizedWCASystem, pert::Perturbation)::Float64
+# Ref:
+function entropy(wca::OptimizedWCASystem, pert::Perturbation)::Float64
   N = ncomp(wca)
 
-  hs = wca.trial
+  ρ::Float64 = totalnumberdensity(wca)
+  c::Vector{Float64} = composition(wca)
+  hs::IndependentReferenceSystem = wca.trial
+  σ_wca::Array{Float64,2} = hsdiameter(hs)
+  r_min::Array{Float64,2} = wca.r_min
+  u₀::Array{Function,2} = wca.u_repu
+  g₀_wca::Array{Function,2} = prdf(wca)
+
+  S_hs::Float64 = entropy(hs)
+  ΔS₀_wca::Float64 = 0
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    M = i == j ? 1 : 2
+
+    ΔS₀_wca += M * 2π*ρ * c[i]*c[j] / T * ∫(r -> u₀[i,j](r) * g₀_wca[i,j](r) * r^2, σ_wca[i,j]/2, r_min[i,j])
+  end
+
+  S = S_hs + ΔS₀_wca
+end
+
+function internal(wca::OptimizedWCASystem)::Float64
+  N = ncomp(wca)
+
+  hs::IndependentReferenceSystem = wca.trial
   σ::Array{Float64,2} = hsdiameter(hs)
-  r_min::Array{Float64,2} = wca.rmin
+  r_min::Array{Float64,2} = wca.r_min
   ρ::Float64 = totalnumberdensity(wca)
   u::Array{Function,2} = pairpotential(pert)
   u₀::Array{Function,2} = wca.u₀

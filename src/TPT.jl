@@ -7,10 +7,11 @@ export TPTSystem,
        composition,
        numberdensity,
        totalnumberdensity,
+       temperature,
 
        # Structural properties
-       psf,
-       prdf,
+       structurefactor,
+       paircorrelation,
        cavityfunction,
 
        # Interatomic interaction
@@ -23,8 +24,8 @@ export TPTSystem,
        helmholtz,
 
        # Reference systems
-       AHSSystem,
-       WCASystem,
+       AHS,
+       WCA,
 
        # Hard-sphere system
        hsdiameter,
@@ -44,6 +45,7 @@ export TPTSystem,
        BretonnetSilbert,
        fermiwavenumber,
        formfactor,
+       screenedformfactor,
        dielectric,
        localfiled,
        wnechar,
@@ -52,7 +54,7 @@ export TPTSystem,
        spline
 
 import Optim
-using NLopt
+import NLopt
 using Dierckx
 
 include("utils.jl")

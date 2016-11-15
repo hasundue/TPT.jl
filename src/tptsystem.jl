@@ -8,12 +8,17 @@ type TPTSystem{Tr <: ReferenceSystem, Tp <: Perturbation}
   pert::Tp # perturbing system
 end
 
-function TPTSystem(ref::IndependentReferenceSystem, pert::Perturbation = NullPerturbation(); T = 0, m = 0)
+function TPTSystem(ref::ReferenceSystem, pert::Perturbation = NullPerturbation(); T = InvalTemp, m = 0)
   N::Int = ncomp(ref)
   ρ::Float64 = totalnumberdensity(ref)
   c::Vector{Float64} = composition(ref)
 
   temp::Float64 = T
+
+  if temp == InvalTemp
+    temp = temperature(ref) # may be also InvalTemp
+  end
+
   mass::Vector{Float64} = []
 
   if typeof(m) <: Vector
@@ -25,12 +30,12 @@ function TPTSystem(ref::IndependentReferenceSystem, pert::Perturbation = NullPer
   TPTSystem(N, ρ, c, temp, mass, ref, pert)
 end
 
-function prdf(sys::TPTSystem)
-  prdf(sys.ref)
+function paircorrelation(sys::TPTSystem)
+  paircorrelation(sys.ref)
 end
 
-function psf(sys::TPTSystem)
-  psf(sys.ref)
+function structurefactor(sys::TPTSystem)
+  structurefactor(sys.ref)
 end
 
 function pairpotential(sys::TPTSystem)
@@ -78,16 +83,17 @@ function entropy(sys::TPTSystem)::Float64
   S_conf = - sum(c .* log(c)) # configurational entropy
 
   S_ref = entropy(sys.ref) # reference system entropy
-  S_pert = entropy(sys.pert, sys.ref) # perturbation entropy
+  S_pert = entropy(sys.pert, T) # perturbation entropy
 
   S = S_gas + S_conf + S_ref + S_pert
 end
 
 function internal(sys::TPTSystem)::Float64
-  U₀ = internal(sys.ref)
-  U₁ = internal(sys.pert, sys.ref)
+  U_ref = internal(sys.ref)
+  U_pair = internal(sys.ref, sys.pert)
+  U_pert = internal(sys.pert, sys.ref)
 
-  U = U₀ + U₁
+  U = U_ref + U_pair + U_pert
 end
 
 function helmholtz(sys::TPTSystem)::Float64

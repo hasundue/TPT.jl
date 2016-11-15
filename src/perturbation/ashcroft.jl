@@ -5,22 +5,23 @@ Ashcroft's empty-core pseudopotential
 """
 
 immutable Ashcroft <: PseudoPotential
+  z::Vector{Float64} # valence of core ion
   rc::Vector{Float64} # pseudopotential core radius
 end
 
-function Ashcroft(rc::Number)
-  Ashcroft([rc])
+function Ashcroft(z::Real, rc::Real)
+  Ashcroft([z], [rc])
 end
 
 function formfactor(nfe::NFE{Ashcroft})
   ρ = nfe.ρ
 
-  N = length(nfe.z)
-  ω = Array{Function}(N)
+  N = length(nfe.pseudo.z)
+  ω = Vector{Function}(N)
 
   for i = 1:N
-    z = nfe.z[i]
-    rc = nfe.pp.rc[i]
+    z = nfe.pseudo.z[i]
+    rc = nfe.pseudo.rc[i]
 
     ω[i] = q -> -4π*ρ / q^2 * z * cos(q*rc)
   end

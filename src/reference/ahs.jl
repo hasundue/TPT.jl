@@ -10,13 +10,13 @@ References:
 
 """
 
-immutable AHSSystem <: IndependentReferenceSystem
+immutable AHS <: IndependentReferenceSystem
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
 end # type
 
 @doc doc"""
-AHSSystem(; kwargs...)
+AHS(; kwargs...)
 
 Initializes an additive hard-sphere reference system.
 You may use one of possible combinations of keyword arguments.
@@ -33,7 +33,7 @@ Multi-component case:
 
 You may use sigma, rho, or eta instead of σ, ρ, or η, respectively.
 """ ->
-function AHSSystem(; kwargs...)
+function AHS(; kwargs...)
   keys, vals = expandkwargs(kwargs)
   @assert 2 ≤ length(keys) ≤ 3 "wrong number of arguments"
 
@@ -57,7 +57,7 @@ function AHSSystem(; kwargs...)
       error("invalid arguments")
     end # if
 
-    return AHSSystem([σ], [ρ])
+    return AHS([σ], [ρ])
 
   else # Multi-component case
 
@@ -82,27 +82,19 @@ function AHSSystem(; kwargs...)
     end
 
     @assert length(σ) == length(ρ) "invalid arguments"
-    return AHSSystem(σ, ρ)
+    return AHS(σ, ρ)
   end
 end
 
-function ncomp(ahs::AHSSystem)::Int
-  length(ahs.σ)
-end
+ncomp(ahs::AHS)::Int = length(ahs.σ)
+composition(ahs::AHS)::Vector{Float64} = ahs.ρ / sum(ahs.ρ)
+numberdensity(ahs::AHS)::Vector{Float64} = ahs.ρ
+totalnumberdensity(ahs::AHS)::Float64 = sum(ahs.ρ)
+packingfraction(ahs::AHS)::Vector{Float64} = (π/6) * ahs.ρ .* ahs.σ.^3
+totalpackingfraction(ahs::AHS)::Float64 = sum(packingfraction(ahs))
+temperature(ahs::AHS)::Float64 = InvalTemp
 
-function composition(ahs::AHSSystem)::Vector{Float64}
-  ahs.ρ / sum(ahs.ρ)
-end
-
-function numberdensity(ahs::AHSSystem)::Float64
-  sum(ahs.ρ)
-end
-
-function totalnumberdensity(ahs::AHSSystem)::Float64
-  sum(ahs.ρ)
-end
-
-function hsdiameter(sys::AHSSystem)::Array{Float64,2}
+function hsdiameter(sys::AHS)::Array{Float64,2}
   N = ncomp(sys)
 
   ret = Array{Float64}(N,N)
@@ -118,21 +110,7 @@ function hsdiameter(sys::AHSSystem)::Array{Float64,2}
   return ret
 end
 
-function packingfraction(ahs::AHSSystem)::Vector{Float64}
-  @attach(ahs, ρ, σ)
-  return (π/6) * ρ .* σ.^3
-end
-
-function totalpackingfraction(ahs::AHSSystem)::Float64
-  η = packingfraction(ahs)
-  return sum(η)
-end
-
-function temperature(ahs::AHSSystem)::Float64
-  return ahs.T
-end
-
-function pairpotential(sys::AHSSystem)
+function pairpotential(sys::AHS)
   σ = sys.σ
   N = length(σ)
 
@@ -153,17 +131,17 @@ function pairpotential(sys::AHSSystem)
 end
 
 # ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
-function lrdf(sys::AHSSystem)
+function paircorrelationlaplace(sys::AHS)
   if length(sys.σ) == 1
-    lrdf1(sys)
+    paircorrelationlaplace1(sys)
   elseif length(sys.σ) == 2
-    lrdf2(sys)
+    paircorrelationlaplace2(sys)
   else
     error("unsupported number of components")
   end
 end
 
-function lrdf1(sys::AHSSystem)
+function paircorrelationlaplace1(sys::AHS)
   σ = sys.σ[1]
   ρ = sys.ρ[1]
   η = π/6 * ρ * σ^3
@@ -183,7 +161,7 @@ function lrdf1(sys::AHSSystem)
   return ret
 end
 
-function lrdf2(sys::AHSSystem)
+function paircorrelationlaplace2(sys::AHS)
   σ = sys.σ
   ρ = sys.ρ
 
@@ -233,14 +211,14 @@ end
 
 
 @doc doc"""
-psf(sys::AHSSystem)
+structurefactor(sys::AHS)
 
 Returns a structure factor of additive hard-sphere system in wave-number space.
 Currently the cases where N = 1 or N = 2 are only supported.
 """ ->
-function psf(sys::AHSSystem)
+function structurefactor(sys::AHS)
   if length(sys.σ) == 1
-    return psf1(sys)
+    return structurefactor1(sys)
   end
 
   ρ = sys.ρ
@@ -249,7 +227,7 @@ function psf(sys::AHSSystem)
 
   # RDF in Laplace space
   if N == 2
-    G = lrdf2(sys)
+    G = paircorrelationlaplace2(sys)
   else
     error("unsupported number of components")
   end
@@ -273,8 +251,8 @@ function psf(sys::AHSSystem)
   return S
 end
 
-function psf1(sys::AHSSystem)
-  G::Function = lrdf(sys)[1,1]
+function structurefactor1(sys::AHS)
+  G::Function = paircorrelationlaplace(sys)[1,1]
   ρ::Float64 = sys.ρ[1]
 
   F(s) = (s^2 * G(s) - 1) / s^3
@@ -288,7 +266,7 @@ function psf1(sys::AHSSystem)
   return ret
 end
 
-function cavityfunction(sys::AHSSystem)
+function cavityfunction(sys::AHS)
   @attach(sys, ρ, σ)
 
   # scalar constans
@@ -299,7 +277,7 @@ function cavityfunction(sys::AHSSystem)
   λ′ = π^2 * ζ₂ / (1-η)^2
 
   N = length(sys.σ)
-  G = lrdf(sys)
+  G = paircorrelationlaplace(sys)
   ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
@@ -321,7 +299,7 @@ function cavityfunction(sys::AHSSystem)
   return ret
 end
 
-function prdf(ahs::AHSSystem)
+function paircorrelation(ahs::AHS)
   @attach(ahs, σ)
 
   N::Int = ncomp(ahs)
@@ -331,13 +309,7 @@ function prdf(ahs::AHSSystem)
 
   for i in 1:N, j in 1:N
     σᵢⱼ = (σ[i] + σ[j]) / 2
-    function g(r)::Float64
-      if r < σᵢⱼ
-        0
-      else
-        y[i,j](r)
-      end
-    end
+    g(r)::Float64 = r < σᵢⱼ ? 0 : y[i,j](r)
     ret[i,j] = g
   end
 
@@ -345,7 +317,7 @@ function prdf(ahs::AHSSystem)
 end
 
 # Ref: K. Hoshino. and W. H. Young: J. Phys. F: Metal Phys. 10 (1980) 1365-1374.
-function entropy(ahs::AHSSystem)::Float64
+function entropy(ahs::AHS)::Float64
   @attach(ahs, σ)
 
   N::Int = ncomp(ahs)
@@ -365,9 +337,6 @@ function entropy(ahs::AHSSystem)::Float64
     y₂ += c[i]*c[j] * σ[i]*σ[j] * (σ[i] - σ[j])^2 / σ_sum^6 * sum(c .* σ.^2)
   end
 
-  #
-  # Note that all S_xxx are divided by N*kB
-  #
   S_η = - (ζ - 1)*(ζ + 3)
 
   S_σ = (3/2*(ζ^2 - 1) - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₁ + (3/2*(ζ - 1)^2 - 1/2*(ζ - 1)*(ζ - 3) - log(ζ))*y₂
@@ -375,6 +344,28 @@ function entropy(ahs::AHSSystem)::Float64
   S = S_η + S_σ
 end
 
-function internal(ahs::AHSSystem)::Float64
+# Perturbation-independent part of internal energy
+function internal(ahs::AHS)::Float64
   U = 0
+end
+
+# Perturbation-dependent part of internal energy
+function internal(ahs::AHS, pert::Perturbation)::Float64
+  N = ncomp(ahs)
+  ρ = totalnumberdensity(ahs)
+  c = composition(ahs)
+  σ = hsdiameter(ahs)
+  g = paircorrelation(ahs)
+  u = pairpotential(pert)
+
+  U::Float64 = 0
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+    a = i == j ? 1 : 2
+    ut = spline(u[i,j], σ[i,j], R_MAX, 256)
+    U += a * 2π*ρ * c[i]*c[j] * ∫(r -> ut(r)*g[i,j](r)*r^2, σ[i,j], R_MAX)
+  end
+
+  U
 end

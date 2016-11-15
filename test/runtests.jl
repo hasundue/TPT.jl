@@ -6,6 +6,8 @@
 tests = [
   # Unit tests
   "unit_ahs.jl",
+  "unit_wca.jl",
+  "unit_nfe.jl",
 
   # Investigational calculations
   "tm_optim.jl",

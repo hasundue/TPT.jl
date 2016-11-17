@@ -41,7 +41,7 @@ sys = Array{TPT.TPTSystem,2}(M,M)
 #
 # Processing each binary system
 #
-for k in 1:(M^2)
+Threads.@threads for k in 1:(M^2)
   (a,b) = ind2sub((M,M), k)
 
   A = p[:X][a]

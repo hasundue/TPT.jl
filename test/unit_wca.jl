@@ -13,8 +13,8 @@ pseudo = TPT.Ashcroft(1.0, 1.67)
 nfe = TPT.NFE(wca, pseudo)
 sys = TPT.TPTSystem(wca, nfe, m = 4.191e+4)
 
-g = TPT.paircorrelation(sys)[1,1]
-g_σ = g(σ_Na)
+g_wca = TPT.paircorrelation(sys)[1,1]
+g_σ = g_wca(σ_Na)
 
 # plot(g, 2, 20, labels = ["AHS" "WCA"])
 

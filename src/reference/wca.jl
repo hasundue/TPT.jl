@@ -148,12 +148,12 @@ function paircorrelation(wca::OptimizedWCA)
   return ret
 end
 
-function structurefactor(wca::WCA)::Array{Function,2}
+function structurefactor(wca::OptimizedWCA)::Array{Function,2}
   N::Int = ncomp(wca)
   c::Vector{Float64} = composition(wca)
 
   Sref::Array{Function,2} = structurefactor(wca.trial)
-  ρ::Float64 = numberdensity(wca)
+  ρ::Float64 = totalnumberdensity(wca)
   b::Array{Function,2} = blipfunction(wca)
 
   ret = Array{Function,2}(N,N)

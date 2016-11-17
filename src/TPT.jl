@@ -13,6 +13,7 @@ export TPTSystem,
        structurefactor,
        paircorrelation,
        cavityfunction,
+       nndistance,
 
        # Interatomic interaction
        pairpotential,
@@ -61,6 +62,7 @@ include("utils.jl")
 include("types.jl")
 include("tptsystem.jl")
 include("constants.jl")
+include(joinpath("reference", "reference.jl"))
 include(joinpath("reference", "ahs.jl"))
 include(joinpath("reference", "wca.jl"))
 include(joinpath("perturbation", "nullpert.jl"))

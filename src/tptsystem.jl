@@ -83,7 +83,7 @@ function entropy(sys::TPTSystem)::Float64
   S_conf = - sum(c .* log(c)) # configurational entropy
 
   S_ref = entropy(sys.ref) # reference system entropy
-  S_pert = entropy(sys.pert, T) # perturbation entropy
+  S_pert = entropy(sys.pert, sys.ref, T) # perturbation entropy
 
   S = S_gas + S_conf + S_ref + S_pert
 end

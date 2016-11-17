@@ -26,6 +26,7 @@ numberdensity(wca::AbstractWCA)::Vector{Float64} = numberdensity(wca.trial)
 totalnumberdensity(wca::AbstractWCA)::Float64 = totalnumberdensity(wca.trial)
 composition(wca::AbstractWCA)::Vector{Float64} = composition(wca.trial)
 temperature(wca::AbstractWCA)::Float64 = wca.temp
+hsdiameter(wca::AbstractWCA)::Array{Float64,2} = hsdiameter(wca.trial)
 
 repulsivepotential(wca::OptimizedWCA)::Array{Function,2} = wca.repu
 tailpotential(wca::AbstractWCA)::Array{Function,2} = wca.tail

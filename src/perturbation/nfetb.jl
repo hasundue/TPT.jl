@@ -9,34 +9,32 @@ immutable NFETB{Tn <: NFEPerturbation, Tt <: TBPerturbation} <: Perturbation
   tb::Tt # TB-like perturbation
 end
 
-function pairpotential(nfetb::NFETB)
+function pairpotential(nfetb::NFETB)::Array{Function,2}
   u_nfe = pairpotential(nfetb.nfe)
   u_tb = pairpotential(nfetb.tb)
 
   N = size(u_nfe, 1)
-  u = Array{Function}(N,N)
+  ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
-    u[i,j] = r -> u_nfe[i,j](r) + u_tb[i,j](r)
+    i > j && continue
+    u(r) =  u_nfe[i,j](r) + u_tb[i,j](r)
+    ret[i,j] = ret[j,i] = u
   end
 
-  return u
+  return ret
 end
 
-function potentialenergy(ref::ReferenceSystem, nfetb::NFETB)
-  g = prdf(ref)
-  u = pairpotential(nfetb)
-  ρ = numberdensity(ref)
-  c = composition(ref)
-  N = length(c)
-  I = Array{Float64}(N,N)
+function entropy(nfetb::NFETB, ref::ReferenceSystem, T::Float64)::Float64
+  S_nfe = entropy(nfetb.nfe, ref, T)
+  S_tb = entropy(nfetb.tb, ref, T)
 
-  for i in 1:N, j in 1:N
-    us = spline(u[i,j], R_MIN, R_MAX, 64)
+  S = S_nfe + S_tb
+end
 
-    f = r -> g[i,j](r) == 0. ? 0. : g[i,j](r) * us(r) * r^2
-    I[i,j] = c[i]*c[j] * ∫(f, R_MIN, R_MAX)
-  end
+function internal(nfetb::NFETB, ref::ReferenceSystem)::Float64
+  U_nfe = internal(nfetb.nfe, ref)
+  U_tb = internal(nfetb.tb, ref)
 
-  return 2π*ρ*sum(I)
+  U = U_nfe + U_tb
 end

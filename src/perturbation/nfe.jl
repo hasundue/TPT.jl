@@ -105,7 +105,7 @@ end
 # Effective pair-potential between ions including full Coulomb and indirect parts
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition (2004), 490
 #
-function pairpotential(nfe::NFE)
+function pairpotential(nfe::NFE)::Array{Function,2}
   ρ = nfe.ρ
   z = nfe.pseudo.z
 
@@ -125,7 +125,7 @@ function pairpotential(nfe::NFE)
   return ret
 end
 
-function entropy(nfe::NFE, T::Float64)
+function entropy(nfe::NFE, ref::ReferenceSystem, T::Float64)::Float64
   z = nfe.z
   kF = fermiwavenumber(nfe)
 
@@ -140,7 +140,7 @@ function internal(nfe::NFE, ref::ReferenceSystem)::Float64
 end
 
 # Internal energy of electron gas
-function internal_eg(nfe::NFE)
+function internal_eg(nfe::NFE)::Float64
   z::Float64 = nfe.z
   kF::Float64 = fermiwavenumber(nfe)
 
@@ -153,7 +153,7 @@ end
 # Electrostatic energy between ions and electrons
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition (2004), 490
 #
-function internal_es(nfe::NFE, ref::ReferenceSystem)
+function internal_es(nfe::NFE, ref::ReferenceSystem)::Float64
   N::Int = ncomp(ref)
   ρ::Float64 = nfe.ρ
   c::Vector{Float64} = composition(ref)
@@ -161,12 +161,9 @@ function internal_es(nfe::NFE, ref::ReferenceSystem)
   F::Array{Function,2} = wnechar(nfe)
   U_ρ::Float64 = 0
 
-  for i in 1:N, j in 1:N
-    i > j && continue
-    a = i == j ? 1 : 2
-
-    U_ρ += a / (2π^2*ρ) * c[i]*c[j] * ∫(q -> F[i,j](q)*q^2, 0, Q_MAX)
+  for i in 1:N
+    U_ρ += 1 / (2π^2*ρ) * c[i] * ∫(q -> F[i,i](q)*q^2, 0, Q_MAX)
   end
 
-  U_ρ
+  return U_ρ
 end

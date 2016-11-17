@@ -52,7 +52,7 @@ for a in 1:M, b in 1:M
   # Skip if file does not exist
   !isfile(psffile) && continue
 
-  # Memorize that this system has experimental data
+  # Remember that this system has experimental data
   isdata[a,b] = true
 
   # Read Sᵢⱼ(q) from csv into dataframe
@@ -175,9 +175,8 @@ for a in 1:M, b in 1:M
   A = p[:X][a]
   B = p[:X][b]
 
-  # Skip if file does not exist
-  psffile = joinpath("data", "sf", "$(A)-$(B).csv")
-  !isfile(psffile) && continue
+  # Skip if data does not exist
+  !isdata[a,b] && continue
 
   println("$(A)-$(B):")
 

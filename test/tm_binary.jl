@@ -39,18 +39,16 @@ sys = Array{TPT.TPTSystem,2}(M,M)
 
 
 #
-# Processing each binary system
+# Calculation for each binary system
 #
-Threads.@threads for k in 1:(M^2)
-  (a,b) = ind2sub((M,M), k)
-
+function tm_binary(a::Int, b::Int)
   A = p[:X][a]
   B = p[:X][b]
 
   psffile = joinpath("data", "sf", "$(A)-$(B).csv")
 
   # Skip if file does not exist
-  !isfile(psffile) && continue
+  !isfile(psffile) && return
 
   # Temperature
   entry = ans[ans[:System] .== "$(A)-$(B)", :T]
@@ -85,10 +83,11 @@ Threads.@threads for k in 1:(M^2)
   # Convert S(q) to g(r)
   g_exp[a,b] = Array{Function,2}(N,N)
   for (i,j) in [(1,1), (1,2), (2,2)]
-    g_exp[a,b][i,j] = r -> begin
+    function g(r)::Float64
       val, err = quadgk(q -> (S[i,j](q) - 1) * sin(q*r) / r * q, q_min, q_max)
       1 + val / (2π^2 * ρ₀)
     end
+    g_exp[a,b][i,j] = g
   end
 
   #
@@ -142,6 +141,12 @@ Threads.@threads for k in 1:(M^2)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb)
+end
+
+# Perform calculation for each binary system
+Threads.@threads for k in 1:(M^2)
+  (a,b) = ind2sub((M,M), k)
+  tm_binary(a, b)
 end
 
 #

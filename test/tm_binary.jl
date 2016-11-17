@@ -85,11 +85,10 @@ Threads.@threads for k in 1:(M^2)
   # Convert S(q) to g(r)
   g_exp[a,b] = Array{Function,2}(N,N)
   for (i,j) in [(1,1), (1,2), (2,2)]
-    function g(r)::Float64
+    g_exp[a,b][i,j] = r -> begin
       val, err = quadgk(q -> (S[i,j](q) - 1) * sin(q*r) / r * q, q_min, q_max)
       1 + val / (2π^2 * ρ₀)
     end
-    g_exp[a,b][i,j] = g
   end
 
   #

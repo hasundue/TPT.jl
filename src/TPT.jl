@@ -52,7 +52,10 @@ export TPTSystem,
        wnechar,
 
        # utils
-       spline
+       spline,
+
+       # constants
+       kB
 
 import Optim
 import NLopt

@@ -33,8 +33,9 @@ u = TPT.pairpotential(nfe)[1,1]
 # plot(u, 2, 20, ylims = (-2.1e-3, 2.1e-3))
 
 T = 373.
+kB = TPT.kB
 U_eg = TPT.internal_eg(nfe)
-S_eg = TPT.entropy(nfe, T)
+S_eg = TPT.entropy(nfe, ahs, T)
 U_es = TPT.internal_es(nfe, ahs)
 U_bs = TPT.internal(ahs, nfe)
 K = TPT.kinetic(sys)
@@ -51,7 +52,6 @@ F_hs = -T*kB*S_hs
 
   @test isapprox(U_eg, -0.0816, atol=1e-4)
   @test isapprox(S_eg, 0.0522, atol=1e-4)
-  @test isapprox(F_eg, -0.0817, atol=1e-4)
   @test isapprox(U_es, -0.147, atol=1e-3)
   @test isapprox(U_bs, -0.00875, atol=1e-5)
   @test isapprox(K, 0.00177, atol=1e-5)

@@ -11,7 +11,7 @@ m_Na, m_K = map(M2m, M)
 # Single component: Liquid Na
 # Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
 #
-ahs1 = TPT.AHSSystem(σ = 6.235, ρ = 3.564e-3)
+ahs1 = TPT.AHS(σ = 6.235, ρ = 3.564e-3)
 sys1 = TPT.TPTSystem(ahs1, T = 373, m = m_Na)
 
 K1 = TPT.kinetic(sys1)
@@ -23,7 +23,7 @@ F1 = TPT.helmholtz(sys1)
 # Two components: NaK liquid alloy
 # Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
 #
-ahs2 = TPT.AHSSystem(ρ = 2.461e-3, σ = [6.235, 7.354], c = [0.5, 0.5])
+ahs2 = TPT.AHS(ρ = 2.461e-3, σ = [6.235, 7.354], c = [0.5, 0.5])
 sys2 = TPT.TPTSystem(ahs2, T = 373, m = [m_Na, m_K])
 
 K2 = TPT.kinetic(sys2)

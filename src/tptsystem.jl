@@ -8,7 +8,7 @@ type TPTSystem{Tr <: ReferenceSystem, Tp <: Perturbation}
   pert::Tp # perturbing system
 end
 
-function TPTSystem(ref::ReferenceSystem, pert::Perturbation = NullPerturbation(); T = InvalTemp, m = 0)
+function TPTSystem(ref::ReferenceSystem, pert::Perturbation = NullPerturbation(ncomp(ref)); T = InvalTemp, m = 0)
   N::Int = ncomp(ref)
   ρ::Float64 = totalnumberdensity(ref)
   c::Vector{Float64} = composition(ref)

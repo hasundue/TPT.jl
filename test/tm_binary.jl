@@ -34,7 +34,7 @@ M = size(p, 1)
 q_exp = Array{Any,2}(M,M)
 S_exp = Array{Any,2}(M,M)
 g_exp = Array{Any,2}(M,M)
-ahs = Array{TPT.AHSSystem,2}(M,M)
+ahs = Array{TPT.AHS,2}(M,M)
 sys = Array{TPT.TPTSystem,2}(M,M)
 
 
@@ -99,8 +99,8 @@ Threads.@threads for k in 1:(M^2)
     ρ = x[1]
     σ = x[2:3]
 
-    ahs = TPT.AHSSystem(ρ = ρ, σ = σ, c = c)
-    S_ahs = TPT.psf(ahs)
+    ahs = TPT.AHS(ρ = ρ, σ = σ, c = c)
+    S_ahs = TPT.structurefactor(ahs)
 
     R::Array{Float64,2} = zeros(N,N)
 
@@ -120,22 +120,26 @@ Threads.@threads for k in 1:(M^2)
   end
 
   x₀ = [ρ₀, σ₀[1], σ₀[2]]
-  res = optimize(fopt, x₀)
+  res = Optim.optimize(fopt, x₀)
 
   (ρ_ahs, σ₁_ahs, σ₂_ahs) = Optim.minimizer(res)
   σ_ahs = [σ₁_ahs, σ₂_ahs]
 
-  ahs[a,b] = TPT.AHSSystem(ρ = ρ_ahs, σ = σ_ahs, c = c::Vector)
+  ahs[a,b] = TPT.AHS(ρ = ρ_ahs, σ = σ_ahs, c = c::Vector)
 
   #
   # PART-2. AHS-WCA:
   #
-  # Setting up the system
-  pp = TPT.Ashcroft([p[:rc][a], p[:rc][b]])
-  nfe = TPT.NFE(ρ_ahs, c::Vector, T, zeros(2), [p[:zs][a], p[:zs][b]], pp)
-  tb = TPT.WHTB(c::Vector, T, 12.0, [p[:zd][a], p[:zd][b]], [p[:rd][a], p[:rd][b]])
+  zs = [p[:zs][a], p[:zs][b]]
+  rc = [p[:rc][a], p[:rc][b]]
+  zd = [p[:zd][a], p[:zd][b]]
+  rd = [p[:rd][a], p[:rd][b]]
+
+  pse = TPT.Ashcroft(zs, rc)
+  nfe = TPT.NFE(ahs[a,b], pse)
+  tb = TPT.WHTB(zd, rd)
   nfetb = TPT.NFETB(nfe, tb)
-  wca = TPT.WCASystem(ahs[a,b], T)
+  wca = TPT.WCA(ahs[a,b], T)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb)
@@ -196,12 +200,12 @@ for a in 1:M, b in 1:M
   #
 
   # Sᵢⱼ(q)
-  S_ahs = TPT.psf(ahs[a,b])
-  S_wca = TPT.psf(sys[a,b])
+  S_ahs = TPT.structurefactor(ahs[a,b])
+  S_wca = TPT.structurefactor(sys[a,b])
 
   # gᵢⱼ(r)
-  g_ahs = TPT.prdf(ahs[a,b])
-  g_wca = TPT.prdf(sys[a,b])
+  g_ahs = TPT.paircorrelation(ahs[a,b])
+  g_wca = TPT.paircorrelation(sys[a,b])
 
   # uᵢⱼ(r)
   u_nfe = TPT.pairpotential(sys[a,b].pert.nfe)

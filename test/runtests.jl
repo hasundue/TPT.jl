@@ -16,5 +16,7 @@ tests = [
 ]
 
 for test in tests
-  @time include(test)
+  let
+    @time include(test)
+  end
 end

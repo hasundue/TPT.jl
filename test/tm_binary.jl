@@ -31,6 +31,8 @@ ans = readtable(joinpath("data", "parameters", "tm_binary.csv"))
 M = size(p, 1)
 
 # Arrays to store the results
+isdata = falses(M,M)
+data = Array{Any,2}(M,M)
 q_exp = Array{Any,2}(M,M)
 S_exp = Array{Any,2}(M,M)
 g_exp = Array{Any,2}(M,M)
@@ -39,11 +41,9 @@ sys = Array{TPT.TPTSystem,2}(M,M)
 
 
 #
-# Processing each binary system
+# Load experimental data
 #
-Threads.@threads for k in 1:(M^2)
-  (a,b) = ind2sub((M,M), k)
-
+for a in 1:M, b in 1:M
   A = p[:X][a]
   B = p[:X][b]
 
@@ -51,6 +51,34 @@ Threads.@threads for k in 1:(M^2)
 
   # Skip if file does not exist
   !isfile(psffile) && continue
+
+  # Memorize that this system has experimental data
+  isdata[a,b] = true
+
+  # Read Sᵢⱼ(q) from csv into dataframe
+  data[a,b] = readtable(psffile)
+
+  # Convert Å to a.u.
+  q_exp[a,b] = data[a,b][:q] * 0.5291
+end
+
+#
+# Processing each binary system
+#
+Threads.@threads for k in 1:(M^2)
+  (a,b) = ind2sub((M,M), k)
+
+  # skip if experimental data does not exist
+  !isdata[a,b] && continue
+
+  # names of components
+  A = p[:X][a]
+  B = p[:X][b]
+
+  # infomation about experimental data
+  ndata = length(q_exp[a,b])
+  q_min = q_exp[a,b][1]
+  q_max = q_exp[a,b][ndata]
 
   # Temperature
   entry = ans[ans[:System] .== "$(A)-$(B)", :T]
@@ -60,27 +88,17 @@ Threads.@threads for k in 1:(M^2)
   σ₀ = [p[:σ][a], p[:σ][b]]
   ρ₀ = (p[:ρ][a] + p[:ρ][b]) / 2
 
-  # Read Sᵢⱼ(q) from csv into dataframe
-  data = readtable(psffile)
-
-  # Convert Å to a.u.
-  q_exp[a,b] = data[:q] * 0.5291
-
-  ndata = length(q_exp[a,b])
-  q_min = q_exp[a,b][1]
-  q_max = q_exp[a,b][ndata]
-
   # Convert Faber-Ziman to Ashcroft-Langreth:
   S_exp[a,b] = Array{Any,2}(N,N)
-  S_exp[a,b][1,1] = 1 + √(c[1]*c[1]) * (data[:S11] - 1)
-  S_exp[a,b][1,2] = √(c[1]*c[2]) * (data[:S12] - 1)
-  S_exp[a,b][2,2] = 1 + √(c[2]*c[2]) * (data[:S22] - 1)
+  S_exp[a,b][1,1] = 1 + √(c[1]*c[1]) * (data[a,b][:S11] - 1)
+  S_exp[a,b][1,2] = √(c[1]*c[2]) * (data[a,b][:S12] - 1)
+  S_exp[a,b][2,2] = 1 + √(c[2]*c[2]) * (data[a,b][:S22] - 1)
 
   # We use Faber-Ziman for obtaining RDF
   S = Array{Any,2}(N,N)
-  S[1,1] = Spline1D(q_exp[a,b], data[:S11], k=3, bc="zero")
-  S[1,2] = Spline1D(q_exp[a,b], data[:S12], k=3, bc="zero")
-  S[2,2] = Spline1D(q_exp[a,b], data[:S22], k=3, bc="zero")
+  S[1,1] = Spline1D(q_exp[a,b], data[a,b][:S11], k=3, bc="zero")
+  S[1,2] = Spline1D(q_exp[a,b], data[a,b][:S12], k=3, bc="zero")
+  S[2,2] = Spline1D(q_exp[a,b], data[a,b][:S22], k=3, bc="zero")
 
   # Convert S(q) to g(r)
   g_exp[a,b] = Array{Function,2}(N,N)

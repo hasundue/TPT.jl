@@ -41,6 +41,12 @@ sys = Array{TPT.TPTSystem,2}(M,M)
 
 
 #
+# Prepare DataFrame for tabular output
+#
+res = DataFrame(System = AbstractString[], T = Float64[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
+
+
+#
 # Load experimental data
 #
 for a in 1:M, b in 1:M
@@ -60,13 +66,13 @@ for a in 1:M, b in 1:M
 
   # Convert Å to a.u.
   q_exp[a,b] = data[a,b][:q] * 0.5291
-end
+# end
 
 #
 # Processing each binary system
 #
-Threads.@threads for k in 1:(M^2)
-  (a,b) = ind2sub((M,M), k)
+# Threads.@threads for k in 1:(M^2)
+  # (a,b) = ind2sub((M,M), k)
 
   # skip if experimental data does not exist
   !isdata[a,b] && continue
@@ -158,18 +164,12 @@ Threads.@threads for k in 1:(M^2)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb)
-end
-
-#
-# Prepare DataFrame for tabular output
-#
-res = DataFrame(System = AbstractString[], T = Float64[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
-
+# end
 
 #
 # Output the results as graphs while creating DataFrame
 #
-for a in 1:M, b in 1:M
+# for a in 1:M, b in 1:M
   A = p[:X][a]
   B = p[:X][b]
 

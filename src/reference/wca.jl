@@ -67,7 +67,6 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   I = Vector{Float64}(N)
 
   function fopt(σ::Vector{Float64}, g)::Float64
-    @show σ
     ahs = AHS(σ::Vector, ρ₀::Vector)
     u_hs::Array{Function,2} = pairpotential(ahs)
     g_hs::Array{Function,2} = paircorrelation(ahs)
@@ -83,7 +82,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
              ∫(r -> B(r)*r^2, σ[i]+ϵ, rmin[i,i])
     end
 
-    return @show norm(I, 1)
+    return norm(I, 1)
   end
 
   σ₀d::Vector{Float64} = [ σ₀[i,i] for i in 1:N ]
@@ -190,8 +189,8 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
     ϵ = eps(Float64)
     rcut = σ[i,j]/2
 
-    bs1 = spline(b[i,j], rcut, σ[i,j]-ϵ, 4)
-    bs2 = spline(b[i,j], σ[i,j]+ϵ, rmin[i,j], 4)
+    bs1 = spline(b[i,j], rcut, σ[i,j]-ϵ, 8)
+    bs2 = spline(b[i,j], σ[i,j]+ϵ, rmin[i,j], 8)
 
     B(q) =
       ∫(r -> bs1(r) * sin(r*q) / (r*q) * r^2, rcut, σ[i,j]-ϵ, e=1e-3) +

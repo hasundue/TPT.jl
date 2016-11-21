@@ -133,7 +133,7 @@ Threads.@threads for k in 1:(M^2)
     return norm(R)
   end
 
-  res = Optim.optimize(fopt, σ₀, g_tol = 1e-3, show_trace = true)
+  res = Optim.optimize(fopt, σ₀, g_tol = 1e-3)
 
   (σ₁_ahs, σ₂_ahs) = Optim.minimizer(res)
   σ_ahs = [σ₁_ahs, σ₂_ahs]

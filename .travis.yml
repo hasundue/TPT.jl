@@ -26,6 +26,6 @@ script:
  - julia -e 'Pkg.add("Plots"); Pkg.build("Plots"); using Plots'
  - julia -e 'ENV["PYTHON"] = ""; Pkg.add("PyPlot"); Pkg.build("PyPlot"); using PyPlot'
  - echo "travis_fold:end:Pkg-install"
- - travis_wait julia -e 'Pkg.test("TPT"; coverage=false)'
+ - julia -e 'Pkg.test("TPT"; coverage=false)'
 after_script:
  - ./.travis.sh

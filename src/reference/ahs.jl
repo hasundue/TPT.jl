@@ -246,8 +246,12 @@ function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
   #
   # Numerically obtaine α
   #
-  α_min = 0.005
-  α_max = 0.045
+
+  # heuristic boundary condition
+  σ_m = mean(σ)
+  α_min = 0.005 * σ_m / η
+  α_max = 0.030 * σ_m / η
+  α_init = (α_min + α_max) / 2
 
   opt = NLopt.Opt(:GN_DIRECT, 1)
   NLopt.min_objective!(opt, fopt)
@@ -256,12 +260,11 @@ function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
   NLopt.ftol_abs!(opt, 1e-12)
   NLopt.lower_bounds!(opt, [α_min])
   NLopt.upper_bounds!(opt, [α_max])
-  NLopt.initial_step!(opt, [0.005])
 
-  (fmin, xmin, res) = NLopt.optimize(opt, [0.020])
+  (fmin, xmin, res) = NLopt.optimize(opt, [α_init])
   α::Float64 = xmin[1]
 
-  if isapprox(α, α_min, atol=1e-3) || isapprox(α, α_max, atol=1e-3)
+  if isapprox(α, α_min, rtol=1e-2) || isapprox(α, α_max, rtol=1e-2)
     warn("α = $(α) is on a bound of optimization")
   end
 

@@ -32,6 +32,9 @@ F = TPT.wnechar(nfe)[1,1]
 u = TPT.pairpotential(nfe)[1,1]
 # plot(u, 2, 20, ylims = (-2.1e-3, 2.1e-3))
 
+g = TPT.paircorrelation(sys)[1,1]
+# plot(g, 1, 20)
+
 T = 373.
 kB = TPT.kB
 U_eg = TPT.internal_eg(nfe)
@@ -53,7 +56,7 @@ F_hs = -T*kB*S_hs
   @test isapprox(U_eg, -0.0816, atol=1e-4)
   @test isapprox(S_eg, 0.0522, atol=1e-4)
   @test isapprox(U_es, -0.147, atol=1e-3)
-  @test isapprox(U_bs, -0.00912, atol=1e-5)
+  @test isapprox(U_bs, -0.00892, atol=1e-5)
   @test isapprox(K, 0.00177, atol=1e-5)
   @test isapprox(F_hs, -0.00856, atol=1e-5)
 end

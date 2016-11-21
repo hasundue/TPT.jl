@@ -14,19 +14,19 @@ function BretonnetSilbert(z::Real, rc::Real, a::Real)
   BretonnetSilbert([z], [rc], [a])
 end
 
-function formfactor(nfe::NFE{BretonnetSilbert})
-  ρ = nfe.ρ
+function formfactor(nfe::NFE{BretonnetSilbert})::Vector{Function}
+  ρ::Float64 = nfe.ρ
 
-  N = length(nfe.z)
-  ret = Array{Function}(N)
+  N::Int = length(nfe.pseudo.z)
+  ret = Vector{Function}(N)
 
-  for i = 1:N
-    z = nfe.pseudo.z[i]
-    rc = nfe.pseudo.rc[i]
-    a = nfe.pseudo.a[i]
+  for i in 1:N
+    z::Float64 = nfe.pseudo.z[i]
+    rc::Float64 = nfe.pseudo.rc[i]
+    a::Float64 = nfe.pseudo.a[i]
 
-    B₁ = (z/rc) * (1 - 2a/rc) * exp(rc/a)
-    B₂ = (2z/rc) * (a/rc - 1) * exp(0.5rc/a)
+    B₁::Float64 = (z/rc) * (1 - 2a/rc) * exp(rc/a)
+    B₂::Float64 = (2z/rc) * (a/rc - 1) * exp(0.5rc/a)
 
     function ω(q)::Float64
       J₁(q) = 2 - exp(-rc/a) * (

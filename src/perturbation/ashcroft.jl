@@ -13,7 +13,7 @@ function Ashcroft(z::Real, rc::Real)
   Ashcroft([z], [rc])
 end
 
-function formfactor(nfe::NFE{Ashcroft})
+function formfactor(nfe::NFE{Ashcroft})::Vector{Function}
   ρ = nfe.ρ
 
   N = length(nfe.pseudo.z)

@@ -37,12 +37,12 @@ end
 # Lindhard (Hartree) dielectric function
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition, 462
 #
-function dielectric(nfe::NFE)
+function dielectric(nfe::NFE)::Function
   ρ::Float64 = nfe.ρ
 
   kF::Float64 = fermiwavenumber(nfe)
 
-  return ϵ(q) = begin
+  return ϵ(q)::Float64 = begin
     x = q / 2kF
     1 + 1/(2π*kF) * (1/x^2) * (1 + (1-x^2)/2x * log(abs((1+x)/(1-x))))
   end
@@ -63,17 +63,17 @@ function screenedformfactor(nfe::NFE)::Vector{Function}
 end
 
 # local-field exchange-correlation function (Vashishta-Singwi)
-function localfiled(nfe::NFE)
-  ρ = nfe.ρ
-  z̄ = nfe.z
+function localfiled(nfe::NFE)::Function
+  ρ::Float64 = nfe.ρ
+  z̄::Float64 = nfe.z
 
-  kF = fermiwavenumber(nfe)
-  rs = ((3/4π) / ρ / z̄)^(1/3) # electron distance
+  kF::Float64 = fermiwavenumber(nfe)
+  rs::Float64 = ((3/4π) / ρ / z̄)^(1/3) # electron distance
 
-  A = 0.5362 + 0.1874rs - 0.0157rs^2 + 0.0008rs^3
-  B = 0.42 - 0.0582rs + 0.0079rs^2 - 0.0005rs^3
+  A::Float64 = 0.5362 + 0.1874rs - 0.0157rs^2 + 0.0008rs^3
+  B::Float64 = 0.42 - 0.0582rs + 0.0079rs^2 - 0.0005rs^3
 
-  G(q) = A*(1 - exp(-B*(q/kF)^2))
+  G(q)::Float64 = A*(1 - exp(-B*(q/kF)^2))
 
   return G
 end
@@ -82,20 +82,23 @@ end
 # Wavenumber-energy characteristic
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition (2004), 462
 #
-function wnechar(nfe::NFE)
-  ρ = nfe.ρ
-  z = nfe.pseudo.z
+function wnechar(nfe::NFE)::Array{Function,2}
+  ρ::Float64 = nfe.ρ
+  z::Vector{Float64} = nfe.pseudo.z
 
-  ω = formfactor(nfe)
-  ϵ = dielectric(nfe)
-  G = localfiled(nfe)
+  ω::Vector{Function} = formfactor(nfe)
+  ϵ::Function = dielectric(nfe)
+  G::Function = localfiled(nfe)
 
-  N = length(z)
-  ret = Array{Function}(N,N)
+  N::Int = length(z)
+  ret = Array{Function,2}(N,N)
 
   for i in 1:N, j in 1:N
+    i > j && continue
+
     F(q)::Float64 = - q^2 / (8π*ρ) * ω[i](q) * ω[j](q) / (1 / (ϵ(q) - 1) + (1 - G(q)))
-    ret[i,j] = F
+
+    ret[i,j] = ret[j,i] = F
   end
 
   return ret
@@ -106,20 +109,23 @@ end
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition (2004), 490
 #
 function pairpotential(nfe::NFE)::Array{Function,2}
-  ρ = nfe.ρ
-  z = nfe.pseudo.z
+  ρ::Float64 = nfe.ρ
+  z::Vector{Float64} = nfe.pseudo.z
 
-  F = wnechar(nfe)
+  F::Array{Function,2} = wnechar(nfe)
 
-  N = length(z)
-  ret = Array{Function}(N,N)
+  N::Int = length(z)
+  ret = Array{Function,2}(N,N)
 
   for i in 1:N, j in 1:N
+    i > j && continue
+
     function u(r)::Float64
-      Ft(r) = ∫(q -> F[i,j](q) * sin(q*r)/(q*r) * q^2, 0, Q_MAX)
+      Ft(r)::Float64 = ∫(q -> F[i,j](q) * sin(q*r)/(q*r) * q^2, 0, Q_MAX)
       z[i]*z[j] / r + 1 / (π^2*ρ) * Ft(r)
     end
-    ret[i,j] = u
+
+    ret[i,j] = ret[j,i] = u
   end
 
   return ret

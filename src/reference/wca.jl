@@ -32,8 +32,8 @@ repulsivepotential(wca::OptimizedWCA)::Array{Function,2} = wca.repu
 tailpotential(wca::AbstractWCA)::Array{Function,2} = wca.tail
 
 function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
-  T = temperature(wca)
-  β = 1 / (kB * T)
+  T::Float64 = temperature(wca)
+  β::Float64 = 1 / (kB * T)
 
   N::Int = ncomp(wca)
   σ₀::Array{Float64,2} = hsdiameter(wca.trial)
@@ -41,15 +41,16 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
   u::Array{Function,2} = pairpotential(pert)
 
-  us = Array{Function}(N,N)
+  us = Array{Function,2}(N,N)
   for i in 1:N, j in 1:N
-    us[i,j] = spline(u[i,j], 0.25σ₀[i,j], 1.5σ₀[i,j], 32)
+    i > j && continue
+    us[i,j] = us[j,i] = spline(u[i,j], 0.25σ₀[i,j], 1.5σ₀[i,j], 32)
   end
 
-  rmin = Array{Float64}(N,N)
-  u₀ = Array{Function}(N,N)
-  u₀s = Array{Function}(N,N)
-  u₁ = Array{Function}(N,N)
+  rmin = Array{Float64,2}(N,N)
+  u₀ = Array{Function,2}(N,N)
+  u₀s = Array{Function,2}(N,N)
+  u₁ = Array{Function,2}(N,N)
 
   for i in 1:N, j in 1:N
     i > j && continue
@@ -66,7 +67,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   I = Vector{Float64}(N)
 
   function fopt(σ::Vector{Float64}, g)::Float64
-    ahs = AHS(σ, ρ₀)
+    ahs = AHS(σ::Vector, ρ₀::Vector)
     u_hs::Array{Function,2} = pairpotential(ahs)
     g_hs::Array{Function,2} = paircorrelation(ahs)
 
@@ -86,9 +87,14 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
   σ₀d::Vector{Float64} = [ σ₀[i,i] for i in 1:N ]
   rmind::Vector{Float64} = [ rmin[i,i] for i in 1:N ]
-  σ_init::Vector{Float64} = [min(σ₀d[i], rmind[i]) for i in 1:N]
+  σ_init::Vector{Float64} = [ min(σ₀d[i], rmind[i]) for i in 1:N ]
 
-  opt = NLopt.Opt(:GN_DIRECT, N)
+  if N == 1
+    opt = NLopt.Opt(:GN_DIRECT, N)
+  else
+    opt = NLopt.Opt(:LN_BOBYQA, N)
+  end
+
   NLopt.min_objective!(opt, fopt)
   NLopt.lower_bounds!(opt, 0.5σ₀d)
   NLopt.upper_bounds!(opt, rmind)
@@ -96,7 +102,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
   (fmin, σ_wca, ret) = NLopt.optimize(opt, σ_init)
 
-  ahs = AHS(σ_wca, ρ₀)
+  ahs = AHS(σ_wca::Vector, ρ₀::Vector)
   optwca = OptimizedWCA(ahs, T, rmin, u₀, u₁)
 
   TPTSystem(optwca, pert; kwargs...)

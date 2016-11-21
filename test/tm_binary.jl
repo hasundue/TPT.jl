@@ -65,8 +65,9 @@ end
 #
 # Processing each binary system
 #
-Threads.@threads for k in 1:(M^2)
-  (a,b) = ind2sub((M,M), k)
+# Threads.@threads for k in 1:(M^2)
+@time for a = 5, b = 3
+  # (a,b) = ind2sub((M,M), k)
 
   # skip if experimental data does not exist
   !isdata[a,b] && continue
@@ -85,8 +86,8 @@ Threads.@threads for k in 1:(M^2)
   T = entry[1]
 
   # Initial guess for HS diameters and number density
-  σ₀ = [p[:σ][a], p[:σ][b]]
-  ρ₀ = (p[:ρ][a] + p[:ρ][b]) / 2
+  σ₀::Vector{Float64} = [p[:σ][a], p[:σ][b]]
+  ρ₀::Float64 = (p[:ρ][a] + p[:ρ][b]) / 2
 
   # Convert Faber-Ziman to Ashcroft-Langreth:
   S_exp[a,b] = Array{Any,2}(N,N)
@@ -112,11 +113,8 @@ Threads.@threads for k in 1:(M^2)
   #
   # PART-1. AHS: fitting S with additive hard-sphere
   #
-  function fopt(x::Vector{Float64})::Float64
-    ρ = x[1]
-    σ = x[2:3]
-
-    ahs = TPT.AHS(ρ = ρ, σ = σ, c = c)
+  function fopt(σ::Vector{Float64})::Float64
+    ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c)
     S_ahs = TPT.structurefactor(ahs)
 
     R::Array{Float64,2} = zeros(N,N)
@@ -136,13 +134,14 @@ Threads.@threads for k in 1:(M^2)
     return norm(R)
   end
 
-  x₀ = [ρ₀, σ₀[1], σ₀[2]]
-  res = Optim.optimize(fopt, x₀, rel_tol = 1e-3)
+  res = Optim.optimize(fopt, σ₀, g_tol = 1e-3, show_trace = true)
 
-  (ρ_ahs, σ₁_ahs, σ₂_ahs) = Optim.minimizer(res)
+  (σ₁_ahs, σ₂_ahs) = Optim.minimizer(res)
   σ_ahs = [σ₁_ahs, σ₂_ahs]
 
-  ahs[a,b] = TPT.AHS(ρ = ρ_ahs, σ = σ_ahs, c = c::Vector)
+  ahs[a,b] = TPT.AHS(ρ = ρ₀, σ = σ_ahs, c = c::Vector)
+
+  ahs[a,b] = TPT.AHS(ρ = ρ₀::Float64, σ = σ₀::Vector, c = c::Vector)
 
   #
   # PART-2. AHS-WCA:
@@ -153,11 +152,20 @@ Threads.@threads for k in 1:(M^2)
   zd = [p[:zd][a], p[:zd][b]]
   rd = [p[:rd][a], p[:rd][b]]
 
+  # pse = TPT.Ashcroft(zs, rc)
   pse = TPT.BretonnetSilbert(zs, rc, pa)
   nfe = TPT.NFE(ahs[a,b], pse)
   tb = TPT.WHTB(zd, rd)
   nfetb = TPT.NFETB(nfe, tb)
   wca = TPT.WCA(ahs[a,b], T)
+
+  u_nfe = TPT.pairpotential(nfetb.nfe)
+  u_tb = TPT.pairpotential(nfetb.tb)
+  u_tot = TPT.pairpotential(nfetb)
+  plot(u_nfe[1,1], 2, 20, ylims = (-0.1, 0.1))
+  plot!(u_tb[1,1], 2, 20, ylims = (-0.1, 0.1))
+  plot!(u_tot[1,1], 2, 20, ylims = (-0.1, 0.1))
+  gui()
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb)

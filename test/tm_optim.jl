@@ -63,7 +63,7 @@ sys = Vector{TPT.TPTSystem}(N)
 #
 Threads.@threads for i in 1:N
   function fopt(a::Float64)::Float64
-    pse = TPT.BretonnetSilbert(p[:zs][i], 1.540, a)
+    pse = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a)
     nfe = TPT.NFE(wca[i], pse)
     nfetb = TPT.NFETB(nfe, tb[i])
     sys[i] = TPT.TPTSystem(wca[i], nfetb)

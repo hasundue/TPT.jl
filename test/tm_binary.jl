@@ -155,6 +155,7 @@ for a in 1:M, b in 1:M
   #
   println("AHS-WCA")
 
+  m = [p[:m][a], p[:m][b]]
   zs = [p[:zs][a], p[:zs][b]]
   rc = [p[:rc][a], p[:rc][b]]
   pa = [p[:a][a], p[:a][b]]
@@ -169,7 +170,7 @@ for a in 1:M, b in 1:M
   wca = TPT.WCA(ahs[a,b], T)
 
   # Performing WCA optimization
-  sys[a,b] = TPT.TPTSystem(wca, nfetb)
+  sys[a,b] = TPT.TPTSystem(wca, nfetb, m = m)
 # end
 
   #
@@ -187,11 +188,11 @@ for a in 1:M, b in 1:M
     w = TPT.WCA(hs, T)
 
     pp = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
-    n = TPT.NFE(ahs, pp)
+    n = TPT.NFE(hs, pp)
     t = TPT.WHTB(zd[i], rd[i])
     nt = TPT.NFETB(n, t)
 
-    s = TPT.TPTSystem(w, nt)
+    s = TPT.TPTSystem(w, nt, m = m[i])
 
     F_pure[i] = TPT.helmholtz(s)
     println("F_pure[$(i)] = $(F_pure[i])")

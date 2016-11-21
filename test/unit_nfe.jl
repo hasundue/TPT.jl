@@ -64,6 +64,8 @@ F2 = TPT.wnechar(nfe2)
 u2 = TPT.pairpotential(nfe2)
 # plot(u2, 2, 20, ylims = (-2.1e-3, 2.1e-3))
 
+F2_total = TPT.helmholtz(sys2)
+
 
 @testset "Unit NFE" begin
   @test isapprox(kF1, 0.473, atol=1e-3)

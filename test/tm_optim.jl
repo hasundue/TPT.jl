@@ -7,6 +7,15 @@ using Plots; pyplot()
 
 println("--- TM Optim ---")
 
+#
+# Prepare a directory to store the results
+#
+!isdir("results") && mkdir("results")
+
+resdir = joinpath("results", "tm_optim")
+!isdir(resdir) && mkdir(resdir)
+
+
 # Load elemental parameters
 p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
 N = size(p, 1) # number of elements
@@ -44,17 +53,17 @@ for i in 1:N
     tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i])
 end
 
-res = Vector{Any}(N)
-rc = Vector{Float64}(N)
+a₀ = p[:a]
+a = Vector{Float64}(N)
+res = Vector{Float64}(N)
 sys = Vector{TPT.TPTSystem}(N)
-
 
 #
 # Performe optimization of rc
 #
 Threads.@threads for i in 1:N
-  function fopt(rc::Float64)::Float64
-    pse = TPT.Ashcroft(p[:zs][i], rc)
+  function fopt(a::Float64)::Float64
+    pse = TPT.BretonnetSilbert(p[:zs][i], 1.540, a)
     nfe = TPT.NFE(wca[i], pse)
     nfetb = TPT.NFETB(nfe, tb[i])
     sys[i] = TPT.TPTSystem(wca[i], nfetb)
@@ -70,17 +79,36 @@ Threads.@threads for i in 1:N
     return residue
   end
 
-  res[i] = Optim.optimize(fopt, 1.0, 2.0)
-  rc[i] = Optim.minimizer(res[i])
+  # fnlopt(x::Vector{Float64}, g)::Float64 = fopt(x[1])
+  #
+  # opt = NLopt.Opt(:GN_DIRECT, 1)
+  # NLopt.min_objective!(opt, fnlopt)
+  # NLopt.stopval!(opt, 1e-0)
+  # NLopt.xtol_abs!(opt, 1e-3)
+  # NLopt.ftol_abs!(opt, 1e-4)
+  # NLopt.lower_bounds!(opt, [0.5rc₀[i]])
+  # NLopt.upper_bounds!(opt, [1.5rc₀[i]])
+  #
+  # (fmin, xmin, result) = NLopt.optimize(opt, [rc₀[i]])
+  #
+  # res[i] = result
+  # rc[i] = xmin[1]
+  # fopt(xmin)
+
+  result = Optim.optimize(fopt, 0.25, 0.40, rel_tol = 1e-3)
+  a[i] = Optim.minimizer(result)
+  res[i] = Optim.minimum(result)
+
+  fopt(a[i])
 end
 
 
 #
 # Print the numerical results to console
 #
-println("The optimized values of rc:")
+println("The optimized values of a:")
 for i in 1:N
-  @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
+  @printf "  %2s: %1.3f\n" p[:X][i] a[i]
 end
 
 rmin = Vector{Float64}(N)
@@ -99,18 +127,9 @@ end
 
 
 #
-# Prepare a directory to store the results
-#
-!isdir("results") && mkdir("results")
-
-resdir = joinpath("results", "tm_optim")
-!isdir(resdir) && mkdir(resdir)
-
-
-#
 # Save the numerical results as a csv file
 #
-df = DataFrame(X = p[:X], rc = round(rc, 3), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
+df = DataFrame(X = p[:X], a = round(a, 3), res = round(res, 1), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
 writetable(joinpath(resdir, "results.csv"), df)
 
 
@@ -125,12 +144,12 @@ for i in 1:N
   u_tot = TPT.pairpotential(sys[i].pert)[1,1]
 
   plot([u_nfe, u_tb, u_tot], 2, 20, ylims=(-0.1, 0.1), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
-  vline!([rmin[i]], label="r_min")
   vline!([σ_hs[i]], label="HS dia.")
   png(joinpath(resdir, "$(i)-$(p[:X][i])_u"))
 end
 
 # 2. Pair correlation functions
+# for i in 1:N
 for i in 1:N
   g_hs = TPT.paircorrelation(ahs[i])[1,1]
   g_wca = TPT.paircorrelation(sys[i])[1,1]
@@ -144,10 +163,8 @@ end
 #
 # Check the results
 #
-rc₀ = p[:rc]
-
 @testset "TM Optim" begin
   for i in 1:N
-    @test isapprox(rc[i], rc₀[i], atol=2e-3)
+    @test isapprox(a[i], a₀[i], atol=1e-3)
   end
 end # testset

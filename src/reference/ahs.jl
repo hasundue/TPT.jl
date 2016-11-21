@@ -248,10 +248,10 @@ function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
   #
 
   # heuristic boundary condition
-  σ_m = mean(σ)
-  α_min = 0.005 * σ_m / η
-  α_max = 0.030 * σ_m / η
-  α_init = (α_min + α_max) / 2
+  σ_m::Float64 = mean(σ)
+  α_min::Float64 = 0
+  α_max::Float64 = 0.040 * σ_m / η
+  α_init::Float64 = (α_min + α_max) / 2
 
   opt = NLopt.Opt(:GN_DIRECT, 1)
   NLopt.min_objective!(opt, fopt)

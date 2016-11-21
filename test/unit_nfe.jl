@@ -67,10 +67,10 @@ u2 = TPT.pairpotential(nfe2)
 
 @testset "Unit NFE" begin
   @test isapprox(kF1, 0.473, atol=1e-3)
-  @test isapprox(G1(kF), 0.267, atol=1e-3)
-  @test isapprox(ϵ1(kF), 3.46, atol=1e-2)
-  @test isapprox(ω1₀(kF), -0.141, atol=1e-3)
-  @test isapprox(F1(kF), -0.0437, atol=1e-4)
+  @test isapprox(G1(kF1), 0.267, atol=1e-3)
+  @test isapprox(ϵ1(kF1), 3.46, atol=1e-2)
+  @test isapprox(ω1₀(kF1), -0.141, atol=1e-3)
+  @test isapprox(F1(kF1), -0.0437, atol=1e-4)
   @test isapprox(u1(6.087), -0.00078, atol=1e-5)
 
   @test isapprox(U1_eg, -0.0816, atol=1e-4)

@@ -177,7 +177,7 @@ for a in 1:M, b in 1:M
   #
   println("Free-energy")
 
-  F_alloy::Float64 = helmholtz(sys[a,b])
+  F_alloy::Float64 = TPT.helmholtz(sys[a,b])
   F_pure = Vector{Float64}(2)
 
   for i in 1:2

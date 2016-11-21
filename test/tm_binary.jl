@@ -139,9 +139,9 @@ for a in 1:M, b in 1:M
     return norm(R)
   end
 
-  res = Optim.optimize(fopt, σ₀, g_tol = 1e-3)
+  opt = Optim.optimize(fopt, σ₀, g_tol = 1e-3)
 
-  (σ₁_ahs, σ₂_ahs) = Optim.minimizer(res)
+  (σ₁_ahs, σ₂_ahs) = Optim.minimizer(opt)
   σ_ahs = [σ₁_ahs, σ₂_ahs]
 
   ahs[a,b] = TPT.AHS(ρ = ρ₀, σ = σ_ahs, c = c::Vector)

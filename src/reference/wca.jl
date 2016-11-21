@@ -67,6 +67,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   I = Vector{Float64}(N)
 
   function fopt(σ::Vector{Float64}, g)::Float64
+    @show σ
     ahs = AHS(σ::Vector, ρ₀::Vector)
     u_hs::Array{Function,2} = pairpotential(ahs)
     g_hs::Array{Function,2} = paircorrelation(ahs)
@@ -82,7 +83,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
              ∫(r -> B(r)*r^2, σ[i]+ϵ, rmin[i,i])
     end
 
-    return norm(I, 1)
+    return @show norm(I, 1)
   end
 
   σ₀d::Vector{Float64} = [ σ₀[i,i] for i in 1:N ]
@@ -93,6 +94,8 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
     opt = NLopt.Opt(:GN_DIRECT, N)
   else
     opt = NLopt.Opt(:LN_BOBYQA, N)
+    NLopt.initial_step!(opt, 0.01σ_init)
+    NLopt.ftol_rel!(opt, 1e-3)
   end
 
   NLopt.min_objective!(opt, fopt)

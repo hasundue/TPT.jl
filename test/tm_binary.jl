@@ -65,9 +65,8 @@ end
 #
 # Processing each binary system
 #
-# Threads.@threads for k in 1:(M^2)
-@time for a = 5, b = 3
-  # (a,b) = ind2sub((M,M), k)
+Threads.@threads for k in 1:(M^2)
+  (a,b) = ind2sub((M,M), k)
 
   # skip if experimental data does not exist
   !isdata[a,b] && continue
@@ -141,8 +140,6 @@ end
 
   ahs[a,b] = TPT.AHS(ρ = ρ₀, σ = σ_ahs, c = c::Vector)
 
-  ahs[a,b] = TPT.AHS(ρ = ρ₀::Float64, σ = σ₀::Vector, c = c::Vector)
-
   #
   # PART-2. AHS-WCA:
   #
@@ -158,14 +155,6 @@ end
   tb = TPT.WHTB(zd, rd)
   nfetb = TPT.NFETB(nfe, tb)
   wca = TPT.WCA(ahs[a,b], T)
-
-  u_nfe = TPT.pairpotential(nfetb.nfe)
-  u_tb = TPT.pairpotential(nfetb.tb)
-  u_tot = TPT.pairpotential(nfetb)
-  plot(u_nfe[1,1], 2, 20, ylims = (-0.1, 0.1))
-  plot!(u_tb[1,1], 2, 20, ylims = (-0.1, 0.1))
-  plot!(u_tot[1,1], 2, 20, ylims = (-0.1, 0.1))
-  gui()
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb)

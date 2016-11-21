@@ -53,7 +53,7 @@ F_hs = -T*kB*S_hs
   @test isapprox(U_eg, -0.0816, atol=1e-4)
   @test isapprox(S_eg, 0.0522, atol=1e-4)
   @test isapprox(U_es, -0.147, atol=1e-3)
-  @test isapprox(U_bs, -0.00875, atol=1e-5)
+  @test isapprox(U_bs, -0.00912, atol=1e-5)
   @test isapprox(K, 0.00177, atol=1e-5)
   @test isapprox(F_hs, -0.00856, atol=1e-5)
 end

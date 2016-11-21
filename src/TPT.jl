@@ -32,6 +32,7 @@ export TPTSystem,
        hsdiameter,
        packingfraction,
        totalpackingfraction,
+       contactvalue,
 
        # Perturbation
        NFE,

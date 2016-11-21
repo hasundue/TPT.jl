@@ -1,6 +1,9 @@
 import TPT
 
 using Base.Test
+
+using Plots; pyplot()
+
 #
 # Single component: Liquid Na
 # Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
@@ -13,18 +16,20 @@ pseudo = TPT.Ashcroft(1.0, 1.67)
 nfe = TPT.NFE(wca, pseudo)
 sys = TPT.TPTSystem(wca, nfe, m = 4.191e+4)
 
+g_ahs = TPT.paircorrelation(ahs)[1,1]
 g_wca = TPT.paircorrelation(sys)[1,1]
+σ = TPT.hsdiameter(ahs)
 g_σ = g_wca(σ_Na)
 
-# plot(g, 2, 20, labels = ["AHS" "WCA"])
+plot([g_ahs, g_wca], 2, 20, labels = ["AHS" "WCA"])
 
 S = TPT.entropy(sys)
 U = TPT.internal(sys)
 F = TPT.helmholtz(sys)
 
 @testset "Unit WCA" begin
-  @test isapprox(g_σ, 2.04, atol=1e-2)
-  @test isapprox(S, 7.47, atol=1e-2)
+  @test isapprox(g_σ, 1.71, atol=1e-2)
+  @test isapprox(S, 7.81, atol=1e-2)
   @test isapprox(U, -0.237, atol=1e-3)
   @test isapprox(F, -0.244, atol=1e-3)
 end

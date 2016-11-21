@@ -41,25 +41,25 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
   u::Array{Function,2} = pairpotential(pert)
 
-  ut = Array{Function}(N,N)
+  us = Array{Function}(N,N)
   for i in 1:N, j in 1:N
-    ut[i,j] = spline(u[i,j], 0.25σ₀[i,j], 1.5σ₀[i,j], 64)
+    us[i,j] = spline(u[i,j], 0.25σ₀[i,j], 1.5σ₀[i,j], 32)
   end
 
   rmin = Array{Float64}(N,N)
   u₀ = Array{Function}(N,N)
-  u₀t = Array{Function}(N,N)
+  u₀s = Array{Function}(N,N)
   u₁ = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
     i > j && continue
 
-    opt = Optim.optimize(ut[i,j], 0.5σ₀[i,j], 1.5σ₀[i,j])
+    opt = Optim.optimize(us[i,j], 0.5σ₀[i,j], 1.5σ₀[i,j])
     rmin[i,j] = rmin[j,i] =  Optim.minimizer(opt)
     umin::Float64 = Optim.minimum(opt)
 
     u₀[i,j] = u₀[j,i] = r -> r < rmin[i,j] ? u[i,j](r) - umin : 0.0
-    u₀t[i,j] = u₀t[j,i] = r -> r < rmin[i,j] ? ut[i,j](r) - umin : 0.0
+    u₀s[i,j] = u₀s[j,i] = r -> r < rmin[i,j] ? us[i,j](r) - umin : 0.0
     u₁[i,j] = u₁[i,j] = r -> r < rmin[i,j] ? umin : u[i,j](r)
   end
 
@@ -68,26 +68,31 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   function fopt(σ::Vector{Float64}, g)::Float64
     ahs = AHS(σ, ρ₀)
     u_hs::Array{Function,2} = pairpotential(ahs)
-    y_hs::Array{Function,2} = cavityfunction(ahs)
+    g_hs::Array{Function,2} = paircorrelation(ahs)
+
+    ϵ = eps(Float64)
 
     for i in 1:N
-      B(r) = y_hs[i,i](r) * (exp(-β*u₀t[i,i](r)) - exp(-β*u_hs[i,i](r)))
-      I[i] = ∫(r -> B(r)*r^2, 0.5σ[i], rmin[i,i])
+      rcut::Float64 = 0.5σ[i]
+      y_hs::Function = spline(g_hs[i,i], σ[i], rmin[i,i], 8, bc="extrapolate")
+      B(r) = y_hs(r) * (exp(-β*u₀s[i,i](r)) - exp(-β*u_hs[i,i](r)))
+
+      I[i] = ∫(r -> B(r)*r^2, rcut, σ[i]-ϵ) +
+             ∫(r -> B(r)*r^2, σ[i]+ϵ, rmin[i,i])
     end
 
     return norm(I, 1)
   end
 
-  σ₀d::Vector{Float64} = [σ₀[i,i] for i in 1:N]
-  rmind::Vector{Float64} = [rmin[i,i] for i in 1:N]
+  σ₀d::Vector{Float64} = [ σ₀[i,i] for i in 1:N ]
+  rmind::Vector{Float64} = [ rmin[i,i] for i in 1:N ]
   σ_init::Vector{Float64} = [min(σ₀d[i], rmind[i]) for i in 1:N]
 
-  opt = NLopt.Opt(:LN_BOBYQA, N)
+  opt = NLopt.Opt(:GN_DIRECT, N)
   NLopt.min_objective!(opt, fopt)
-  NLopt.lower_bounds!(opt, 0.8σ_init)
+  NLopt.lower_bounds!(opt, 0.5σ₀d)
   NLopt.upper_bounds!(opt, rmind)
-  NLopt.initial_step!(opt, 0.01σ_init)
-  NLopt.xtol_rel!(opt, 1e-3)
+  NLopt.stopval!(opt, 1e-1)
 
   (fmin, σ_wca, ret) = NLopt.optimize(opt, σ_init)
 
@@ -102,18 +107,19 @@ function blipfunction(wca::OptimizedWCA)
   β = 1 / (kB * T)
 
   N = ncomp(wca.trial)
+  σ::Array{Float64,2} = hsdiameter(wca.trial)
+  rmin::Array{Float64,2} = wca.rmin
 
   u₀::Array{Function,2} = repulsivepotential(wca)
   u_hs::Array{Function,2} = pairpotential(wca.trial)
-  y_hs::Array{Function,2} = cavityfunction(wca.trial)
+  g_hs::Array{Function,2} = paircorrelation(wca.trial)
 
   ret = Array{Function,2}(N,N)
 
   for i in 1:N, j in 1:N
     i > j && continue
-
-    B(r) = y_hs[i,j](r) * (exp(-β*u₀[i,j](r)) - exp(-β*u_hs[i,j](r)))
-
+    y_hs::Function = spline(g_hs[i,j], σ[i,i], rmin[i,i], 8, bc="extrapolate")
+    B(r) = y_hs(r) * (exp(-β*u₀[i,j](r)) - exp(-β*u_hs[i,j](r)))
     ret[i,j] = ret[j,i] =  B
   end
 
@@ -121,25 +127,34 @@ function blipfunction(wca::OptimizedWCA)
 end
 
 function paircorrelation(wca::OptimizedWCA)
-  β = 1 / (kB * wca.temp)
+  T = temperature(wca)
+  β = 1 / (kB * T)
 
   N::Int = ncomp(wca.trial)
 
   σ₀::Array{Float64,2} = hsdiameter(wca.trial)
+  rmin::Array{Float64,2} = wca.rmin
   u₀::Array{Function,2} = repulsivepotential(wca)
   g_hs::Array{Function,2} = paircorrelation(wca.trial)
-  y_hs::Array{Function,2} = cavityfunction(wca.trial)
 
   ret = Array{Function}(N,N)
 
   for i in 1:N, j in 1:N
     i > j && continue
 
-    u₀t = spline(u₀[i,j], 0.5σ₀[i,j], R_MAX, 256)
+    rcut = 0.5σ₀[i,j]
 
-    function g(r)
-      val = y_hs[i,j](r) * exp(-β*u₀t(r))
-      abs(val) < eps(Float64) ? 0. : val
+    y_hs = spline(g_hs[i,j], σ₀[i,j], rmin[i,j], 4, bc="extrapolate")
+    u₀s = spline(u₀[i,j], rcut, rmin[i,j], 16)
+
+    function g(r)::Float64
+      if r < rcut
+        0
+      elseif r < rmin[i,j]
+        y_hs(r) * exp(-β*u₀s(r))
+      else
+        g_hs[i,j](r)
+      end
     end
 
     ret[i,j] = ret[j,i] = g
@@ -153,7 +168,9 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
   c::Vector{Float64} = composition(wca)
 
   Sref::Array{Function,2} = structurefactor(wca.trial)
+  σ::Array{Float64,2} = hsdiameter(wca.trial)
   ρ::Float64 = totalnumberdensity(wca)
+  rmin::Array{Float64,2} = wca.rmin
   b::Array{Function,2} = blipfunction(wca)
 
   ret = Array{Function,2}(N,N)
@@ -161,9 +178,16 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
   for i in 1:N, j in 1:N
     i > j && continue
 
-    bt = spline(b[i,j], R_MIN, wca.rmin[i,j], 64)
+    ϵ = eps(Float64)
+    rcut = σ[i,j]/2
 
-    B(q) = ∫(r -> bt(r) * sin(r*q) / (r*q) * r^2, R_MIN, wca.rmin[i,j], e=1e-3)
+    bs1 = spline(b[i,j], rcut, σ[i,j]-ϵ, 4)
+    bs2 = spline(b[i,j], σ[i,j]+ϵ, rmin[i,j], 4)
+
+    B(q) =
+      ∫(r -> bs1(r) * sin(r*q) / (r*q) * r^2, rcut, σ[i,j]-ϵ, e=1e-3) +
+      ∫(r -> bs2(r) * sin(r*q) / (r*q) * r^2, σ[i,j]+ϵ, rmin[i,j], e=1e-3)
+
     S(q) = Sref[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * Sref[i,j](q) * B(q))
 
     ret[i,j] = ret[j,i] = S
@@ -202,9 +226,10 @@ function internal(wca::OptimizedWCA)::Float64
     i > j && continue
 
     a = i == j ? 1 : 2
-    u₀t = spline(u₀[i,j], σ[i,j]/2, rmin[i,j], 32)
+    g₀s_wca::Function = spline(g₀_wca[i,j], σ[i,j]/2, rmin[i,j], 16)
+    u₀s::Function = spline(u₀[i,j], σ[i,j]/2, rmin[i,j], 16)
 
-    U₀_wca += a * 2π*ρ * c[i]*c[j] * ∫(r -> u₀t(r)*g₀_wca[i,j](r)*r^2, σ[i,j]/2, rmin[i,j])
+    U₀_wca += a * 2π*ρ * c[i]*c[j] * ∫(r -> u₀s(r)*g₀s_wca(r)*r^2, σ[i,j]/2, rmin[i,j])
   end
 
   U₀_wca
@@ -221,7 +246,7 @@ function internal(wca::OptimizedWCA, pert::Perturbation)::Float64
   ρ::Float64 = totalnumberdensity(wca)
   u::Array{Function,2} = pairpotential(pert)
   u₀::Array{Function,2} = repulsivepotential(wca)
-  g_HS::Array{Function,2} = paircorrelation(hs)
+  g_hs::Array{Function,2} = paircorrelation(hs)
 
   U::Float64 = 0
 
@@ -231,11 +256,12 @@ function internal(wca::OptimizedWCA, pert::Perturbation)::Float64
     a = i == j ? 1 : 2
     A = a * 2π*ρ * c[i]*c[j]
 
-    ut = spline(u[i,j], σ[i,j], R_MAX, 256)
-    u₀t = spline(u₀[i,j], σ[i,j], rmin[i,j], 16)
+    us = spline(u[i,j], σ[i,j], R_MAX, 32)
+    u₀s = spline(u₀[i,j], σ[i,j], rmin[i,j], 16)
+    gs_hs = spline(g_hs[i,j], σ[i,j], R_MAX, 32)
 
-    U += A * ∫(r -> ut(r)*g_HS[i,j](r)*r^2, σ[i,j], R_MAX)
-    U -= A * ∫(r -> u₀t(r)*g_HS[i,j](r)*r^2, σ[i,j], rmin[i,j])
+    U += A * ∫(r -> us(r)*gs_hs(r)*r^2, σ[i,j], R_MAX)
+    U -= A * ∫(r -> u₀s(r)*gs_hs(r)*r^2, σ[i,j], rmin[i,j])
   end
 
   return U

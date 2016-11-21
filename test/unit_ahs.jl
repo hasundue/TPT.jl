@@ -1,47 +1,40 @@
 import TPT
 
 using Base.Test
+using Plots; pyplot()
 
-# Atomic mass
-M = [22.9898, 39.0983]
-M2m(M) = M / 1000 / 6.022e+23 / 9.109e-31
-m_Na, m_K = map(M2m, M)
+ahs1 = TPT.AHS(η = 0.49, σ = [1.0, 0.3], c = [1/16, 15/16])
+g1 = TPT.paircorrelation(ahs1)
 
-#
-# Single component: Liquid Na
-# Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
-#
-ahs1 = TPT.AHS(σ = 6.235, ρ = 3.564e-3)
-sys1 = TPT.TPTSystem(ahs1, T = 373, m = m_Na)
+default(xlabel = "r", ylabel = "g(r)", label = "")
 
-K1 = TPT.kinetic(sys1)
-S1 = TPT.entropy(sys1)
-U1 = TPT.internal(sys1)
-F1 = TPT.helmholtz(sys1)
+# Fig.1(a)
+g1_1 = TPT.spline(g1[1,1], 1.0, 1.25, 4, bc = "error")
+plot(g1_1, 1, 1.25, ylims = (0, 10), yticks = 0:1:10)
 
-#
-# Two components: NaK liquid alloy
-# Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
-#
-ahs2 = TPT.AHS(ρ = 2.461e-3, σ = [6.235, 7.354], c = [0.5, 0.5])
-sys2 = TPT.TPTSystem(ahs2, T = 373, m = [m_Na, m_K])
+# Fig.1(b)
+g1_2 = TPT.spline(g1[1,1], 1.0, 2.25, 16, bc = "error")
+plot(g1_2, 1, 2.25, xticks = 1:0.2:2.2, ylims = (0.55, 1.25), yticks = 0.0:0.1:1.3)
 
-K2 = TPT.kinetic(sys2)
-S2 = TPT.entropy(sys2) # divided by kB
-U2 = TPT.internal(sys2)
-F2 = TPT.helmholtz(sys2)
+# Fig.2(a)
+# @time plot(g1[1,2], 0.65, 0.90, ylims = (0.8, 4.8), yticks = 0:0.5:10)
+
+# Fig.2(b)
+# @time plot(g1[1,2], 0.7, 1.9, xticks = (0:0.2:2), ylims = (0.88, 1.18), yticks = 0:0.05:10)
+
+
+# ahs3 = TPT.AHS(η = 0.49, σ = [1.0, 0.3, 0.1], c = [1/102, 1/102, 100/102])
+# G3 = TPT.paircorrelationlaplace(ahs3)
 
 @testset "Unit AHS" begin
-  @testset "Unary" begin
-    @test isapprox(K1, 0.00177, atol=1e-5)
-    @test isapprox(S1, 7.25, atol=1e-2)
-    @test isapprox(U1, 0.00, atol=1e-2)
-    @test isapprox(F1, -0.00679, atol=1e-5)
-  end
-  @testset "Binary" begin
-    @test isapprox(K2, 0.00177, atol=1e-5)
-    @test isapprox(S2, 9.44, atol=1e-2)
-    @test isapprox(U2, 0.00, atol=1e-2)
-    @test isapprox(F2, -0.00938, atol=1e-5)
-  end
+#   @testset "Energy" begin
+#     @test isapprox(K1, 0.00177, atol=1e-5)
+#     @test isapprox(S1, 7.25, atol=1e-2)
+#     @test isapprox(U1, 0.00, atol=1e-2)
+#     @test isapprox(F1, -0.00679, atol=1e-5)
+#     @test isapprox(K2, 0.00177, atol=1e-5)
+#     @test isapprox(S2, 9.44, atol=1e-2)
+#     @test isapprox(U2, 0.00, atol=1e-2)
+#     @test isapprox(F2, -0.00938, atol=1e-5)
+#   end
 end

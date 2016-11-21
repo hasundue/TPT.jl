@@ -53,24 +53,25 @@ sys = Vector{TPT.TPTSystem}(N)
 # Performe optimization of rc
 #
 Threads.@threads for i in 1:N
-    function fopt(rc::Float64)::Float64
-      pse = TPT.Ashcroft(p[:zs][i], rc)
-      nfe = TPT.NFE(wca[i], pse)
-      nfetb = TPT.NFETB(nfe, tb[i])
-      sys[i] = TPT.TPTSystem(wca[i], nfetb)
-      g = TPT.paircorrelation(sys[i])[1,1]
+  function fopt(rc::Float64)::Float64
+    pse = TPT.Ashcroft(p[:zs][i], rc)
+    nfe = TPT.NFE(wca[i], pse)
+    nfetb = TPT.NFETB(nfe, tb[i])
+    sys[i] = TPT.TPTSystem(wca[i], nfetb)
 
-      residue::Float64 = 0
+    g = TPT.paircorrelation(sys[i])[1,1]
 
-      for j in 1:length(g_exp[i])
-          residue += abs(g_exp[i][j][2] - g(g_exp[i][j][1]))
-      end
+    residue::Float64 = 0
 
-      return residue
+    for j in 1:length(g_exp[i])
+      residue += abs(g_exp[i][j][2] - g(g_exp[i][j][1]))
     end
 
-    res[i] = Optim.optimize(fopt, 1.0, 2.0)
-    rc[i] = Optim.minimizer(res[i])
+    return residue
+  end
+
+  res[i] = Optim.optimize(fopt, 1.0, 2.0)
+  rc[i] = Optim.minimizer(res[i])
 end
 
 

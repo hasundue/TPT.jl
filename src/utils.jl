@@ -53,20 +53,20 @@ end
 
 # Ref: http://www.eweb.unex.es/eweb/fisteor/santos/files/rdf.nb
 function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
-  a = 30.0
-  h = π/t
-  u = exp(a/2) / t
-  x = a / 2t
+  a::Float64 = 30.0
+  h::Float64 = π/t
+  u::Float64 = exp(a/2) / t
+  x::Float64 = a / 2t
 
-  c(m::Int) = binomial(meuler, m-1)
-  fs(s::Complex{Float64}) = real(F(s))
+  c(m::Int)::Int = binomial(meuler, m-1)
+  fs(s::Complex{Float64})::Float64 = real(F(s))
 
-  suma = fs(x + 0im)/2
+  suma::Float64 = fs(x + 0im)/2
   for n in 1:nterm
     suma = suma + (-1)^n * fs(x + im*n*h)
   end
 
-  su = Array{Float64}(meuler+2)
+  su = Vector{Float64}(meuler+2)
   su[1] = suma
   for k in 1:meuler+1
     n = nterm + k
@@ -74,25 +74,26 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
   end
 
   # argsu = 0
-  argsu1 = 0
+  argsu1::Float64 = 0
   for j in 1:meuler+1
     # argsu = argsu + c(j)*su[j]
     argsu1 = argsu1 + c(j)*su[j+1]
   end
 
   # fun = u * argsu / 2^meuler
-  fun1 = u * argsu1 / 2^meuler
+  fun1::Float64 = u * argsu1 / 2^meuler
 
   return fun1
 end
 
-function spline(f::Function, a::Float64, b::Float64, N::Int; bc="extrapolate")
+function spline(f::Function, a::Float64, b::Float64, N::Int; bc="error")
   @assert a < b "invalid arguments"
 
-  Δx = (b - a) / N
-  𝐱 = collect(a : Δx : b)
-  𝐲 = [f(x) for x in 𝐱]
+  Δx::Float64 = (b - a) / N
+  𝐱::Vector{Float64} = collect(a : Δx : b)
+  𝐲::Vector{Float64} = [f(x) for x in 𝐱]
 
   spl = Spline1D(𝐱, 𝐲, k=3, bc=bc)
-  return x -> spl(x)
+
+  fs(x::Real)::Float64 = spl(x)
 end

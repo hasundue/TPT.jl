@@ -37,7 +37,10 @@ plot([u_nfe, u_tb, u_tot], 2, 10, ylims = (-0.06, 0.1), labels = ["NFE" "TB" "To
 
 g1 = TPT.paircorrelation(sys1)[1,1]
 g2 = TPT.paircorrelation(sys2)[1,1]
-plot([g1, g2], 2, 18, labels = ["AHS" "WCA"])
+plot([g1, g2], 2, 10, labels = ["AHS" "WCA"])
+
+y2 = TPT.blipfunction(sys2.ref)[1,1]
+plot(y2, 3, 6)
 
 U1_ref = TPT.internal(sys1.ref)
 U2_ref = TPT.internal(sys2.ref)
@@ -65,17 +68,19 @@ F2 = TPT.helmholtz(sys2)
 
 @testset "Unit NFETB" begin
   @test isapprox(U1_ref, 0.00, atol=1e-2)
-  @test isapprox(U2_ref, 0.00964, atol=1e-5)
-  @test isapprox(U1_nfe, 0.0248, atol=1e-4)
-  @test isapprox(U2_nfe, 0.0156, atol=1e-4)
-  @test isapprox(U1_pair, -0.136, atol=1e-3)
-  @test isapprox(U2_pair, -0.145, atol=1e-3)
+  @test isapprox(U2_ref, 0.0107, atol=1e-4)
+  @test isapprox(U1_nfe, 0.0273, atol=1e-4)
+  @test isapprox(U2_nfe, 0.0195, atol=1e-4)
+  @test isapprox(U1_tb, -0.168, atol=1e-3)
+  @test isapprox(U2_tb, -0.174, atol=1e-3)
+  @test isapprox(U1_pair, -0.140, atol=1e-3)
+  @test isapprox(U2_pair, -0.148, atol=1e-3)
   @test isapprox(U1_es, -0.708, atol=1e-3)
   @test isapprox(U2_es, -0.708, atol=1e-3)
-  @test isapprox(U1, -0.844, atol=1e-3)
-  @test isapprox(U2, -0.843, atol=1e-3)
+  @test isapprox(U1, -0.848, atol=1e-3)
+  @test isapprox(U2, -0.845, atol=1e-3)
   @test isapprox(S1, 10.7, atol=1e-1)
-  @test isapprox(S2, 10.5, atol=1e-1)
-  @test isapprox(F1, -0.898, atol=1e-3)
-  @test isapprox(F2, -0.895, atol=1e-3)
+  @test isapprox(S2, 11.0, atol=1e-1)
+  @test isapprox(F1, -0.902, atol=1e-3)
+  @test isapprox(F2, -0.900, atol=1e-3)
 end

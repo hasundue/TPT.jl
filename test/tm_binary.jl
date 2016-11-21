@@ -208,8 +208,8 @@ for a in 1:M, b in 1:M
   ΔU_mix_nfe = U_alloy_nfe - c[1]*U_pure_nfe[1] - c[2]*U_pure_nfe[2]
   ΔU_mix_tb = U_alloy_tb - c[1]*U_pure_tb[1] - c[2]*U_pure_tb[2]
   println("ΔF_mix = $(ΔF_mix)")
-  println("ΔF_mix_nfe = $(ΔF_mix_nfe)")
-  println("ΔF_mix_tb = $(ΔF_mix_tb)")
+  println("ΔU_mix_nfe = $(ΔU_mix_nfe)")
+  println("ΔU_mix_tb = $(ΔU_mix_tb)")
 
 
 #

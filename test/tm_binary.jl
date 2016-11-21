@@ -179,9 +179,13 @@ for a in 1:M, b in 1:M
   println("Free-energy")
 
   F_alloy::Float64 = TPT.helmholtz(sys[a,b])
+  U_alloy_nfe::Float64 = TPT.internal(sys[a,b].ref, sys[a,b].pert.nfe)
+  U_alloy_tb::Float64 = TPT.internal(sys[a,b].ref, sys[a,b].pert.tb)
   println("F_alloy = $(F_alloy)")
 
   F_pure = Vector{Float64}(2)
+  U_pure_nfe = Vector{Float64}(2)
+  U_pure_tb = Vector{Float64}(2)
 
   for i in 1:2
     hs = TPT.AHS(ρ = p[:ρ][i], σ = sys[a,b].ref.trial.σ[i])
@@ -194,12 +198,18 @@ for a in 1:M, b in 1:M
 
     s = TPT.TPTSystem(w, nt, m = m[i])
 
+    U_pure_nfe[i] = TPT.internal(s.ref, s.pert.nfe)
+    U_pure_tb[i] = TPT.internal(s.ref, s.pert.tb)
     F_pure[i] = TPT.helmholtz(s)
     println("F_pure[$(i)] = $(F_pure[i])")
   end
 
   ΔF_mix = F_alloy - c[1]*F_pure[1] - c[2]*F_pure[2]
+  ΔU_mix_nfe = U_alloy_nfe - c[1]*U_pure_nfe[1] - c[2]*U_pure_nfe[2]
+  ΔU_mix_tb = U_alloy_tb - c[1]*U_pure_tb[1] - c[2]*U_pure_tb[2]
   println("ΔF_mix = $(ΔF_mix)")
+  println("ΔF_mix_nfe = $(ΔF_mix_nfe)")
+  println("ΔF_mix_tb = $(ΔF_mix_tb)")
 
 
 #

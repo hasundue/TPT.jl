@@ -178,20 +178,23 @@ for a in 1:M, b in 1:M
   println("Free-energy")
 
   F_alloy::Float64 = TPT.helmholtz(sys[a,b])
+  println("F_alloy = $(ΔF_alloy)")
+
   F_pure = Vector{Float64}(2)
 
   for i in 1:2
-    ahs = TPT.AHS(ρ = p[:ρ][i], σ = sys[a,b].ref.trial.σ[i])
-    wca = TPT.WCA(ahs, T)
+    hs = TPT.AHS(ρ = p[:ρ][i], σ = sys[a,b].ref.trial.σ[i])
+    w = TPT.WCA(hs, T)
 
-    pse = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
-    nfe = TPT.NFE(ahs, pse)
-    tb = TPT.WHTB(zd[i], rd[i])
-    nfetb = TPT.NFETB(nfe, tb)
+    pp = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
+    n = TPT.NFE(ahs, pp)
+    t = TPT.WHTB(zd[i], rd[i])
+    nt = TPT.NFETB(n, t)
 
-    s = TPT.TPTSystem(wca, nfetb)
+    s = TPT.TPTSystem(w, nt)
 
     F_pure[i] = TPT.helmholtz(s)
+    println("F_pure[$(i)] = $(F_pure[i])")
   end
 
   ΔF_mix = F_alloy - c[1]*F_pure[1] - c[2]*F_pure[2]

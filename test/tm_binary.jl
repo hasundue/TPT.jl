@@ -181,7 +181,7 @@ for a in 1:M, b in 1:M
   F_pure = Vector{Float64}(2)
 
   for i in 1:2
-    ahs = TPT.AHS(ρ = p[:ρ][i], σ = σ_wca[i])
+    ahs = TPT.AHS(ρ = p[:ρ][i], σ = sys[a,b].ref.trial.σ[i])
     wca = TPT.WCA(ahs, T)
 
     pse = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])

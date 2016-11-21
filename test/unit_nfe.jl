@@ -44,6 +44,8 @@ K1 = TPT.kinetic(sys1)
 S1_hs = TPT.entropy(sys1) - S1_eg
 F1_hs = -T*kB*S1_hs
 
+F1_total = TPT.helmholtz(sys1)
+
 #
 # Binary
 #

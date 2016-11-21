@@ -81,6 +81,8 @@ for a in 1:M, b in 1:M
   A = p[:X][a]
   B = p[:X][b]
 
+  println("$(A)-$(B):")
+
   # infomation about experimental data
   ndata = length(q_exp[a,b])
   q_min = q_exp[a,b][1]
@@ -118,6 +120,8 @@ for a in 1:M, b in 1:M
   #
   # PART-1. AHS: fitting S with additive hard-sphere
   #
+  println("AHS")
+
   function fopt(σ::Vector{Float64})::Float64
     ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c)
     S_ahs = TPT.structurefactor(ahs)
@@ -149,6 +153,8 @@ for a in 1:M, b in 1:M
   #
   # PART-2. AHS-WCA:
   #
+  println("AHS-WCA")
+
   zs = [p[:zs][a], p[:zs][b]]
   rc = [p[:rc][a], p[:rc][b]]
   pa = [p[:a][a], p[:a][b]]
@@ -165,6 +171,32 @@ for a in 1:M, b in 1:M
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb)
 # end
+
+  #
+  # PART-3. Free-energy of mixing by AHS-WCA
+  #
+  println("Free-energy")
+
+  F_alloy::Float64 = helmholtz(sys[a,b])
+  F_pure = Vector{Float64}(2)
+
+  for i in 1:2
+    ahs = TPT.AHS(ρ = p[:ρ][i], σ = σ_wca[i])
+    wca = TPT.WCA(ahs, T)
+
+    pse = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
+    nfe = TPT.NFE(ahs, pse)
+    tb = TPT.WHTB(zd[i], rd[i])
+    nfetb = TPT.NFETB(nfe, tb)
+
+    s = TPT.TPTSystem(wca, nfetb)
+
+    F_pure[i] = TPT.helmholtz(s)
+  end
+
+  ΔF_mix = F_alloy - c[1]*F_pure[1] - c[2]*F_pure[2]
+  println("ΔF_mix = $(ΔF_mix)")
+
 
 #
 # Output the results as graphs while creating DataFrame

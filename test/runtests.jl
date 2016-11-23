@@ -11,7 +11,7 @@ tests = [
   # "unit_nfetb.jl",
 
   # Investigational calculations
-  # "tm_optim.jl",
+  "tm_optim.jl",
   "tm_binary.jl"
 ]
 

@@ -33,6 +33,11 @@ g1 = TPT.paircorrelation(sys)[1,1]
 
 plot([g0, g1], 5, 20)
 
+S0 = TPT.structurefactor(sys.ref.trial)[1,1]
+S1 = TPT.structurefactor(sys)[1,1]
+
+plot([S0, S1], 0, 5, labels=["AHS" "LWCA"])
+
 @testset "Unit LWCA" begin
   @test isapprox(σ, 6.55, atol=1e-2)
 end

@@ -37,7 +37,6 @@ LWCA(trial::IndependentReferenceSystem, temp::Real) =
 immutable OptimizedLWCA{T <: IndependentReferenceSystem} <: AbstractWCA
   trial::T
   temp::Float64
-  Y::Array{Float64,2}
   C₁::Array{Float64,2}
   C₂::Array{Float64,2}
   K₁::Array{Float64,2}
@@ -154,7 +153,6 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
     i > j && continue
 
     opt = Optim.optimize(u[i,j], 0.5σ₀[i,j], 1.5σ₀[i,j])
-    show(opt)
     rmin[i,j] = rmin[j,i] =  Optim.minimizer(opt)
     umin =  Optim.minimum(opt)
 
@@ -197,8 +195,6 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
     σ = Optim.minimizer(res)::Vector{Float64}
   end
 
-  show(res)
-
   C₁ = Array{Float64,2}(N,N) # C-
   C₂ = Array{Float64,2}(N,N) # C+
   K₁ = Array{Float64,2}(N,N) # K-
@@ -219,7 +215,7 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
       -β * σᵢⱼ * u′_σ * exp(-β*u₀_σ) / (exp(-β*u₀_σ) - 1) + Y[i,j] + 2
   end
 
-  optlwca = OptimizedLWCA(ahs, T, Y, C₁, C₂, K₁, K₂)
+  optlwca = OptimizedLWCA(ahs, T, C₁, C₂, K₁, K₂)
   TPTSystem(optlwca, pert; kwargs...)
 end
 
@@ -249,7 +245,7 @@ function blipfunction(wca::OptimizedWCA)
 end
 
 function blipfunction(lwca::OptimizedLWCA)::Array{Function,2}
-  @attach(lwca, Y, C₁, C₂, K₁, K₂)
+  @attach(lwca, C₁, C₂, K₁, K₂)
 
   N = ncomp(lwca.trial)
 
@@ -349,7 +345,7 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
   N::Int = ncomp(wca)
   c::Vector{Float64} = composition(wca)
 
-  Sref::Array{Function,2} = structurefactor(wca.trial)
+  S₀::Array{Function,2} = structurefactor(wca.trial)
   σ::Array{Float64,2} = hsdiameter(wca.trial)
   ρ::Float64 = totalnumberdensity(wca)
   rmin::Array{Float64,2} = wca.rmin
@@ -370,7 +366,34 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
       ∫(r -> bs1(r) * sin(r*q) / (r*q) * r^2, rcut, σ[i,j]-ϵ, e=1e-3) +
       ∫(r -> bs2(r) * sin(r*q) / (r*q) * r^2, σ[i,j]+ϵ, rmin[i,j], e=1e-3)
 
-    S(q) = Sref[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * Sref[i,j](q) * B(q))
+    S(q) = S₀[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * S₀[i,j](q) * B(q))
+
+    ret[i,j] = ret[j,i] = S
+  end
+
+  return ret
+end
+
+function structurefactor(lwca::OptimizedLWCA)::Array{Function,2}
+  @attach(lwca, C₁, C₂, K₁, K₂)
+
+  N::Int = ncomp(lwca)
+  c::Vector{Float64} = composition(lwca)
+
+  S₀::Array{Function,2} = structurefactor(lwca.trial)
+  ρ::Float64 = totalnumberdensity(lwca)
+
+  ret = Array{Function,2}(N,N)
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    σ::Float64 = hsdiameter(lwca)[i,j]
+
+    B̃(q)::Float64 = -4π / factorial(3) * q*σ * sin(q*σ) / (q*σ) *
+                    ( σ*C₁[i,j] / K₁[i,j]^2 - σ*C₂[i,j] / K₂[i,j]^2 )
+
+    S(q) = S₀[i,j](q) / (1 - ρ * √(c[i]*c[j]) * S₀[i,j](q) * B̃(q))
 
     ret[i,j] = ret[j,i] = S
   end

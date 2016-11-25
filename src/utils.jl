@@ -87,13 +87,25 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
 end
 
 function spline(f::Function, a::Float64, b::Float64, N::Int; bc="error")
-  @assert a < b "invalid arguments"
+  spl = spline_spl(f, a, b, N, bc)
+
+  fspl(x::Real)::Float64 = spl(x)
+end
+
+function spline_derivative(f::Function, a::Float64, b::Float64, N::Int;
+                           bc="error")::Function
+  spl = spline_spl(f, a, b, N, bc)
+
+  f′spl(x::Real)::Float64 = derivative(spl, x)
+end
+
+function spline_spl(f::Function, a::Float64, b::Float64, N::Int,
+                    bc::AbstractString)::Spline1D
+  @assert a < b "invalid arguments for spline"
 
   Δx::Float64 = (b - a) / N
   𝐱::Vector{Float64} = collect(a : Δx : b)
   𝐲::Vector{Float64} = [f(x) for x in 𝐱]
 
-  spl = Spline1D(𝐱, 𝐲, k=3, bc=bc)
-
-  fs(x::Real)::Float64 = spl(x)
+  Spline1D(𝐱, 𝐲, k=3, bc=bc)
 end

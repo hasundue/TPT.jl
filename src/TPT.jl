@@ -33,8 +33,10 @@ export TPTSystem,
        packingfraction,
        totalpackingfraction,
        contactvalue,
+       contactgradient,
 
        # Perturbation
+       LennardJones,
        NFE,
        WHTB,
        NFETB,
@@ -70,6 +72,7 @@ include(joinpath("reference", "reference.jl"))
 include(joinpath("reference", "ahs.jl"))
 include(joinpath("reference", "wca.jl"))
 include(joinpath("perturbation", "nullpert.jl"))
+include(joinpath("perturbation", "lennardjones.jl"))
 include(joinpath("perturbation", "nfetb.jl"))
 include(joinpath("perturbation", "nfe.jl"))
 include(joinpath("perturbation", "ashcroft.jl"))

@@ -11,9 +11,15 @@ References:
 """
 
 immutable AHS <: IndependentReferenceSystem
+  approx::AbstractString # approximation
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
+  α::Float64 # α parameter for RFA approximation
 end # type
+
+function AHS(approx::AbstractString, σ::Vector{Float64}, ρ::Vector{Float64})
+  optimizealpha(AHS(approx, σ, ρ, 0.))
+end
 
 @doc doc"""
 AHS(; kwargs...)
@@ -35,7 +41,21 @@ You may use sigma, rho, or eta instead of σ, ρ, or η, respectively.
 """ ->
 function AHS(; kwargs...)
   keys, vals = expandkwargs(kwargs)
-  @assert 2 ≤ length(keys) ≤ 3 "wrong number of arguments"
+
+  # The type of approximation
+  if in(:approx, keys)
+    ind = findfirst(keys, :approx)
+    approx = vals[ind]
+
+    @assert in(approx, ["PY", "RFA"]) "unsuportted type of approximation for AHS"
+
+    deleteat!(keys, ind)
+    deleteat!(vals, ind)
+  else
+    approx = "PY"
+  end
+
+  @assert 2 ≤ length(keys) ≤ 3 "wrong number of arguments for AHS"
 
   if all(x -> !(typeof(x) <: Vector), vals) # one-component case
 
@@ -54,20 +74,19 @@ function AHS(; kwargs...)
       ρ = 6/π * η / σ^3
 
     else
-      error("invalid arguments")
+      error("invalid arguments for AHS")
     end # if
 
-    return AHS([σ], [ρ])
-
+    return AHS(approx, [σ], [ρ])
   else # Multi-component case
 
     if length(kwargs) == 2
-      @assert all(x-> typeof(x) <: Vector, vals) "invalid arguments"
+      @assert all(x-> typeof(x) <: Vector, vals) "invalid arguments for AHS"
       σ = vals[greekfind(keys, :σ)]
       ρ = vals[greekfind(keys, :ρ)]
 
     else
-      @assert greekin(:σ, keys) && greekin(:c, keys) "invalid arguments"
+      @assert greekin(:σ, keys) && greekin(:c, keys) "invalid arguments for AHS"
       σ = vals[greekfind(keys, :σ)]
       c = vals[findfirst(keys, :c)]
 
@@ -81,8 +100,9 @@ function AHS(; kwargs...)
       end
     end
 
-    @assert length(σ) == length(ρ) "invalid arguments"
-    return AHS(σ, ρ)
+    @assert length(σ) == length(ρ) "invalid arguments for AHS"
+
+    return AHS(approx, σ, ρ)
   end
 end
 
@@ -97,7 +117,7 @@ temperature(ahs::AHS)::Float64 = InvalTemp
 function hsdiameter(sys::AHS)::Array{Float64,2}
   N = ncomp(sys)
 
-  ret = Array{Float64}(N,N)
+  ret = Array{Float64,2}(N,N)
 
   for i in 1:N, j in 1:N
     if i == j
@@ -150,15 +170,49 @@ function contactvalue(ahs::AHS)::Array{Float64,2}
     for i = 1:N, j = 1:N ]
 end
 
+function contactgradient(ahs::AHS)::Array{Float64,2}
+  N::Int = ncomp(ahs)
+  σ::Array{Float64,2} = hsdiameter(ahs)
+  ρ::Vector{Float64} = numberdensity(ahs)
+  α::Float64 = ahs.α
+  g_σ::Array{Float64,2} = contactvalue(ahs)
+
+  ζ₂::Float64 = sum(ρ[i] * σ[i,i]^2 for i = 1:N)
+  ζ₃::Float64 = sum(ρ[i] * σ[i,i]^3 for i = 1:N)
+  η::Float64 = (π/6) * ζ₃
+  λ::Float64 = 2π / (1-η)
+  λ′::Float64 = π^2 * ζ₂ / (1-η)^2
+
+  L²::Array{Float64,2} =
+    [ 2π * α * σ[i,j] * g_σ[i,j] for i = 1:N, j = 1:N ]
+
+  L¹::Array{Float64,2} =
+    [ ( λ*σ[i,j] + λ′/2*σ[i,i]*σ[j,j] + (λ + λ′*σ[i,i])*α -
+        λ/2*σ[i,i]*sum(ρ[k]*σ[k,k]*L²[k,j] for k = 1:N) )
+      for i = 1:N, j = 1:N ]
+
+  g′::Array{Float64,2} =
+    if ahs.approx == "PY"
+      [ 1 / (2π*α*σ[i,j]) * L¹[i,j] for i in 1:N, j in 1:N ]
+    elseif ahs.approx == "RFA"
+      [ 1 / (2π*α*σ[i,j]) * (L¹[i,j] - L²[i,j]*(1/α + 1/σ[i,j]))
+        for i in 1:N, j in 1:N ]
+    else
+      error("unsupported type of approximation for AHS")
+    end
+end
+
 #
 # Pair correlation function in Laplace space
 # ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
 #
-function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
+function optimizealpha(ahs::AHS)::AHS
+  ahs.approx == "PY" && return ahs
+
   N::Int = ncomp(ahs)
   x::Vector{Float64} = composition(ahs)
   σ::Array{Float64,2} = hsdiameter(ahs)
-  ρ::Vector{Float64} = ahs.ρ
+  ρ::Vector{Float64} = numberdensity(ahs)
 
   # scalar constans
   ζ₁::Float64 = sum(ρ[i] * σ[i,i] for i = 1:N)
@@ -243,20 +297,16 @@ function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
     abs(χ - 1/χ⁻¹)
   end # fopt
 
-  #
-  # Numerically obtaine α
-  #
-
-  # heuristic boundary condition
-  σ_m::Float64 = mean(σ)
-  α_min::Float64 = 0
-  α_max::Float64 = 0.040 * σ_m / η
-  α_init::Float64 = (α_min + α_max) / 2
+  # heuristic initial and boundary condition
+  σ_m::Float64 = sum(x .* σ)
+  α_init::Float64 = 0.01 * σ_m / η
+  α_min::Float64 = 0.5 * α_init
+  α_max::Float64 = 2.5 * α_init
 
   opt = NLopt.Opt(:GN_DIRECT, 1)
   NLopt.min_objective!(opt, fopt)
   NLopt.stopval!(opt, 1e-9)
-  NLopt.xtol_abs!(opt, 5e-6)
+  NLopt.xtol_abs!(opt, 1e-5)
   NLopt.ftol_abs!(opt, 1e-12)
   NLopt.lower_bounds!(opt, [α_min])
   NLopt.upper_bounds!(opt, [α_max])
@@ -269,9 +319,57 @@ function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
   end
 
   #
-  # Calculate G(s)
+  # Refinement of α by local optimization
   #
-  fopt([α], []) # set Lⁿ for optimized α
+  # opt = NLopt.Opt(:LN_BOBYQA, 1)
+  # NLopt.min_objective!(opt, fopt)
+  # NLopt.xtol_abs!(opt, 1e-5)
+  # NLopt.lower_bounds!(opt, [0.99α])
+  # NLopt.upper_bounds!(opt, [1.01α])
+  #
+  # (fmin, xmin, res) = NLopt.optimize(opt, [α])
+  # α = xmin[1]
+
+  AHS(ahs.approx, ahs.σ, ahs.ρ, α)
+end # optimizealpha()
+
+#
+# Pair correlation function in Laplace space
+# ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
+#
+function paircorrelationlaplace(ahs::AHS)::Array{Function,2}
+  N::Int = ncomp(ahs)
+  x::Vector{Float64} = composition(ahs)
+  ρ::Vector{Float64} = numberdensity(ahs)
+  σ::Array{Float64,2} = hsdiameter(ahs)
+  g_σ::Array{Float64,2} = contactvalue(ahs)
+
+  # scalar constans
+  ζ₂::Float64 = sum(ρ[i] * σ[i,i]^2 for i = 1:N)
+  ζ₃::Float64 = sum(ρ[i] * σ[i,i]^3 for i = 1:N)
+  η::Float64 = (π/6) * ζ₃
+  λ::Float64 = 2π / (1-η)
+  λ′::Float64 = π^2 * ζ₂ / (1-η)^2
+
+  # auxiliary qunatities and functions
+  I::Array{Float64,2} = δ::Array{Float64,2} = eye(N)
+  ϕ₀(x::Complex{Float64}) = x^-1 * (1 - exp(-x))
+  ϕ₁(x::Complex{Float64}) = x^-2 * (1 - x - exp(-x))
+  ϕ₂(x::Complex{Float64}) = x^-3 * (1 - x + x^2/2 - exp(-x))
+
+  α::Float64 = ahs.α
+
+  L²::Array{Float64,2} =
+    [ 2π * α * σ[i,j] * g_σ[i,j] for i = 1:N, j = 1:N ]
+
+  L⁰::Array{Float64,2} =
+    [ ( λ + λ′*σ[j,j] + 2λ′*α - λ*sum(ρ[k]*σ[k,k]*L²[k,j] for k = 1:N) )
+      for i = 1:N, j = 1:N ]
+
+  L¹::Array{Float64,2} =
+    [ ( λ*σ[i,j] + λ′/2*σ[i,i]*σ[j,j] + (λ + λ′*σ[i,i])*α -
+        λ/2*σ[i,i]*sum(ρ[k]*σ[k,k]*L²[k,j] for k = 1:N) )
+      for i = 1:N, j = 1:N ]
 
   𝐋::Array{Function,2} =
     [ s::Complex{Float64} -> L⁰[i,j] + L¹[i,j]*s + L²[i,j]*s^2

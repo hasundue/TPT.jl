@@ -1,7 +1,11 @@
 """
 wca.jl
 
-WCA reference system
+WCA and LWCA reference system
+
+References:
+
+* A. Meyer et al. CHemical Physics 49 (1980 147-152)
 """
 
 abstract AbstractWCA <: DependentReferenceSystem
@@ -11,7 +15,8 @@ immutable WCA{T <: IndependentReferenceSystem} <: AbstractWCA
   temp::Float64 # temperature
 end
 
-WCA(trial::IndependentReferenceSystem, temp::Real) = WCA(trial, convert(Float64, temp))
+WCA(trial::IndependentReferenceSystem, temp::Real) =
+  WCA(trial, convert(Float64, temp))
 
 immutable OptimizedWCA{T <: IndependentReferenceSystem} <: AbstractWCA
   trial::T # optimized trial system
@@ -19,6 +24,24 @@ immutable OptimizedWCA{T <: IndependentReferenceSystem} <: AbstractWCA
   rmin::Array{Float64,2} # positionof the minimum of pair-potential
   repu::Array{Function,2} # repulsive part of pair-potential
   tail::Array{Function,2} # tail part of pair-potential
+end
+
+immutable LWCA{T <: IndependentReferenceSystem} <: AbstractWCA
+  trial::T
+  temp::Float64
+end
+
+LWCA(trial::IndependentReferenceSystem, temp::Real) =
+  LWCA(trial, convert(Float64, temp))
+
+immutable OptimizedLWCA{T <: IndependentReferenceSystem} <: AbstractWCA
+  trial::T
+  temp::Float64
+  Y::Array{Float64,2}
+  C₁::Array{Float64,2}
+  C₂::Array{Float64,2}
+  K₁::Array{Float64,2}
+  K₂::Array{Float64,2}
 end
 
 ncomp(wca::AbstractWCA)::Int = ncomp(wca.trial)
@@ -36,6 +59,8 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   β::Float64 = 1 / (kB * T)
 
   N::Int = ncomp(wca)
+  approx::AbstractString = wca.trial.approx
+  c::Vector{Float64} = composition(wca)
   σ₀::Array{Float64,2} = hsdiameter(wca.trial)
   ρ₀::Vector{Float64} = numberdensity(wca)
 
@@ -67,7 +92,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   I = Vector{Float64}(N)
 
   function fopt(σ::Vector{Float64}, g)::Float64
-    ahs = AHS(σ::Vector, ρ₀::Vector)
+    ahs = AHS(approx, σ::Vector, ρ₀::Vector)
     u_hs::Array{Function,2} = pairpotential(ahs)
     g_hs::Array{Function,2} = paircorrelation(ahs)
 
@@ -104,17 +129,106 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
   (fmin, σ_wca, ret) = NLopt.optimize(opt, σ_init)
 
-  ahs = AHS(σ_wca::Vector, ρ₀::Vector)
+  ahs = AHS(approx, σ_wca::Vector, ρ₀::Vector)
   optwca = OptimizedWCA(ahs, T, rmin, u₀, u₁)
 
   TPTSystem(optwca, pert; kwargs...)
 end
 
+function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
+  N::Int = ncomp(lwca)
+
+  T::Float64 = temperature(lwca)
+  β::Float64 = 1 / (kB * T)
+
+  approx::AbstractString = lwca.trial.approx
+  c::Vector{Float64} = composition(lwca)
+  σ₀::Array{Float64,2} = hsdiameter(lwca.trial)
+  ρ₀::Vector{Float64} = numberdensity(lwca.trial)
+  u::Array{Function,2} = pairpotential(pert)
+
+  u₀ = Array{Function,2}(N,N)
+  u′ = Array{Function,2}(N,N)
+  rmin = Array{Float64,2}(N,N)
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    opt = Optim.optimize(u[i,j], 0.5σ₀[i,j], 1.5σ₀[i,j])
+    show(opt)
+    rmin[i,j] = rmin[j,i] =  Optim.minimizer(opt)
+    umin =  Optim.minimum(opt)
+
+    u₀[i,j] = u₀[j,i] = r -> u[i,j](r) - umin
+
+    u′[i,j] = u′[j,i] = spline_derivative(u[i,i], 0.5σ₀[i,i], 1.5σ₀[i,i], 16)
+  end
+
+  # staffs to be optimized along with σ
+  ahs::typeof(lwca.trial) = lwca.trial
+  Y = Array{Float64,2}(N,N)
+  g₀ = Array{Float64,2}(N,N)
+  g′₀ = Array{Float64,2}(N,N)
+
+  function fopt(σ::Vector{Float64})::Float64
+    ahs = AHS(approx, σ, ρ₀)
+    g₀ = contactvalue(ahs)
+    g′₀ = contactgradient(ahs)
+
+    residue::Float64 = 0
+
+    for i in 1:N, j in 1:N
+      Y[i,j] = Y[j,i] = g′₀[i,j] / g₀[i,j] * σ[i]
+
+      i ≠ j && continue
+
+      residue += β*u₀[i,i](σ[i]) -
+                 log( (-2β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2) /
+                      (-β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2) )
+    end
+
+    return abs(residue)
+  end
+
+  if N == 1
+    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1,1], rmin[1,1], abs_tol=1e-6)
+    σ = [Optim.minimizer(res)]::Vector{Float64}
+  else
+    res = Optim.optimize(fopt, lwca.trial.σ, gtol_abs = 1e-6)
+    σ = Optim.minimizer(res)::Vector{Float64}
+  end
+
+  show(res)
+
+  C₁ = Array{Float64,2}(N,N) # C-
+  C₂ = Array{Float64,2}(N,N) # C+
+  K₁ = Array{Float64,2}(N,N) # K-
+  K₂ = Array{Float64,2}(N,N) # K+
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    σᵢⱼ::Float64 = (σ[i] + σ[j]) / 2
+    u₀_σ::Float64 = u₀[i,j](σᵢⱼ)
+    u′_σ::Float64 = u′[i,j](σᵢⱼ)
+
+    C₁[i,j] = C₁[j,i] = σᵢⱼ^2 * g₀[i,j] * exp(-β*u₀_σ)
+    C₂[i,j] = C₂[j,i] = σᵢⱼ^2 * g₀[i,j] * (exp(-β*u₀_σ) - 1)
+
+    K₁[i,j] = K₁[j,i] = -β*σᵢⱼ*u′_σ + Y[i,j] + 2
+    K₂[i,j] = K₂[j,i] =
+      -β * σᵢⱼ * u′_σ * exp(-β*u₀_σ) / (exp(-β*u₀_σ) - 1) + Y[i,j] + 2
+  end
+
+  optlwca = OptimizedLWCA(ahs, T, Y, C₁, C₂, K₁, K₂)
+  TPTSystem(optlwca, pert; kwargs...)
+end
+
 function blipfunction(wca::OptimizedWCA)
+  N = ncomp(wca.trial)
+
   T = temperature(wca)
   β = 1 / (kB * T)
 
-  N = ncomp(wca.trial)
   σ::Array{Float64,2} = hsdiameter(wca.trial)
   rmin::Array{Float64,2} = wca.rmin
 
@@ -129,6 +243,47 @@ function blipfunction(wca::OptimizedWCA)
     y_hs::Function = spline(g_hs[i,j], σ[i,i], rmin[i,i], 8, bc="extrapolate")
     B(r) = y_hs(r) * (exp(-β*u₀[i,j](r)) - exp(-β*u_hs[i,j](r)))
     ret[i,j] = ret[j,i] =  B
+  end
+
+  return ret
+end
+
+function blipfunction(lwca::OptimizedLWCA)::Array{Function,2}
+  @attach(lwca, Y, C₁, C₂, K₁, K₂)
+
+  N = ncomp(lwca.trial)
+
+  T = temperature(lwca)
+  β = 1 / (kB * T)
+
+  σ::Array{Float64,2} = hsdiameter(lwca)
+
+  ret = Array{Function,2}(N,N)
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    C₁′ = K₁[i,j] * C₁[i,j] / σ[i,j]
+    C₂′ = K₂[i,j] * C₂[i,j] / σ[i,j]
+
+    R₁ = σ[i,j] / K₁[i,j]
+    R₂ = - σ[i,j] / K₂[i,j]
+
+    function C(r)::Float64
+      if r < σ[i,j] - R₁
+        0
+      elseif r < σ[i,j]
+        C₁[i,j] + C₁′ * (r - σ[i,j])
+      elseif r < σ[i,j] + R₂
+        C₂[i,j] + C₂′ * (r - σ[i,j])
+      else
+        0
+      end
+    end
+
+    B(r)::Float64 = C(r) / r^2
+
+    ret[i,j] = ret[j,i] = B
   end
 
   return ret
@@ -164,6 +319,25 @@ function paircorrelation(wca::OptimizedWCA)
         g_hs[i,j](r)
       end
     end
+
+    ret[i,j] = ret[j,i] = g
+  end
+
+  return ret
+end
+
+function paircorrelation(lwca::OptimizedLWCA)::Array{Function,2}
+  N::Int = ncomp(lwca)
+
+  g_hs::Array{Function,2} = paircorrelation(lwca.trial)
+  B::Array{Function,2} = blipfunction(lwca)
+
+  ret = Array{Function,2}(N,N)
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    g(r)::Float64 = g_hs[i,j](r) + B[i,j](r)
 
     ret[i,j] = ret[j,i] = g
   end

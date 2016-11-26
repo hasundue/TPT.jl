@@ -1,8 +1,8 @@
 import TPT
-
 using Base.Test
-
 using Plots; pyplot()
+
+println("--- Unit NFETB ---")
 
 #
 # Liquid Fe
@@ -19,8 +19,9 @@ a = 0.333
 zd = 6.6
 rd = 1.512
 
-ahs = TPT.AHS(σ = 4.25, ρ = ρ)
+ahs = TPT.AHS(σ = 4.25, ρ = ρ, approx="RFA")
 wca = TPT.WCA(ahs, T)
+lwca = TPT.LWCA(ahs, T)
 
 nfe = TPT.NFE(ρ, zs, TPT.BretonnetSilbert(zs, rc, a))
 tb = TPT.WHTB(zd, rd)
@@ -28,6 +29,11 @@ nfetb = TPT.NFETB(nfe, tb)
 
 sys1 = TPT.TPTSystem(ahs, nfetb, T = 1833., m = 1.018e+5)
 sys2 = TPT.TPTSystem(wca, nfetb, m = 1.018e+5)
+sys3 = TPT.TPTSystem(lwca, nfetb, m = 1.018e+5)
+
+σ1 = TPT.hsdiameter(sys1.ref)[1,1]
+σ2 = TPT.hsdiameter(sys2.ref)[1,1]
+σ3 = TPT.hsdiameter(sys3.ref)[1,1]
 
 u_nfe = TPT.pairpotential(nfe)[1,1]
 u_tb = TPT.pairpotential(tb)[1,1]
@@ -37,10 +43,12 @@ plot([u_nfe, u_tb, u_tot], 2, 10, ylims = (-0.06, 0.1), labels = ["NFE" "TB" "To
 
 g1 = TPT.paircorrelation(sys1)[1,1]
 g2 = TPT.paircorrelation(sys2)[1,1]
-plot([g1, g2], 2, 10, labels = ["AHS" "WCA"])
+g3 = TPT.paircorrelation(sys3)[1,1]
+plot([g1, g2, g3], 2, 10, labels = ["AHS" "WCA" "LWCA"])
 
-y2 = TPT.blipfunction(sys2.ref)[1,1]
-plot(y2, 3, 6)
+B2 = TPT.blipfunction(sys2.ref)[1,1]
+B3 = TPT.blipfunction(sys3.ref)[1,1]
+plot([B2, B3], 3.0, 5.5, labels = ["WCA" "LWCA"])
 
 U1_ref = TPT.internal(sys1.ref)
 U2_ref = TPT.internal(sys2.ref)

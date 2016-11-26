@@ -5,7 +5,7 @@ WCA and LWCA reference system
 
 References:
 
-* A. Meyer et al. CHemical Physics 49 (1980 147-152)
+* A. Meyer et al. CHemical Physics 49 (1980) 147-152
 """
 
 abstract AbstractWCA <: DependentReferenceSystem
@@ -23,7 +23,6 @@ immutable OptimizedWCA{T <: IndependentReferenceSystem} <: AbstractWCA
   temp::Float64 # temperature
   rmin::Array{Float64,2} # positionof the minimum of pair-potential
   repu::Array{Function,2} # repulsive part of pair-potential
-  tail::Array{Function,2} # tail part of pair-potential
 end
 
 immutable LWCA{T <: IndependentReferenceSystem} <: AbstractWCA
@@ -51,7 +50,6 @@ temperature(wca::AbstractWCA)::Float64 = wca.temp
 hsdiameter(wca::AbstractWCA)::Array{Float64,2} = hsdiameter(wca.trial)
 
 repulsivepotential(wca::OptimizedWCA)::Array{Function,2} = wca.repu
-tailpotential(wca::AbstractWCA)::Array{Function,2} = wca.tail
 
 function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   T::Float64 = temperature(wca)
@@ -74,7 +72,6 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   rmin = Array{Float64,2}(N,N)
   u₀ = Array{Function,2}(N,N)
   u₀s = Array{Function,2}(N,N)
-  u₁ = Array{Function,2}(N,N)
 
   for i in 1:N, j in 1:N
     i > j && continue
@@ -85,7 +82,6 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
     u₀[i,j] = u₀[j,i] = r -> r < rmin[i,j] ? u[i,j](r) - umin : 0.0
     u₀s[i,j] = u₀s[j,i] = r -> r < rmin[i,j] ? us[i,j](r) - umin : 0.0
-    u₁[i,j] = u₁[i,j] = r -> r < rmin[i,j] ? umin : u[i,j](r)
   end
 
   I = Vector{Float64}(N)
@@ -129,7 +125,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   (fmin, σ_wca, ret) = NLopt.optimize(opt, σ_init)
 
   ahs = AHS(approx, σ_wca::Vector, ρ₀::Vector)
-  optwca = OptimizedWCA(ahs, T, rmin, u₀, u₁)
+  optwca = OptimizedWCA(ahs, T, rmin, u₀)
 
   TPTSystem(optwca, pert; kwargs...)
 end
@@ -156,7 +152,7 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
     rmin[i,j] = rmin[j,i] =  Optim.minimizer(opt)
     umin =  Optim.minimum(opt)
 
-    u₀[i,j] = u₀[j,i] = r -> u[i,j](r) - umin
+    u₀[i,j] = u₀[j,i] = r -> r < rmin[i,j] ? u[i,j](r) - umin : 0.0
 
     u′[i,j] = u′[j,i] = spline_derivative(u[i,i], 0.5σ₀[i,i], 1.5σ₀[i,i], 16)
   end
@@ -179,9 +175,14 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
 
       i ≠ j && continue
 
-      residue += β*u₀[i,i](σ[i]) -
-                 log( (-2β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2) /
-                      (-β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2) )
+      X = (-2β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2) /
+          (-β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2)
+
+      if X ≤ 0
+        residue += Inf
+      else
+        residue += β*u₀[i,i](σ[i]) - log(X)
+      end
     end
 
     return abs(residue)
@@ -215,8 +216,8 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
       -β * σᵢⱼ * u′_σ * exp(-β*u₀_σ) / (exp(-β*u₀_σ) - 1) + Y[i,j] + 2
   end
 
-  optlwca = OptimizedLWCA(ahs, T, C₁, C₂, K₁, K₂)
-  TPTSystem(optlwca, pert; kwargs...)
+  optwca = OptimizedWCA(ahs, T, rmin, u₀)
+  TPTSystem(optwca, pert; kwargs...)
 end
 
 function blipfunction(wca::OptimizedWCA)
@@ -309,8 +310,10 @@ function paircorrelation(wca::OptimizedWCA)
     function g(r)::Float64
       if r < rcut
         0
-      elseif r < rmin[i,j]
+      elseif r < σ₀[i,j]
         y_hs(r) * exp(-β*u₀s(r))
+      elseif r < rmin[i,j]
+        g_hs[i,j](r) * exp(-β*u₀s(r))
       else
         g_hs[i,j](r)
       end
@@ -363,8 +366,8 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
     bs2 = spline(b[i,j], σ[i,j]+ϵ, rmin[i,j], 8)
 
     B(q) =
-      ∫(r -> bs1(r) * sin(r*q) / (r*q) * r^2, rcut, σ[i,j]-ϵ, e=1e-3) +
-      ∫(r -> bs2(r) * sin(r*q) / (r*q) * r^2, σ[i,j]+ϵ, rmin[i,j], e=1e-3)
+      ∫(r -> bs1(r) * sin(r*q) / (r*q) * r^2, rcut, σ[i,j]-ϵ) +
+      ∫(r -> bs2(r) * sin(r*q) / (r*q) * r^2, σ[i,j]+ϵ, rmin[i,j])
 
     S(q) = S₀[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * S₀[i,j](q) * B(q))
 

@@ -52,7 +52,7 @@ function AHS(; kwargs...)
     deleteat!(keys, ind)
     deleteat!(vals, ind)
   else
-    approx = "PY"
+    approx = "RFA" # default
   end
 
   @assert 2 ≤ length(keys) ≤ 3 "wrong number of arguments for AHS"
@@ -206,7 +206,7 @@ end
 # Pair correlation function in Laplace space
 # ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
 #
-function optimizealpha(ahs::AHS)::AHS
+function optimizealpha(ahs::AHS)
   ahs.approx == "PY" && return ahs
 
   N::Int = ncomp(ahs)
@@ -247,7 +247,7 @@ function optimizealpha(ahs::AHS)::AHS
   H⁰ = Array{Float64,2}(N,N)
   H¹ = Array{Float64,2}(N,N)
 
-  function fopt(v::Vector{Float64}, g)::Float64
+  function fopt(v::Vector{Float64}, g::Vector)::Float64
     α = v[1]
 
     # express L² in terms of α
@@ -270,7 +270,9 @@ function optimizealpha(ahs::AHS)::AHS
       A¹[i,j] = Aᵢⱼ(1)
       A²[i,j] = Aᵢⱼ(2)
       A³[i,j] = Aᵢⱼ(3)
+    end
 
+    for i in 1:N, j in 1:N
       B⁰[i,j] = 1/2π * L²[i,j] + sum(A²[k,j] for k = 1:N) -
         sum(σ[i,k]*(α*δ[k,j] - A¹[k,j]) for k = 1:N) -
         sum(1/2 * σ[i,k]^2 * (δ[k,j] - A⁰[k,j]) for k = 1:N)
@@ -300,14 +302,16 @@ function optimizealpha(ahs::AHS)::AHS
   # heuristic initial and boundary condition
   σ_m::Float64 = sum(x .* σ)
   α_init::Float64 = 0.01 * σ_m / η
-  α_min::Float64 = 0.5 * α_init
-  α_max::Float64 = 2.5 * α_init
+  α_min::Float64 = 0.0 * α_init
+  α_max::Float64 = 3.0 * α_init
 
-  opt = NLopt.Opt(:GN_DIRECT, 1)
+  # opt = Optim.optimize(fopt, α_min, α_max, abs_tol=1e-6)
+  # show(opt)
+  # α::Float64 = Optim.minimizer(opt)
+
+  opt = NLopt.Opt(:LN_BOBYQA, 1)
   NLopt.min_objective!(opt, fopt)
-  NLopt.stopval!(opt, 1e-9)
-  NLopt.xtol_abs!(opt, 1e-5)
-  NLopt.ftol_abs!(opt, 1e-12)
+  NLopt.xtol_rel!(opt, 1e-4)
   NLopt.lower_bounds!(opt, [α_min])
   NLopt.upper_bounds!(opt, [α_max])
 
@@ -315,20 +319,8 @@ function optimizealpha(ahs::AHS)::AHS
   α::Float64 = xmin[1]
 
   if isapprox(α, α_min, rtol=1e-2) || isapprox(α, α_max, rtol=1e-2)
-    warn("α = $(α) is on a bound of optimization")
+    warn("α = $α is on a bound of optimization (α_init = $α_init)")
   end
-
-  #
-  # Refinement of α by local optimization
-  #
-  # opt = NLopt.Opt(:LN_BOBYQA, 1)
-  # NLopt.min_objective!(opt, fopt)
-  # NLopt.xtol_abs!(opt, 1e-5)
-  # NLopt.lower_bounds!(opt, [0.99α])
-  # NLopt.upper_bounds!(opt, [1.01α])
-  #
-  # (fmin, xmin, res) = NLopt.optimize(opt, [α])
-  # α = xmin[1]
 
   AHS(ahs.approx, ahs.σ, ahs.ρ, α)
 end # optimizealpha()

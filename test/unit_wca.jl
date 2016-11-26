@@ -4,6 +4,8 @@ using Base.Test
 
 using Plots; pyplot()
 
+println("--- Unit WCA ---")
+
 #
 # Single component: Liquid Na
 # Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
@@ -28,7 +30,7 @@ U = TPT.internal(sys)
 F = TPT.helmholtz(sys)
 
 @testset "Unit WCA" begin
-  @test isapprox(g_σ, 2.08, atol=1e-2)
+  @test isapprox(g_σ, 2.07, atol=1e-2)
   @test isapprox(S, 7.52, atol=1e-2)
   @test isapprox(U, -0.237, atol=1e-3)
   @test isapprox(F, -0.244, atol=1e-3)

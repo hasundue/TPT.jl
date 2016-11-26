@@ -114,8 +114,6 @@ Threads.@threads for k in 1:(M^2)
   #
   # PART-1. AHS: fitting S with additive hard-sphere
   #
-  println("AHS")
-
   function fopt(σ::Vector{Float64})::Float64
     ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c)
     S_ahs = TPT.structurefactor(ahs)
@@ -147,8 +145,6 @@ Threads.@threads for k in 1:(M^2)
   #
   # PART-2. AHS-WCA:
   #
-  println("AHS-WCA")
-
   m = [p[:m][a], p[:m][b]]
   zs = [p[:zs][a], p[:zs][b]]
   rc = [p[:rc][a], p[:rc][b]]
@@ -172,11 +168,9 @@ end
 #
 res = DataFrame(System = AbstractString[], T = Float64[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
 
-  #
-  # PART-3. Free-energy of mixing by AHS-WCA
-  #
-  println("Free-energy")
-
+#
+# PART-3. Free-energy of mixing by AHS-WCA
+#
 for a in 1:M, b in 1:M
   F_alloy::Float64 = TPT.helmholtz(sys[a,b])
   U_alloy_nfe::Float64 = TPT.internal(sys[a,b].ref, sys[a,b].pert.nfe)

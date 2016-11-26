@@ -2,6 +2,8 @@ import TPT
 
 using Base.Test
 
+println("--- Unit LWCA ---")
+
 #
 # Lennard-Jones
 # ref: A. Meyer et al. CHemical Physics 49 (1980) 147-152

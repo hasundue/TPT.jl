@@ -48,7 +48,7 @@ plot([g1, g2, g3], 2, 10, labels = ["AHS" "WCA" "LWCA"])
 
 B2 = TPT.blipfunction(sys2.ref)[1,1]
 B3 = TPT.blipfunction(sys3.ref)[1,1]
-plot([B2, B3], 3.0, 5.5, labels = ["WCA" "LWCA"])
+# plot([B2, B3], 3.0, 5.5, labels = ["WCA" "LWCA"])
 
 U1_ref = TPT.internal(sys1.ref)
 U2_ref = TPT.internal(sys2.ref)

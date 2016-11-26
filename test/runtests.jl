@@ -5,11 +5,11 @@
 
 tests = [
   # Unit tests
-  # "unit_ahs.jl",
-  # "unit_wca.jl",
-  # "unit_lwca.jl",
-  # "unit_nfe.jl",
-  # "unit_nfetb.jl",
+  "unit_ahs.jl",
+  "unit_wca.jl",
+  "unit_lwca.jl",
+  "unit_nfe.jl",
+  "unit_nfetb.jl",
 
   # Investigational calculations
   "tm_optim.jl",

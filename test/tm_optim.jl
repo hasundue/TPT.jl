@@ -44,12 +44,12 @@ p[:T] = convert(DataArrays.DataArray{Float64,1}, p[:T])
 # Prepare TPTSystem for each system
 #
 ahs = Vector{TPT.AHS}(N)
-wca = Vector{TPT.WCA}(N)
+wca = Vector{TPT.LWCA}(N)
 tb = Vector{TPT.WHTB}(N)
 
 for i in 1:N
     ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
-    wca[i] = TPT.WCA(ahs[i], p[:T][i])
+    wca[i] = TPT.LWCA(ahs[i], p[:T][i])
     tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i])
 end
 

@@ -76,7 +76,7 @@ F2 = TPT.helmholtz(sys2)
 
 @testset "Unit NFETB" begin
   @test isapprox(U1_ref, 0.00, atol=1e-2)
-  @test isapprox(U2_ref, 0.0108, atol=1e-4)
+  @test isapprox(U2_ref, 0.0105, atol=1e-4)
   @test isapprox(U1_nfe, 0.0271, atol=1e-4)
   @test isapprox(U2_nfe, 0.0187, atol=1e-4)
   @test isapprox(U1_tb, -0.166, atol=1e-3)

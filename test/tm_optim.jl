@@ -95,7 +95,7 @@ Threads.@threads for i in 1:N
   # rc[i] = xmin[1]
   # fopt(xmin)
 
-  result = Optim.optimize(fopt, 0.25, 0.40, rel_tol = 1e-3)
+  result = Optim.optimize(fopt, 0.25, 0.35, rel_tol = 1e-3)
   a[i] = Optim.minimizer(result)
   res[i] = Optim.minimum(result)
 

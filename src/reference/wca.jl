@@ -314,7 +314,7 @@ function paircorrelation(wca::OptimizedWCA)
 
     rcut = 0.5σ₀[i,j]
 
-    y_hs = spline(g_hs[i,j], σ₀[i,j], rmin[i,j], 4, bc="extrapolate")
+    y_hs = spline(g_hs[i,j], σ₀[i,j], 1.01rmin[i,j], 4, bc="extrapolate")
     u₀s = spline(u₀[i,j], rcut, rmin[i,j], 16)
 
     function g(r)::Float64

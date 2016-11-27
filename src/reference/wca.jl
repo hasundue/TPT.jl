@@ -170,13 +170,11 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
     residue::Float64 = 0
 
     for i in 1:N, j in 1:N
-      i > j && continue
+      i ≠ j && continue
 
       σᵢⱼ = hsdiameter(ahs)[i,j]
 
       Y[i,j] = Y[j,i] = g′₀[i,j] / g₀[i,j] * σᵢⱼ
-
-      i ≠ j && continue
 
       X = (-2β * σᵢⱼ * u′[i,j](σᵢⱼ) + Y[i,j] + 2) /
           (-β * σᵢⱼ * u′[i,i](σᵢⱼ) + Y[i,j] + 2)
@@ -184,8 +182,7 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
       if X ≤ 0
         residue += Inf
       else
-        A = i == j ? 1 : 2
-        residue += A * c[i]*c[j] * abs(β * u₀[i,i](σᵢⱼ) - log(X))
+        residue += abs(β * u₀[i,i](σᵢⱼ) - log(X))
       end
     end
 

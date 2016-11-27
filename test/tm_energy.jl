@@ -95,8 +95,9 @@ end
 
 default(xlabel = "x2", ylabel = "dFmix (kJ/mol)")
 
-for a in 1:M, b in 1:M
-  a ≥ b && continue
+for a in 5, b in 1:M
+  # a ≥ b && continue
+  a == b && continue
 
   A = p[:X][a]
   B = p[:X][b]

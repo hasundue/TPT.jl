@@ -132,6 +132,9 @@ end
 df = DataFrame(X = p[:X], a = round(a, 3), res = round(res, 1), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
 writetable(joinpath(resdir, "results.csv"), df)
 
+# Overwrite the parameters for the subsequent tests
+p[:a] = round(a, 3)
+writetable(joinpath("data", "parameters", "tm_optim.csv"), p)
 
 #
 # Save the graphical results as png files

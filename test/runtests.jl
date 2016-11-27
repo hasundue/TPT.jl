@@ -14,7 +14,7 @@ tests = [
   # Investigational calculations
   "tm_optim.jl",
   "tm_binary.jl",
-  "tm_binary.jl"
+  "tm_energy.jl"
 ]
 
 for test in tests

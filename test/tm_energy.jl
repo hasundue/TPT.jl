@@ -25,6 +25,7 @@ M = size(p, 1)
 
 # Results
 ΔFm = Array{Vector{Float64},2}(M,M)
+res = Array{Vector{TPT.TPTSystem},2}(M,M)
 
 Threads.@threads for b in 1:M
   # (a,b) = ind2sub((M,M), k)
@@ -32,11 +33,10 @@ Threads.@threads for b in 1:M
   # a ≥ b && continue
 
   a = 5
-  a == b && continue
 
   ΔFm[a,b] = Vector{Float64}(11)
 
-  T = (p[:T][a] + p[:T][b]) / 2
+  T = min( p[:T][a], p[:T][b] )
   σ = [ p[:σ][a], p[:σ][b] ]
   ρ = [ p[:ρ][a], p[:ρ][b] ]
 
@@ -48,6 +48,7 @@ Threads.@threads for b in 1:M
   rd = [ p[:rd][a], p[:rd][b] ]
 
   F = Vector{Float64}(11)
+  res[a,b] = Vector{TPT.TPTSystem}(11)
 
   # Pure components
   for i in 1:2
@@ -61,11 +62,10 @@ Threads.@threads for b in 1:M
 
     sys = TPT.TPTSystem(wca, nfetb, m = m[i])
 
-    if i == 1
-      F[1] = TPT.helmholtz(sys)
-    else
-      F[11] = TPT.helmholtz(sys)
-    end
+    j = i == 1 ? 1 : 11
+
+    F[j] = TPT.helmholtz(sys)
+    res[a,b][j] = sys
   end
 
   # Alloys
@@ -84,6 +84,7 @@ Threads.@threads for b in 1:M
 
     sys = TPT.TPTSystem(wca, nfetb, m = m)
 
+    res[a,b][i] = sys
     F[i] = TPT.helmholtz(sys)
   end
 
@@ -93,17 +94,27 @@ Threads.@threads for b in 1:M
   end
 end
 
-default(xlabel = "x2", ylabel = "dFmix (kJ/mol)")
-
 for a in 5, b in 1:M
   # a ≥ b && continue
-  a == b && continue
 
   A = p[:X][a]
   B = p[:X][b]
+  sys = res[a,b]::Vector{TPT.TPTSystem}
 
-  plot(0:0.1:1.0, 2625.5 * ΔFm[a,b])
-  png(joinpath(resdir, "$(A)-$(B)"))
+  default(xlabel = "x2")
+
+  # Free energy of mixing
+  plot(0:0.1:1.0, 2625.5 * ΔFm[a,b], ylabel = "dFmix (kJ/mol)")
+  png(joinpath(resdir, "$(A)-$(B)_F"))
+
+  # Effective hard-sphere diameter
+  σ₁ = [ sys[i].ref.trial.σ[1] for i in 2:10 ]
+  σ₁ = cat(1, [sys[1].ref.trial.σ[1]], σ₁, [NaN])
+  σ₂ = [ sys[i].ref.trial.σ[2] for i in 2:10 ]
+  σ₂ = cat(1, [NaN], σ₂, [sys[11].ref.trial.σ[1]])
+  plot(0:0.1:1, [σ₁, σ₂], labels = ["1" "2"],
+       ylabel = "Effective HS diameter (a.u.)")
+  png(joinpath(resdir, "$(A)-$(B)_sigma"))
 end
 
 @testset "TM Energy" begin

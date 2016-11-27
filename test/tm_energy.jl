@@ -26,10 +26,13 @@ M = size(p, 1)
 # Results
 ΔFm = Array{Vector{Float64},2}(M,M)
 
-Threads.@threads for k in 1:(M^2)
-  (a,b) = ind2sub((M,M), k)
+Threads.@threads for b in 1:M
+  # (a,b) = ind2sub((M,M), k)
 
-  a ≥ b && continue
+  # a ≥ b && continue
+
+  a = 5
+  a == b && continue
 
   ΔFm[a,b] = Vector{Float64}(11)
 

@@ -13,6 +13,7 @@ tests = [
 
   # Investigational calculations
   "tm_optim.jl",
+  "tm_binary.jl",
   "tm_binary.jl"
 ]
 

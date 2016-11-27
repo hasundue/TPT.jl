@@ -4,6 +4,8 @@ using Base.Test
 
 # using Plots; pyplot()
 
+println("--- Unit NFE ---")
+
 #
 # Single component: Liquid Na
 # Ref: I. H. Umar et al.: J. Phys. F: Metal Phys., Vol. 4 (1974), 1691-1706.
@@ -29,7 +31,6 @@ F1 = TPT.wnechar(nfe1)[1,1]
 
 u1 = TPT.pairpotential(nfe1)[1,1]
 # plot(u1, 2, 20, ylims = (-2.1e-3, 2.1e-3))
-u1(6.087)
 
 g = TPT.paircorrelation(sys1)[1,1]
 # plot(g, 1, 20)

@@ -2,6 +2,8 @@ import TPT
 
 using Base.Test
 
+using Plots; pyplot()
+
 println("--- Unit LWCA ---")
 
 #
@@ -20,7 +22,7 @@ u = TPT.pairpotential(lj)[1,1]
 plot(u, 5, 20, ylims=(-1e-3, 1e-3))
 
 ahs = TPT.AHS(σ = r₀, ρ = n, approx="RFA")
-lwca = TPT.LWCA(ahs, 86.6)
+lwca = TPT.LWCA(ahs, T)
 
 sys = TPT.TPTSystem(lwca, lj)
 

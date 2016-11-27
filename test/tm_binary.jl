@@ -75,8 +75,6 @@ Threads.@threads for k in 1:(M^2)
   A = p[:X][a]
   B = p[:X][b]
 
-  println("$(A)-$(B):")
-
   # infomation about experimental data
   ndata = length(q_exp[a,b])
   q_min = q_exp[a,b][1]
@@ -87,8 +85,8 @@ Threads.@threads for k in 1:(M^2)
   T = entry[1]
 
   # Initial guess for HS diameters and number density
-  σ₀::Vector{Float64} = [p[:σ][a], p[:σ][b]]
-  ρ₀::Float64 = (p[:ρ][a] + p[:ρ][b]) / 2
+  σ₀ = [p[:σ][a], p[:σ][b]]
+  ρ₀ = (p[:ρ][a] + p[:ρ][b]) / 2
 
   # Convert Faber-Ziman to Ashcroft-Langreth:
   S_exp[a,b] = Array{Any,2}(N,N)
@@ -157,7 +155,7 @@ Threads.@threads for k in 1:(M^2)
   nfe = TPT.NFE(ahs[a,b], pse)
   tb = TPT.WHTB(zd, rd)
   nfetb = TPT.NFETB(nfe, tb)
-  wca = TPT.WCA(ahs[a,b], T)
+  wca = TPT.LWCA(ahs[a,b], T)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb, m = m)
@@ -167,44 +165,6 @@ end
 # Prepare DataFrame for tabular output
 #
 res = DataFrame(System = AbstractString[], T = Float64[], ρ_ahs = Float64[], σ₁_ahs = Float64[], σ₂_ahs = Float64[], σ₁_wca = Float64[], σ₂_wca = Float64[])
-
-#
-# PART-3. Free-energy of mixing by AHS-WCA
-#
-for a in 1:M, b in 1:M
-  F_alloy::Float64 = TPT.helmholtz(sys[a,b])
-  U_alloy_nfe::Float64 = TPT.internal(sys[a,b].ref, sys[a,b].pert.nfe)
-  U_alloy_tb::Float64 = TPT.internal(sys[a,b].ref, sys[a,b].pert.tb)
-  println("F_alloy = $(F_alloy)")
-
-  F_pure = Vector{Float64}(2)
-  U_pure_nfe = Vector{Float64}(2)
-  U_pure_tb = Vector{Float64}(2)
-
-  for i in 1:2
-    hs = TPT.AHS(ρ = p[:ρ][i], σ = sys[a,b].ref.trial.σ[i])
-    w = TPT.WCA(hs, T)
-
-    pp = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
-    n = TPT.NFE(hs, pp)
-    t = TPT.WHTB(zd[i], rd[i])
-    nt = TPT.NFETB(n, t)
-
-    s = TPT.TPTSystem(w, nt, m = m[i])
-
-    U_pure_nfe[i] = TPT.internal(s.ref, s.pert.nfe)
-    U_pure_tb[i] = TPT.internal(s.ref, s.pert.tb)
-    F_pure[i] = TPT.helmholtz(s)
-    println("F_pure[$(i)] = $(F_pure[i])")
-  end
-
-  ΔF_mix = F_alloy - c[1]*F_pure[1] - c[2]*F_pure[2]
-  ΔU_mix_nfe = U_alloy_nfe - c[1]*U_pure_nfe[1] - c[2]*U_pure_nfe[2]
-  ΔU_mix_tb = U_alloy_tb - c[1]*U_pure_tb[1] - c[2]*U_pure_tb[2]
-  println("ΔF_mix = $(ΔF_mix)")
-  println("ΔU_mix_nfe = $(ΔU_mix_nfe)")
-  println("ΔU_mix_tb = $(ΔU_mix_tb)")
-end
 
 
 #

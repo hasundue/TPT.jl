@@ -158,7 +158,6 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
   end
 
   # staffs to be optimized along with σ
-  ahs::typeof(lwca.trial) = lwca.trial
   Y = Array{Float64,2}(N,N)
   g₀ = Array{Float64,2}(N,N)
   g′₀ = Array{Float64,2}(N,N)
@@ -171,50 +170,61 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
     residue::Float64 = 0
 
     for i in 1:N, j in 1:N
-      Y[i,j] = Y[j,i] = g′₀[i,j] / g₀[i,j] * σ[i]
+      i > j && continue
+
+      σᵢⱼ = hsdiameter(ahs)[i,j]
+
+      Y[i,j] = Y[j,i] = g′₀[i,j] / g₀[i,j] * σᵢⱼ
 
       i ≠ j && continue
 
-      X = (-2β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2) /
-          (-β*σ[i]*u′[i,i](σ[i]) + Y[i,i] + 2)
+      X = (-2β * σᵢⱼ * u′[i,j](σᵢⱼ) + Y[i,j] + 2) /
+          (-β * σᵢⱼ * u′[i,i](σᵢⱼ) + Y[i,j] + 2)
 
       if X ≤ 0
         residue += Inf
       else
-        residue += β*u₀[i,i](σ[i]) - log(X)
+        A = i == j ? 1 : 2
+        residue += A * c[i]*c[j] * abs(β * u₀[i,i](σᵢⱼ) - log(X))
       end
     end
 
-    return abs(residue)
+    return residue
   end
 
-  if N == 1
-    res = Optim.optimize(σ -> fopt([σ]), 0.5σ₀[1,1], rmin[1,1], abs_tol=1e-6)
-    σ = [Optim.minimizer(res)]::Vector{Float64}
-  else
-    res = Optim.optimize(fopt, lwca.trial.σ, gtol_abs = 1e-6)
-    σ = Optim.minimizer(res)::Vector{Float64}
-  end
+  σ₀v::Vector{Float64} = [ σ₀[i,i] for i in 1:N ]
+  rminv::Vector{Float64} = [ rmin[i,i] for i in 1:N ]
+  σ_init::Vector{Float64} = [ min(σ₀v[i], rminv[i]) for i in 1:N ]
 
-  C₁ = Array{Float64,2}(N,N) # C-
-  C₂ = Array{Float64,2}(N,N) # C+
-  K₁ = Array{Float64,2}(N,N) # K-
-  K₂ = Array{Float64,2}(N,N) # K+
+  opt = NLopt.Opt(:LN_BOBYQA, N)
+  NLopt.min_objective!(opt, (σ, g) -> fopt(σ))
+  NLopt.xtol_rel!(opt, 1e-4)
+  NLopt.lower_bounds!(opt, 0.5σ₀v)
+  NLopt.upper_bounds!(opt, rminv)
+  NLopt.initial_step!(opt, 0.01σ₀v)
 
-  for i in 1:N, j in 1:N
-    i > j && continue
+  (fmin, σ_wca, res) = NLopt.optimize(opt, σ_init)
+  ahs = AHS(approx, σ_wca, ρ₀)
 
-    σᵢⱼ::Float64 = (σ[i] + σ[j]) / 2
-    u₀_σ::Float64 = u₀[i,j](σᵢⱼ)
-    u′_σ::Float64 = u′[i,j](σᵢⱼ)
-
-    C₁[i,j] = C₁[j,i] = σᵢⱼ^2 * g₀[i,j] * exp(-β*u₀_σ)
-    C₂[i,j] = C₂[j,i] = σᵢⱼ^2 * g₀[i,j] * (exp(-β*u₀_σ) - 1)
-
-    K₁[i,j] = K₁[j,i] = -β*σᵢⱼ*u′_σ + Y[i,j] + 2
-    K₂[i,j] = K₂[j,i] =
-      -β * σᵢⱼ * u′_σ * exp(-β*u₀_σ) / (exp(-β*u₀_σ) - 1) + Y[i,j] + 2
-  end
+  # C₁ = Array{Float64,2}(N,N) # C-
+  # C₂ = Array{Float64,2}(N,N) # C+
+  # K₁ = Array{Float64,2}(N,N) # K-
+  # K₂ = Array{Float64,2}(N,N) # K+
+  #
+  # for i in 1:N, j in 1:N
+  #   i > j && continue
+  #
+  #   σᵢⱼ::Float64 = (σ[i] + σ[j]) / 2
+  #   u₀_σ::Float64 = u₀[i,j](σᵢⱼ)
+  #   u′_σ::Float64 = u′[i,j](σᵢⱼ)
+  #
+  #   C₁[i,j] = C₁[j,i] = σᵢⱼ^2 * g₀[i,j] * exp(-β*u₀_σ)
+  #   C₂[i,j] = C₂[j,i] = σᵢⱼ^2 * g₀[i,j] * (exp(-β*u₀_σ) - 1)
+  #
+  #   K₁[i,j] = K₁[j,i] = -β*σᵢⱼ*u′_σ + Y[i,j] + 2
+  #   K₂[i,j] = K₂[j,i] =
+  #     -β * σᵢⱼ * u′_σ * exp(-β*u₀_σ) / (exp(-β*u₀_σ) - 1) + Y[i,j] + 2
+  # end
 
   optwca = OptimizedWCA(ahs, T, rmin, u₀)
   TPTSystem(optwca, pert; kwargs...)
@@ -237,7 +247,7 @@ function blipfunction(wca::OptimizedWCA)
 
   for i in 1:N, j in 1:N
     i > j && continue
-    y_hs::Function = spline(g_hs[i,j], σ[i,i], rmin[i,i], 8, bc="extrapolate")
+    y_hs::Function = spline(g_hs[i,j], σ[i,j], rmin[i,j], 8, bc="extrapolate")
     B(r) = y_hs(r) * (exp(-β*u₀[i,j](r)) - exp(-β*u_hs[i,j](r)))
     ret[i,j] = ret[j,i] =  B
   end

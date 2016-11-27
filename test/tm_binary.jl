@@ -227,6 +227,9 @@ for a in 1:M, b in 1:M
   u_tb = TPT.pairpotential(sys[a,b].pert.tb)
   u_tot = TPT.pairpotential(sys[a,b].pert)
 
+  # Bᵢⱼ(r)
+  Bl = TPT.blipfunction(sys[a,b].ref)
+
   for (i,j) in [(1,1), (1,2), (2,2)]
     # Partial structure factors Sᵢⱼ(q)
     plot(q_exp[a,b], S_exp[a,b][i,j], label="exp")
@@ -252,6 +255,12 @@ for a in 1:M, b in 1:M
     σᵢⱼ = (σ_wca[i] + σ_wca[j]) / 2
     vline!([σᵢⱼ], label="HS")
     file = string("$(A)-$(B)_u", i, j)
+    path = joinpath(resdir, file)
+    png(path)
+
+    # blip function B(r)
+    plot(Bl[i,j], 3, 6, xlabel="r (a.u.)", ylabel="B(r)", label = "")
+    file = string("$(A)-$(B)_B", i, j)
     path = joinpath(resdir, file)
     png(path)
   end

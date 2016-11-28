@@ -36,7 +36,7 @@ Threads.@threads for b in 1:M
 
   ΔFm[a,b] = Vector{Float64}(11)
 
-  T = min( p[:T][a], p[:T][b] )
+  T = p[:T][a]
   σ = [ p[:σ][a], p[:σ][b] ]
   ρ = [ p[:ρ][a], p[:ρ][b] ]
 

@@ -146,7 +146,7 @@ for i in 1:N
   u_tb = TPT.pairpotential(sys[i].pert.tb)[1,1]
   u_tot = TPT.pairpotential(sys[i].pert)[1,1]
 
-  plot([u_nfe, u_tb, u_tot], 2, 10, ylims=(-0.05, 0.05),
+  plot([u_nfe, u_tb, u_tot], 2, 20, ylims=(-0.05, 0.05),
        labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
   vline!([σ_hs[i]], label="HS")
   png(joinpath(resdir, "$(i)-$(p[:X][i])_u"))

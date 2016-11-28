@@ -109,9 +109,9 @@ for a in 5, b in 1:M
 
   # Effective hard-sphere diameter
   σ₁ = [ TPT.hsdiameter(sys[i].ref)[1,1] for i in 2:10 ]
-  σ₁ = cat(1, [TPT.hsdiameter(sys[1].ref)[1,1]], σ₁, [NaN])
+  σ₁ = cat(1, [TPT.hsdiameter(sys[1].ref)[1]], σ₁, [NaN])
   σ₂ = [ TPT.hsdiameter(sys[i].ref)[2,2] for i in 2:10 ]
-  σ₂ = cat(1, [NaN], σ₂, [TPT.hsdiameter(sys[2].ref)[2,2]])
+  σ₂ = cat(1, [NaN], σ₂, [TPT.hsdiameter(sys[11].ref)[1]])
   plot(0:0.1:1, [σ₁, σ₂], labels = ["1" "2"],
        ylabel = "Effective HS diameter (a.u.)")
   png(joinpath(resdir, "$(A)-$(B)_sigma"))

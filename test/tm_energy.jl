@@ -57,7 +57,7 @@ Threads.@threads for b in 1:M
 
     pse = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
     nfe = TPT.NFE(ahs, pse)
-    tb = TPT.WHTB(zd, rd)
+    tb = TPT.WHTB(zd[i], rd[i])
     nfetb = TPT.NFETB(nfe, tb)
 
     sys = TPT.TPTSystem(wca, nfetb, m = m[i])

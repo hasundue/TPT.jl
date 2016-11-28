@@ -112,8 +112,8 @@ Threads.@threads for k in 1:(M^2)
   #
   # PART-1. AHS: fitting S with additive hard-sphere
   #
-  function fopt(x::Vector{Float64})::Float64
-    ahs = TPT.AHS(ρ = x[1]::Float64, σ = x[2:3]::Vector, c = c::Vector)
+  function fopt(σ::Vector{Float64})::Float64
+    ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c)
     S_ahs = TPT.structurefactor(ahs)
 
     R::Array{Float64,2} = zeros(N,N)
@@ -133,13 +133,12 @@ Threads.@threads for k in 1:(M^2)
     return norm(R)
   end
 
-  x₀ = cat(1, ρ₀, σ₀)
-  opt = Optim.optimize(fopt, x₀, g_tol = 1e-3)
+  opt = Optim.optimize(fopt, σ₀, g_tol = 1e-3)
 
-  (ρ_ahs, σ₁_ahs, σ₂_ahs) = Optim.minimizer(opt)
+  (σ₁_ahs, σ₂_ahs) = Optim.minimizer(opt)
   σ_ahs = [σ₁_ahs, σ₂_ahs]
 
-  ahs[a,b] = TPT.AHS(ρ = ρ_ahs::Float64, σ = σ_ahs::Vector, c = c::Vector)
+  ahs[a,b] = TPT.AHS(ρ = ρ₀, σ = σ_ahs, c = c::Vector)
 
   #
   # PART-2. AHS-WCA:

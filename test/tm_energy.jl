@@ -25,6 +25,8 @@ M = size(p, 1)
 
 # Results
 ΔFm = Array{Vector{Float64},2}(M,M)
+ΔUm = Array{Vector{Float64},2}(M,M)
+ΔSm = Array{Vector{Float64},2}(M,M)
 res = Array{Vector{TPT.TPTSystem},2}(M,M)
 
 Threads.@threads for b in 1:M
@@ -35,6 +37,8 @@ Threads.@threads for b in 1:M
   a = 5
 
   ΔFm[a,b] = Vector{Float64}(11)
+  ΔUm[a,b] = Vector{Float64}(11)
+  ΔSm[a,b] = Vector{Float64}(11)
 
   T = p[:T][a]
   σ = [ p[:σ][a], p[:σ][b] ]
@@ -48,28 +52,11 @@ Threads.@threads for b in 1:M
   rd = [ p[:rd][a], p[:rd][b] ]
 
   F = Vector{Float64}(11)
+  U = Vector{Float64}(11)
+  S = Vector{Float64}(11)
   res[a,b] = Vector{TPT.TPTSystem}(11)
 
-  # Pure components
-  for i in 1:2
-    ahs = TPT.AHS(ρ = ρ[i], σ = σ[i], approx = "RFA")
-    wca = TPT.LWCA(ahs, T)
-
-    pse = TPT.BretonnetSilbert(zs[i], rc[i], pa[i])
-    nfe = TPT.NFE(ahs, pse)
-    tb = TPT.WHTB(zd[i], rd[i])
-    nfetb = TPT.NFETB(nfe, tb)
-
-    sys = TPT.TPTSystem(wca, nfetb, m = m[i])
-
-    j = i == 1 ? 1 : 11
-
-    F[j] = TPT.helmholtz(sys)
-    res[a,b][j] = sys
-  end
-
-  # Alloys
-  for i in 2:10
+  for i in 1:11
     x₂ = (i-1) / 10
 
     ρ₀ = (1-x₂) * ρ[1] + x₂ * ρ[2]
@@ -86,11 +73,15 @@ Threads.@threads for b in 1:M
 
     res[a,b][i] = sys
     F[i] = TPT.helmholtz(sys)
+    U[i] = TPT.internal(sys)
+    S[i] = TPT.entropy(sys)
   end
 
   for i in 1:11
     x₂ = (i-1) / 10
     ΔFm[a,b][i] = F[i] - (1-x₂)*F[1] - x₂*F[11]
+    ΔUm[a,b][i] = U[i] - (1-x₂)*U[1] - x₂*U[11]
+    ΔSm[a,b][i] = S[i] - (1-x₂)*S[1] - x₂*S[11]
   end
 end
 

@@ -68,6 +68,7 @@ function kinetic(sys::TPTSystem)::Float64
 end
 
 function entropy(sys::TPTSystem)::Float64
+  N::Int = ncomp(sys)
   ρ::Float64 = totalnumberdensity(sys)
   c::Vector{Float64} = composition(sys)
   T::Float64 = temperature(sys)
@@ -76,11 +77,20 @@ function entropy(sys::TPTSystem)::Float64
   # Ideal gas entropy
   if m == Float64[] || T == 0.
     S_gas = 0
+    S_conf = 0
   else
-    S_gas = 5/2 + log((prod(m.^c) * kB*T / 2π)^(3/2) / ρ)
-  end
+    P = 1
+    S_conf = 0
 
-  S_conf = - sum(c .* log(c)) # configurational entropy
+    for i in 1:N
+      if c[i] > 0
+        P *= m[i]^c[i]
+        S_conf -= c[i]*log(c[i])
+      end
+    end
+
+    S_gas = 5/2 + log((P * kB*T / 2π)^(3/2) / ρ)
+  end
 
   S_ref = entropy(sys.ref) # reference system entropy
   S_pert = entropy(sys.pert, sys.ref, T) # perturbation entropy

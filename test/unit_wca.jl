@@ -32,6 +32,6 @@ F = TPT.helmholtz(sys)
 @testset "Unit WCA" begin
   @test isapprox(g_σ, 2.07, atol=1e-2)
   @test isapprox(S, 7.52, atol=1e-2)
-  @test isapprox(U, -0.237, atol=1e-3)
-  @test isapprox(F, -0.244, atol=1e-3)
+  @test isapprox(U, -0.238, atol=1e-3)
+  @test isapprox(F, -0.245, atol=1e-3)
 end

@@ -45,7 +45,7 @@ Threads.@threads for b in 1:M
   A = 5
 
   # Temperature
-  T::Float64 = p[:T][A]
+  T = float(p[:T][A])
 
   # The other parameters
   for x in [:σ, :ρ, :m, :zs, :rc, :a, :zd, :rd]

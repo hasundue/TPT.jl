@@ -69,9 +69,9 @@ end
 
 function entropy(sys::TPTSystem)::Float64
   T::Float64 = temperature(sys)
-  
+
   S_gas = entropy_gas(sys)
-  S_gas = entropy_conf(sys)
+  S_conf = entropy_conf(sys)
   S_ref = entropy(sys.ref) # reference system entropy
   S_pert = entropy(sys.pert, sys.ref, T) # perturbation entropy
 

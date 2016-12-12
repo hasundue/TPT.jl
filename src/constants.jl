@@ -15,3 +15,4 @@ const Q_MAX = 10.
 
 # other internal constants
 const InvalTemp = -1.
+const InvalMass = Float64[]

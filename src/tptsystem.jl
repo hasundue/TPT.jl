@@ -68,6 +68,15 @@ function kinetic(sys::TPTSystem)::Float64
 end
 
 function entropy(sys::TPTSystem)::Float64
+  S_gas = entropy_gas(sys)
+  S_gas = entropy_conf(sys)
+  S_ref = entropy(sys.ref) # reference system entropy
+  S_pert = entropy(sys.pert, sys.ref, T) # perturbation entropy
+
+  S = S_gas + S_conf + S_ref + S_pert
+end
+
+function entropy_gas(sys::TPTSystem)::Float64
   N::Int = ncomp(sys)
   ρ::Float64 = totalnumberdensity(sys)
   c::Vector{Float64} = composition(sys)
@@ -75,35 +84,42 @@ function entropy(sys::TPTSystem)::Float64
   m::Vector{Float64} = mass(sys)
 
   # Ideal gas entropy
-  if m == Float64[] || T == 0.
-    S_gas = 0
-    S_conf = 0
+  if m == InvalMass || T == InvalTemp
+    return S = 0
   else
-    P = 1
-    S_conf = 0
-
+    P::Float64 = 1
     for i in 1:N
       if c[i] > 0
         P *= m[i]^c[i]
-        S_conf -= c[i]*log(c[i])
       end
     end
-
-    S_gas = 5/2 + log((P * kB*T / 2π)^(3/2) / ρ)
+    return S = 5/2 + log((P * kB*T / 2π)^(3/2) / ρ)
   end
+end
 
-  S_ref = entropy(sys.ref) # reference system entropy
-  S_pert = entropy(sys.pert, sys.ref, T) # perturbation entropy
+function entropy_conf(sys::TPTSystem)::Float64
+  N::Int = ncomp(sys)
+  c::Vector{Float64} = composition(sys)
+  T::Float64 = temperature(sys)
 
-  S = S_gas + S_conf + S_ref + S_pert
+  if T == InvalTemp
+    return S = 0
+  else
+    S::Float64 = 0
+    for i in 1:N
+      if c[i] > 0
+        S -= c[i]*log(c[i])
+      end
+    end
+    return S
+  end
 end
 
 function internal(sys::TPTSystem)::Float64
-  U_ref = internal(sys.ref)
   U_pair = internal(sys.ref, sys.pert)
   U_pert = internal(sys.pert, sys.ref)
 
-  U = U_ref + U_pair + U_pert
+  U = U_pair + U_pert
 end
 
 function helmholtz(sys::TPTSystem)::Float64

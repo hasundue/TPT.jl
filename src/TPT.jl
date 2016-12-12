@@ -21,6 +21,8 @@ export TPTSystem,
        # Thermodynamic properties
        kinetic,
        entropy,
+       entropy_gas,
+       entropy_conf,
        internal,
        helmholtz,
 

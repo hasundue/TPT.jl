@@ -49,7 +49,8 @@ Threads.@threads for B in 1:M
 
   # The other parameters
   for x in [:σ, :ρ, :m, :zs, :rc, :a, :zd, :rd]
-    @eval $x = [ $(p[x][A]), $(p[x][B]) ]
+    v = :[ p[x][$A], p[x][$B] ]
+    @eval $x = $v
   end
 
   res[A,B] = Vector{TPT.TPTSystem}(11)

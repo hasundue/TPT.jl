@@ -68,6 +68,8 @@ function kinetic(sys::TPTSystem)::Float64
 end
 
 function entropy(sys::TPTSystem)::Float64
+  T::Float64 = temperature(sys)
+  
   S_gas = entropy_gas(sys)
   S_gas = entropy_conf(sys)
   S_ref = entropy(sys.ref) # reference system entropy

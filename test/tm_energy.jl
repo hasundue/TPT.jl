@@ -37,7 +37,7 @@ for E in enr
   @eval $(ΔE) = Array{Vector{Float64},2}(M,M)
 end
 
-Threads.@threads for b in 1:M
+Threads.@threads for B in 1:M
   # (A,B) = ind2sub((M,M), k)
 
   # a ≥ b && continue
@@ -115,7 +115,7 @@ for A in 5, B in 1:M
   X₂ = p[:X][B]
   sys = res[A,B]::Vector{TPT.TPTSystem}
 
-  T::Float64 = p[:T][A]
+  T = p[:T][A]
 
   # settings for plots
   default(xlabel="x($X₂)", ylabel="Energy of mixing (kJ/mol)", ylims=())

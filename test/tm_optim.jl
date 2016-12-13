@@ -158,8 +158,7 @@ for i in 1:N
   g_hs = TPT.paircorrelation(ahs[i])[1,1]
   g_wca = TPT.paircorrelation(sys[i])[1,1]
 
-  # plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)")
-  plot(g_hs, 2, 20, label="HS", xlabel="r (a.u.)", ylabel="g(r)")
+  plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)")
   plot!(g_exp[i], label="exp", xlims=(2,20))
   png(joinpath(resdir, "$(i)-$(p[:X][i])_g"))
 end

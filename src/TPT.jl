@@ -56,6 +56,9 @@ export TPTSystem,
        localfiled,
        wnechar,
 
+       # TB
+       bandwidth,
+
        # utils
        spline,
 

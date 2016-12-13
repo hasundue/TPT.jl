@@ -130,6 +130,8 @@ function hsdiameter(sys::AHS)::Array{Float64,2}
   return ret
 end
 
+cutoffradius(ahs::AHS)::Array{Float64,2} = hsdiameter(ahs)
+
 function pairpotential(ahs::AHS)::Array{Function,2}
   N = ncomp(ahs)
   σ = hsdiameter(ahs)

@@ -99,6 +99,11 @@ function spline_derivative(f::Function, a::Float64, b::Float64, N::Int;
   f′spl(x::Real)::Float64 = derivative(spl, x)
 end
 
+function spline_integral(f::Function, a::Float64, b::Float64, N::Int)::Float64
+  spl = spline_spl(f, a, b, N, "zero")
+  integrate(spl, a, b)
+end
+
 function spline_spl(f::Function, a::Float64, b::Float64, N::Int,
                     bc::AbstractString)::Spline1D
   @assert a < b "invalid arguments for spline"

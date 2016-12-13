@@ -48,6 +48,7 @@ totalnumberdensity(wca::AbstractWCA)::Float64 = totalnumberdensity(wca.trial)
 composition(wca::AbstractWCA)::Vector{Float64} = composition(wca.trial)
 temperature(wca::AbstractWCA)::Float64 = wca.temp
 hsdiameter(wca::AbstractWCA)::Array{Float64,2} = hsdiameter(wca.trial)
+cutoffradius(wca::AbstractWCA)::Array{Float64,2} = hsdiameter(wca.trial) / 2
 
 repulsivepotential(wca::OptimizedWCA)::Array{Function,2} = wca.repu
 

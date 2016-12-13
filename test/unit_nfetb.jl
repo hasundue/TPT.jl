@@ -45,7 +45,7 @@ plot([u_nfe, u_tb, u_tot], 2, 10, ylims = (-0.06, 0.1),
 g1 = TPT.paircorrelation(sys1)[1,1]
 g2 = TPT.paircorrelation(sys2)[1,1]
 g3 = TPT.paircorrelation(sys3)[1,1]
-plot([g1, g2, g3], 2, 10, labels = ["AHS" "WCA" "LWCA"])
+plot([g1, g2, g3], 2, 10, labels = ["AHS" "WCA" "LWCA"], ylims=:auto)
 
 B2 = TPT.blipfunction(sys2.ref)[1,1]
 B3 = TPT.blipfunction(sys3.ref)[1,1]
@@ -83,18 +83,18 @@ F2 = TPT.helmholtz(sys2)
   @test isapprox(Wd2, 0.230, atol=1e-3)
   @test isapprox(U1_ref, 0.00, atol=1e-2)
   @test isapprox(U2_ref, 0.0105, atol=1e-4)
-  @test isapprox(U1_nfe, 0.0271, atol=1e-4)
-  @test isapprox(U2_nfe, 0.0187, atol=1e-4)
-  @test isapprox(U1_tb, -0.166, atol=1e-3)
-  @test isapprox(U2_tb, -0.171, atol=1e-3)
-  @test isapprox(U1_pair, -0.139, atol=1e-3)
-  @test isapprox(U2_pair, -0.147, atol=1e-3)
+  @test isapprox(U1_nfe, 0.0249, atol=1e-4)
+  @test isapprox(U2_nfe, 0.0312, atol=1e-4)
+  @test isapprox(U1_tb, -0.162, atol=1e-3)
+  @test isapprox(U2_tb, -0.163, atol=1e-3)
+  @test isapprox(U1_pair, -0.137, atol=1e-3)
+  @test isapprox(U2_pair, -0.131, atol=1e-3)
   @test isapprox(U1_es, -0.708, atol=1e-3)
   @test isapprox(U2_es, -0.708, atol=1e-3)
-  @test isapprox(U1, -0.847, atol=1e-3)
-  @test isapprox(U2, -0.855, atol=1e-3)
+  @test isapprox(U1, -0.845, atol=1e-3)
+  @test isapprox(U2, -0.839, atol=1e-3)
   @test isapprox(S1, 10.9, atol=1e-1)
   @test isapprox(S2, 10.5, atol=1e-1)
-  @test isapprox(F1, -0.901, atol=1e-3)
-  @test isapprox(F2, -0.907, atol=1e-3)
+  @test isapprox(F1, -0.900, atol=1e-3)
+  @test isapprox(F2, -0.892, atol=1e-3)
 end

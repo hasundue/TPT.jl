@@ -490,25 +490,3 @@ end
 function internal(ahs::AHS)::Float64
   U = 0
 end
-
-# Perturbation-dependent part of internal energy
-function internal(ahs::AHS, pert::Perturbation)::Float64
-  N = ncomp(ahs)
-  ρ = totalnumberdensity(ahs)
-  c = composition(ahs)
-  σ = hsdiameter(ahs)
-  g = paircorrelation(ahs)
-  u = pairpotential(pert)
-
-  U::Float64 = 0
-
-  for i in 1:N, j in 1:N
-    i > j && continue
-    a = i == j ? 1 : 2
-    us = spline(u[i,j], σ[i,j], R_MAX, 32)
-    gs = spline(g[i,j], σ[i,j], R_MAX, 32)
-    U += a * 2π*ρ * c[i]*c[j] * ∫(r -> us(r)*gs(r)*r^2, σ[i,j], R_MAX)
-  end
-
-  U
-end

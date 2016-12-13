@@ -453,32 +453,32 @@ end
 
 # Perturbation-dependent part of internal energy
 # Ref: N. E. Dubinin et al.: Thermochimica Acta, 518 (2011) 9-12.
-function internal(wca::OptimizedWCA, pert::Perturbation)::Float64
-  N::Int = ncomp(wca)
-  c::Vector{Float64} = composition(wca)
-  hs::IndependentReferenceSystem = wca.trial
-  σ::Array{Float64,2} = hsdiameter(hs)
-  rmin::Array{Float64,2} = wca.rmin
-  ρ::Float64 = totalnumberdensity(wca)
-  u::Array{Function,2} = pairpotential(pert)
-  u₀::Array{Function,2} = repulsivepotential(wca)
-  g_hs::Array{Function,2} = paircorrelation(hs)
-
-  U::Float64 = 0
-
-  for i in 1:N, j in 1:N
-    i > j && continue
-
-    a = i == j ? 1 : 2
-    A = a * 2π*ρ * c[i]*c[j]
-
-    us = spline(u[i,j], σ[i,j], R_MAX, 32)
-    u₀s = spline(u₀[i,j], σ[i,j], rmin[i,j], 16)
-    gs_hs = spline(g_hs[i,j], σ[i,j], R_MAX, 32)
-
-    U += A * ∫(r -> us(r)*gs_hs(r)*r^2, σ[i,j], R_MAX)
-    U -= A * ∫(r -> u₀s(r)*gs_hs(r)*r^2, σ[i,j], rmin[i,j])
-  end
-
-  return U
-end
+# function internal(wca::OptimizedWCA, pert::Perturbation)::Float64
+#   N::Int = ncomp(wca)
+#   c::Vector{Float64} = composition(wca)
+#   hs::IndependentReferenceSystem = wca.trial
+#   σ::Array{Float64,2} = hsdiameter(hs)
+#   rmin::Array{Float64,2} = wca.rmin
+#   ρ::Float64 = totalnumberdensity(wca)
+#   u::Array{Function,2} = pairpotential(pert)
+#   u₀::Array{Function,2} = repulsivepotential(wca)
+#   g_hs::Array{Function,2} = paircorrelation(hs)
+#
+#   U::Float64 = 0
+#
+#   for i in 1:N, j in 1:N
+#     i > j && continue
+#
+#     a = i == j ? 1 : 2
+#     A = a * 2π*ρ * c[i]*c[j]
+#
+#     us = spline(u[i,j], σ[i,j], R_MAX, 32)
+#     u₀s = spline(u₀[i,j], σ[i,j], rmin[i,j], 16)
+#     gs_hs = spline(g_hs[i,j], σ[i,j], R_MAX, 32)
+#
+#     U += A * ∫(r -> us(r)*gs_hs(r)*r^2, σ[i,j], R_MAX)
+#     U -= A * ∫(r -> u₀s(r)*gs_hs(r)*r^2, σ[i,j], rmin[i,j])
+#   end
+#
+#   return U
+# end

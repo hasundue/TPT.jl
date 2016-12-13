@@ -70,13 +70,14 @@ Threads.@threads for B in 1:M
     x₂ = (i-1) / 10
 
     ρ₀ = (1-x₂)*ρ[A,B][1] + x₂*ρ[A,B][2]
+    c = [1-x₂, x₂]
 
-    ahs = TPT.AHS(ρ = ρ₀, σ = σ[A,B], c = [1-x₂, x₂], approx = "RFA")
+    ahs = TPT.AHS(ρ = ρ₀, σ = σ[A,B], c = c, approx = "RFA")
     wca = TPT.LWCA(ahs, T[A,B])
 
     pse = TPT.BretonnetSilbert(zs[A,B], rc[A,B], a[A,B])
     nfe = TPT.NFE(ahs, pse)
-    tb = TPT.WHTB(zd[A,B], rd[A,B])
+    tb = TPT.WHTB(zd[A,B], rd[A,B], c)
     nfetb = TPT.NFETB(nfe, tb)
 
     sys = TPT.TPTSystem(wca, nfetb, m = m[A,B])

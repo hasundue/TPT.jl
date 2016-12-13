@@ -26,7 +26,7 @@ N = size(p, 1) # number of elements
 g_exp = Vector{Vector{Tuple{Float64,Float64}}}(N)
 for i in 1:N
     elem = p[:X][i]
-    T = p[:T][i]
+    T = convert(Int, p[:T][i])
 
     data = readtable(joinpath("data", "rdf", "$(elem)$(T).csv"))
 

@@ -4,7 +4,6 @@ using Base.Test
 
 using DataFrames
 using Optim
-using Dierckx
 using Plots; pyplot()
 
 println("--- TM Energy ---")
@@ -87,6 +86,7 @@ Threads.@threads for B in 1:M
     U_nfe[A,B][i] = TPT.internal(sys.ref, sys.pert.nfe)
     U_tb[A,B][i] = TPT.internal(sys.ref, sys.pert.tb)
     U_es[A,B][i] = TPT.internal(sys.pert, sys.ref)
+
     U[A,B][i] = U_nfe[A,B][i] + U_tb[A,B][i] + U_es[A,B][i]
 
     S_gas[A,B][i] = TPT.entropy_gas(sys)
@@ -94,8 +94,9 @@ Threads.@threads for B in 1:M
     S_ref[A,B][i] = TPT.entropy(sys.ref)
     S_nfe[A,B][i] = TPT.entropy(nfetb.nfe, sys.ref, T[A,B])
     S_tb[A,B][i] = TPT.entropy(nfetb.tb, sys.ref, T[A,B])
-    S[A,B][i] = S_gas[A,B][i] + S_conf[A,B][i] + S_ref[A,B][i] + S_nfe[A,B][i]
-                + S_tb[A,B][i]
+
+    S[A,B][i] = S_gas[A,B][i] + S_conf[A,B][i] + S_ref[A,B][i] +
+                S_nfe[A,B][i] + S_tb[A,B][i]
 
     K = TPT.kinetic(sys) # this can be omitted
 
@@ -143,7 +144,7 @@ for A in 5, B in 1:M
   end
 
   # Save the plot as png
-  png(joinpath(resdir, "$(X₁)-$(X₂)_F"))
+  png(joinpath(resdir, "$(A)-$(B)_$(X₁)-$(X₂)_F"))
 
   # Effective hard-sphere diameter
   σ₁ = [ TPT.hsdiameter(sys[i].ref)[1,1] for i in 1:11 ]
@@ -153,7 +154,7 @@ for A in 5, B in 1:M
   default(ylabel = "Effective HS diameter (a.u.)", ylims=(0.99σmin, 1.01σmax))
   plot(0:0.1:1, σ₁, label=X₁)
   plot!(0:0.1:1, σ₂, label=X₂)
-  png(joinpath(resdir, "$(X₁)-$(X₂)_σ"))
+  png(joinpath(resdir, "$(A)-$(B)_$(X₁)-$(X₂)_σ"))
 end
 
 @testset "TM Energy" begin

@@ -29,6 +29,8 @@ function TPTSystem(ref::ReferenceSystem, pseudo::PseudoPotential; kwargs...)
   TPTSystem(ref, nfe; kwargs...)
 end
 
+ncomp(nfe::NFE)::Int = length(nfe.pseudo.rc)
+
 function fermiwavenumber(nfe::NFE)::Float64
   kF = (3π^2 * nfe.z * nfe.ρ)^(1/3)
 end
@@ -104,6 +106,20 @@ function wnechar(nfe::NFE)::Array{Function,2}
   return ret
 end
 
+function coreradius(nfe::NFE)::Array{Float64,2}
+  N::Int = ncomp(nfe)
+  rc::Vector{Float64} = nfe.pseudo.rc
+
+  [ (rc[i] + rc[j]) / 2 for i in 1:N, j in 1:N ]
+end
+
+function cutoffradius(nfe::NFE)::Array{Float64,2}
+  10 * coreradius(nfe)
+end
+
+function hsdiameter_estimate(nfe::NFE)::Array{Float64,2}
+  3 * coreradius(nfe)
+end
 #
 # Effective pair-potential between ions including full Coulomb and indirect parts
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition (2004), 490
@@ -126,6 +142,49 @@ function pairpotential(nfe::NFE)::Array{Function,2}
     end
 
     ret[i,j] = ret[j,i] = u
+  end
+
+  return ret
+end
+
+function pairpotential_minimizer(nfe::NFE)::Array{Float64,2}
+  N::Int = length(nfe.z)
+  rc::Vector{Float64} = nfe.pseudo.rc
+  u::Array{Function,2} = pairpotential(nfe)
+
+  ret = Array{Float64,2}(N,N)
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    r̄c = (rc[i] + rc[j]) / 2
+
+    opt = Optim.optimize(u[i,j], 4*√r̄c, 8*√r̄c)
+    ret[i,j] = ret[j,i] =  Optim.minimizer(opt)
+  end
+
+  return ret
+end
+
+function pairpotential_derivative(nfe::NFE)::Array{Function,2}
+  ρ::Float64 = nfe.ρ
+  z::Vector{Float64} = nfe.pseudo.z
+
+  F::Array{Function,2} = wnechar(nfe)
+
+  N::Int = length(z)
+  ret = Array{Function,2}(N,N)
+
+  for i in 1:N, j in 1:N
+    i > j && continue
+
+    function u′(r)::Float64
+      Ft(r)::Float64 =
+        ∫(q -> F[i,j](q) * (cos(q*r)/r - sin(q*r)/(q*r^2)) * q^2, 0, Q_MAX)
+      - z[i]*z[j] / r^2 + 1 / (π^2*ρ) * Ft(r)
+    end
+
+    ret[i,j] = ret[j,i] = u′
   end
 
   return ret

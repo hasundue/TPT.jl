@@ -23,12 +23,14 @@ end
 
 # pairwise contribution to internal energy
 function internal(ref::ReferenceSystem, pert::Perturbation)::Float64
-  N = ncomp(ref)
-  ρ = totalnumberdensity(ref)
-  c = composition(ref)
-  rcut = cutoffradius(ref)
-  g = paircorrelation(ref)
-  u = pairpotential(pert)
+  N::Int = ncomp(ref)
+  ρ::Float64 = totalnumberdensity(ref)
+  c::Vector{Float64} = composition(ref)
+  g::Array{Function,2} = paircorrelation(ref)
+  rcore::Array{Float64,2} = emptyradius(ref)
+
+  u::Array{Function,2} = pairpotential(pert)
+  rcut::Array{Float64,2} = cutoffradius(pert)
 
   U::Float64 = 0
 
@@ -36,9 +38,9 @@ function internal(ref::ReferenceSystem, pert::Perturbation)::Float64
     i > j && continue
     n = i == j ? 1 : 2
 
-    f(r) = u[i,j](r)*g[i,j](r)*r^2
-    I = spline_integral(f, rcut[i,j], R_MAX, 128)
-    U += 2π*ρ * n*c[i]*c[j] * I
+    gs = spline(g[i,j], rcore[i,j], rcut[i,j], 32)
+    us = spline(u[i,j], rcore[i,j], rcut[i,j], 32)
+    U += 2π*ρ * n*c[i]*c[j] * ∫(r -> us(r)*gs(r)*r^2, rcore[i,j], rcut[i,j])
   end
 
   return U

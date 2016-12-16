@@ -30,7 +30,8 @@ F1 = TPT.wnechar(nfe1)[1,1]
 # plot(q -> 27.21*F(q*kF), 0, 6, ylims = (-0.1, 0))
 
 u1 = TPT.pairpotential(nfe1)[1,1]
-# plot(u1, 2, 20, ylims = (-2.1e-3, 2.1e-3))
+u1′ = TPT.pairpotential_derivative(nfe1)[1,1]
+# plot([u1, u1′], 2, 20, ylims = (-2.1e-3, 2.1e-3))
 
 g = TPT.paircorrelation(sys1)[1,1]
 # plot(g, 1, 20)
@@ -81,7 +82,7 @@ F2_total = TPT.helmholtz(sys2)
   @test isapprox(U1_eg, -0.0816, atol=1e-4)
   @test isapprox(S1_eg, 0.0522, atol=1e-4)
   @test isapprox(U1_es, -0.147, atol=1e-3)
-  @test isapprox(U1_bs, -0.00831, atol=1e-5)
+  @test isapprox(U1_bs, -0.00833, atol=1e-5)
   @test isapprox(K1, 0.00177, atol=1e-5)
   @test isapprox(F1_hs, -0.00921, atol=1e-5)
 end

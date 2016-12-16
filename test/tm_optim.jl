@@ -7,6 +7,10 @@ using Plots; pyplot()
 
 println("--- TM Optim ---")
 
+# Load elemental parameters
+p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
+N = size(p, 1) # number of elements
+
 #
 # Prepare a directory to store the results
 #
@@ -15,10 +19,6 @@ println("--- TM Optim ---")
 resdir = joinpath("results", "tm_optim")
 !isdir(resdir) && mkdir(resdir)
 
-
-# Load elemental parameters
-p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
-N = size(p, 1) # number of elements
 
 #
 # Load experimental g(r) from csv files
@@ -54,8 +54,8 @@ for i in 1:N
 end
 
 a₀ = p[:a]
-a = Vector{Float64}(N)
-res = Vector{Float64}(N)
+a = zeros(N)
+res = zeros(N)
 sys = Vector{TPT.TPTSystem}(N)
 
 #
@@ -111,14 +111,14 @@ for i in 1:N
   @printf "  %2s: %1.3f\n" p[:X][i] a[i]
 end
 
-rmin = Vector{Float64}(N)
+rmin = zeros(N)
 println("The positions of minimum of pairpotentials:")
 for i in 1:N
   rmin[i] = sys[i].ref.rmin[1,1]
   @printf "  %2s: %1.3f\n" p[:X][i] rmin[i]
 end
 
-σ_hs = Vector{Float64}(N)
+σ_hs = zeros(N)
 println("The effective hard-sphere diameters:")
 for i in 1:N
   σ_hs[i] = sys[i].ref.trial.σ[1]

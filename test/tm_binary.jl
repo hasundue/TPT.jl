@@ -9,6 +9,15 @@ using Plots; pyplot()
 
 println("--- TM Binary ---")
 
+# Elemental parameters
+p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
+
+# Binary parameters
+ans = readtable(joinpath("data", "parameters", "tm_binary.csv"))
+
+# number of elements available
+M = size(p, 1)
+
 #
 # setting up the directory to store the results
 #
@@ -20,15 +29,6 @@ resdir = joinpath("results", "tm_binary")
 # composition is fixed to 1:1
 N = 2
 c = [0.5, 0.5]
-
-# Elemental parameters
-p = readtable(joinpath("data", "parameters", "tm_optim.csv"))
-
-# Binary parameters
-ans = readtable(joinpath("data", "parameters", "tm_binary.csv"))
-
-# number of elements available
-M = size(p, 1)
 
 # Arrays to store the results
 isdata = falses(M,M)
@@ -246,7 +246,7 @@ for a in 1:M, b in 1:M
     ylims!(0, 4.5)
     xlabel!("r (a.u.)")
     ylabel!("g(r)")
-    file = string("$(A)-$(B)_g", i, j)
+    file = string("$(a)-$(b)_$(A)-$(B)_g", i, j)
     path = joinpath(resdir, file)
     png(path)
 
@@ -254,13 +254,13 @@ for a in 1:M, b in 1:M
     plot([u_nfe[i,j], u_tb[i,j], u_tot[i,j]], 2, 20, ylims=(-0.1, 0.1), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
     σᵢⱼ = (σ_wca[i] + σ_wca[j]) / 2
     vline!([σᵢⱼ], label="HS")
-    file = string("$(A)-$(B)_u", i, j)
+    file = string("$(a)-$(b)_$(A)-$(B)_u", i, j)
     path = joinpath(resdir, file)
     png(path)
 
     # blip function B(r)
     plot(Bl[i,j], 3, 6, xlabel="r (a.u.)", ylabel="B(r)", label = "")
-    file = string("$(A)-$(B)_B", i, j)
+    file = string("$(a)-$(b)_$(A)-$(B)_B", i, j)
     path = joinpath(resdir, file)
     png(path)
   end

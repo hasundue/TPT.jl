@@ -86,10 +86,10 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
   return fun1
 end
 
-function spline(f::Function, a::Float64, b::Float64, N::Int; bc="error")
+function spline(f::Function, a::Float64, b::Float64, N::Int; bc="error")::Function
   spl = spline_spl(f, a, b, N, bc)
 
-  fspl(x::Real)::Float64 = spl(x)
+  fspl(x::Real)::Float64 = evaluate(spl, x)
 end
 
 function spline_derivative(f::Function, a::Float64, b::Float64, N::Int;

@@ -19,25 +19,34 @@ T = 0.723 * ϵ / kB
 lj = TPT.LennardJones(ϵ, r₀)
 
 u = TPT.pairpotential(lj)[1,1]
-plot(u, 5, 20, ylims=(-1e-3, 1e-3))
+rmin = TPT.pairpotential_minimizer(lj)[1,1]
+umin = u(rmin)
+u′ = TPT.pairpotential_derivative(lj)[1,1]
+plot([u, u′], 5, 20, ylims=(umin, -umin))
 
 ahs = TPT.AHS(σ = r₀, ρ = n, approx="RFA")
-lwca = TPT.LWCA(ahs, T)
+lwca = TPT.LWCA(ahs, T, :linear)
+wca = TPT.WCA(ahs, T)
 
 sys = TPT.TPTSystem(lwca, lj)
+sys2 = TPT.TPTSystem(wca, lj)
 
 σ = sys.ref.trial.σ[1]
 σ₀ = 3.474 / 0.5292
 
+σ2 = sys2.ref.trial.σ[1]
+
 B = TPT.blipfunction(sys.ref)[1,1]
-plot(r -> B(r)*r^2, 6, 7)
+B2 = TPT.blipfunction(sys2.ref)[1,1]
+plot([B, B2], 5, 8)
 
 g0 = TPT.paircorrelation(ahs)[1,1]
 g1 = TPT.paircorrelation(sys)[1,1]
+g2 = TPT.paircorrelation(sys2)[1,1]
 
-plot([g0, g1], 5, 20)
+plot([g0, g1, g2], 5, 20)
 
-S0 = TPT.structurefactor(sys.ref.trial)[1,1]
+S0 = TPT.structurefactor(ahs)[1,1]
 S1 = TPT.structurefactor(sys)[1,1]
 
 plot([S0, S1], 0.1, 5, labels=["AHS" "LWCA"])

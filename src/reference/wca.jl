@@ -156,12 +156,12 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
 
   opt = NLopt.Opt(:GN_DIRECT, N)
   NLopt.min_objective!(opt, (σ, g) -> fopt(σ))
-  NLopt.ftol_abs!(opt, 1e-3)
+  NLopt.ftol_abs!(opt, 1e-5)
   NLopt.lower_bounds!(opt, [ rcore[i,i] for i in 1:N ])
-  NLopt.upper_bounds!(opt, [ 0.99rmin[i,i] for i in 1:N ])
+  NLopt.upper_bounds!(opt, [ 0.95rmin[i,i] for i in 1:N ])
   NLopt.initial_step!(opt, [ 0.01*rmin[i,i] for i in 1:N ])
 
-  σ_init = [ 0.8rmin[i,i] for i in 1:N ]
+  σ_init = [ 0.80rmin[i,i] for i in 1:N ]
   (fmin, σ_wca, res) = NLopt.optimize(opt, σ_init)
 
   ahs = AHS(approx, σ_wca, ρ₀)

@@ -7,13 +7,24 @@ approach.
 References:
 """
 
+const η_original = (-16.2, 8.75, -2.39)
+const η_modified = (-21.22, 12.60, -2.29)
+const η_dict = Dict(:original => η_original, :modified => η_modified)
+
 immutable WHTB <: TBPerturbation
+  version::Symbol # :original or :modified parameters
   zd::Vector{Float64} # number of d-electrons
   rd::Vector{Float64} # d-state radius
   c::Vector{Float64} # composition
 end
 
-WHTB(zd::Real, rd::Real) = WHTB([zd], [rd], [1.0])
+function WHTB(zd::Real, rd::Real; version=:original)
+  WHTB(version, [zd], [rd], [1.0])
+end
+
+function WHTB(zd::Vector, rd::Vector, c::Vector; version=:original)
+  WHTB(version, zd, rd, c)
+end
 
 ncomp(whtb::WHTB)::Int = length(whtb.zd)
 
@@ -29,11 +40,37 @@ function cutoffradius(whtb::WHTB)::Array{Float64,2}
   [ 10 * (rd[i] + rd[j]) / 2 for i in 1:N, j in 1:N ]
 end
 
-function transfermatrixelement(whtb::WHTB)::Array{Function,2}
-  rd::Vector{Float64} = whtb.rd
-  N::Int = ncomp(whtb)
+function transfercoefficient(whtb::WHTB)::Float64
+  (η_ddσ, η_ddπ, η_ddδ) =
+    get(η_dict, whtb.version, zeros(3))
 
-  [ Vd(r::Float64)::Float64 = 28.06/π * (rd[i]*rd[j])^(3/2) / r^5
+  ( (η_ddσ^2 + 2η_ddπ^2 + 2η_ddδ^2) / 5 )^(1/2)
+end
+
+function transfermatrixelement(whtb::WHTB)::Array{Function,2}
+  N::Int = ncomp(whtb)
+  rd::Vector{Float64} = whtb.rd
+  A::Float64 = transfercoefficient(whtb)
+
+  [ V(r::Float64)::Float64 = A * (rd[i]*rd[j])^(3/2) / r^5
+    for i in 1:N, j in 1:N ]
+end
+
+function overlapcoefficient(whtb::WHTB)::Float64
+  (η_ddσ, η_ddπ, η_ddδ) =
+    get(η_dict, whtb.version, zeros(3))
+
+  (σ_ddσ, σ_ddπ, σ_ddδ) = (5/π, -5/π, 5/2π)
+
+  -2/5 * (σ_ddσ*η_ddσ + 2σ_ddπ*η_ddπ + 2σ_ddδ*η_ddδ)
+end
+
+function overlapmatrixelement(whtb::WHTB)::Array{Function,2}
+  N::Int = ncomp(whtb)
+  rd::Vector{Float64} = whtb.rd
+  B::Float64 = overlapcoefficient(whtb)
+
+  [ SV(r::Float64)::Float64 = B * (rd[i]*rd[j])^3 / r^8
     for i in 1:N, j in 1:N ]
 end
 
@@ -66,6 +103,8 @@ function pairpotential(whtb::WHTB)::Array{Function,2}
   @attach(whtb, zd, rd, c)
 
   N::Int = ncomp(whtb)
+  A::Float64 = transfercoefficient(whtb)
+  B::Float64 = overlapcoefficient(whtb)
 
   γ = 12 # coordination number
 
@@ -77,8 +116,8 @@ function pairpotential(whtb::WHTB)::Array{Function,2}
     z̄d = (zd[i] + zd[j]) / 2
     r̄d = √(rd[i]*rd[j])
 
-    u(r) = -28.1/π * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^5 +
-           225/π^2 * z̄d * r̄d^6 / r^8
+    u(r) = -A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^5 +
+           B * z̄d * r̄d^6 / r^8
 
     ret[i,j] = ret[j,i] = u
   end
@@ -90,6 +129,8 @@ function pairpotential_derivative(whtb::WHTB)::Array{Function,2}
   @attach(whtb, zd, rd, c)
 
   N::Int = ncomp(whtb)
+  A::Float64 = transfercoefficient(whtb)
+  B::Float64 = overlapcoefficient(whtb)
 
   γ = 12 # coordination number
 
@@ -101,8 +142,8 @@ function pairpotential_derivative(whtb::WHTB)::Array{Function,2}
     z̄d = (zd[i] + zd[j]) / 2
     r̄d = √(rd[i]*rd[j])
 
-    u(r) = 5*28.1/π * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^6 +
-           -8*225/π^2 * z̄d * r̄d^6 / r^9
+    u(r) = 5A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^6 +
+           -8B * z̄d * r̄d^6 / r^9
 
     ret[i,j] = ret[j,i] = u
   end

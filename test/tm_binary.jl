@@ -153,7 +153,7 @@ Threads.@threads for k in 1:(M^2)
   # pse = TPT.Ashcroft(zs, rc)
   pse = TPT.BretonnetSilbert(zs, rc, pa)
   nfe = TPT.NFE(ahs[a,b], pse)
-  tb = TPT.WHTB(zd, rd, c)
+  tb = TPT.WHTB(zd, rd, c, verion=:modified)
   nfetb = TPT.NFETB(nfe, tb)
   wca = TPT.LWCA(ahs[a,b], T)
 

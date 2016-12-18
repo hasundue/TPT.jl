@@ -50,7 +50,7 @@ tb = Vector{TPT.WHTB}(N)
 for i in 1:N
     ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
     wca[i] = TPT.LWCA(ahs[i], p[:T][i])
-    tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i])
+    tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
 end
 
 a₀ = p[:a]

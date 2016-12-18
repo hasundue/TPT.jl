@@ -48,15 +48,16 @@ wca = Vector{TPT.LWCA}(N)
 tb = Vector{TPT.WHTB}(N)
 
 for i in 1:N
-    ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
-    wca[i] = TPT.LWCA(ahs[i], p[:T][i])
-    tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
+  ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
+  wca[i] = TPT.LWCA(ahs[i], p[:T][i])
+  tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
 end
 
 a₀ = p[:a]
 a = zeros(N)
 res = zeros(N)
 sys = Vector{TPT.TPTSystem}(N)
+F = Vector{Vector{Float64}}(N)
 
 #
 # Performe optimization of rc
@@ -100,6 +101,24 @@ Threads.@threads for i in 1:N
   res[i] = Optim.minimum(result)
 
   fopt(a[i])
+
+  #
+  # Density dependency of free-energy
+  #
+  F[i] = Vector{Float64}(5)
+  for k in 1:5
+    ρₖ = (0.8 + (k-1)*0.1) * p[:ρ][i]
+
+    ahsₖ = TPT.AHS(σ = p[:σ][i], ρ = ρₖ)
+    wcaₖ = TPT.LWCA(ahsₖ, p[:T][i])
+    tbₖ = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
+    pseₖ = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a[i])
+    nfeₖ = TPT.NFE(wcaₖ, pseₖ)
+    nfetbₖ = TPT.NFETB(nfeₖ, tbₖ)
+    sysₖ = TPT.TPTSystem(wcaₖ, nfetbₖ, m = p[:m][i])
+
+    F[i][k] = TPT.helmholtz(sysₖ)
+  end
 end
 
 
@@ -153,7 +172,6 @@ for i in 1:N
 end
 
 # 2. Pair correlation functions
-# for i in 1:N
 for i in 1:N
   g_hs = TPT.paircorrelation(ahs[i])[1,1]
   g_wca = TPT.paircorrelation(sys[i])[1,1]
@@ -161,6 +179,13 @@ for i in 1:N
   plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)")
   plot!(g_exp[i], label="exp", xlims=(2,20))
   png(joinpath(resdir, "$(i)-$(p[:X][i])_g"))
+end
+
+# 3. Density dependency of free-energy
+for i in 1:N
+  plot(0.8:0.1:1.2, 2625.5*F[i], xlabel="Relative density",
+  ylabel="F (kJ/mol)", ylims=:auto)
+  png(joinpath(resdir, "$(i)-$(p[:X][i])_F"))
 end
 
 

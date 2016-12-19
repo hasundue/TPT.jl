@@ -28,7 +28,7 @@ M = size(p, 1)
 # Various thermodynamic quantities
 enr = [:F, :U, :U_nfe, :U_tb, :U_es, :S, :S_gas, :S_conf, :S_ref, :S_nfe, :S_tb]
 
-for B in 1:M
+for B in 3:M
   A = 5
   # (A,B) = ind2sub((M,M), k)
 

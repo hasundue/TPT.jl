@@ -63,7 +63,7 @@ for B in 3:M
 
     pse = TPT.BretonnetSilbert(zs, rc, a)
     nfe = TPT.NFE(ahs, pse)
-    tb = TPT.WHTB(zd, rd, c, version=:original)
+    tb = TPT.WHTB(zd, rd, c, version=:modified)
     nfetb = TPT.NFETB(nfe, tb)
 
     sys = TPT.TPTSystem(wca, nfetb, m = m)

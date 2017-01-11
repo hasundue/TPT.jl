@@ -106,7 +106,7 @@ function pairpotential(whtb::WHTB)::Array{Function,2}
   A::Float64 = transfercoefficient(whtb)
   B::Float64 = overlapcoefficient(whtb)
 
-  γ = 10 # coordination number
+  γ = 12 # coordination number
 
   ret = Array{Function,2}(N,N)
 

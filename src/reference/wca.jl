@@ -373,7 +373,7 @@ function structurefactor(wca::OptimizedWCA)::Array{Function,2}
       ∫(r -> bs1(r) * sin(r*q) / (r*q) * r^2, rcore[i,j], σ[i,j]-ϵ) +
       ∫(r -> bs2(r) * sin(r*q) / (r*q) * r^2, σ[i,j]+ϵ, rmin[i,j])
 
-    S(q) = S₀[i,j](q) / (1 - 4π*ρ * √(c[i]*c[j]) * S₀[i,j](q) * B(q))
+    S(q) = S₀[i,j](q) / (1 - ρ * √(c[i]*c[j]) * S₀[i,j](q) * B(q))
 
     ret[i,j] = ret[j,i] = S
   end

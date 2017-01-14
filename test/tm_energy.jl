@@ -26,7 +26,7 @@ kB = TPT.kB
 M = size(p, 1)
 
 # Various thermodynamic quantities
-enr = [:F, :U, :U_nfe, :U_tb, :U_es, :S, :S_gas, :S_conf, :S_ref, :S_nfe, :S_tb]
+enr = [:F, :U, :U_nfe, :U_tb, :U_bond, :U_es, :S, :S_gas, :S_conf, :S_ref, :S_nfe, :S_tb]
 
 for B in 3:M
   A = 5
@@ -66,11 +66,12 @@ for B in 3:M
     tb = TPT.WHTB(zd, rd, c, version=:modified)
     nfetb = TPT.NFETB(nfe, tb)
 
-    sys = TPT.TPTSystem(wca, nfetb, m = m)
+    sys = TPT.TPTSystem(ahs, nfetb, m = m)
     res[i] = sys
 
     U_nfe[i] = TPT.internal_pair(sys.pert.nfe, sys.ref)
     U_tb[i] = TPT.internal(sys.pert.tb, sys.ref)
+    U_bond[i] = TPT.internal_band(sys.pert.tb, sys.ref)
     U_es[i] = TPT.internal_es(sys.pert.nfe, sys.ref)
 
     U[i] = U_nfe[i] + U_tb[i] + U_es[i]
@@ -105,7 +106,7 @@ for B in 3:M
   plot() # initialize the plot
 
   # free energy (total) and internal energy
-  for E in [:F, :U, :U_nfe, :U_tb, :U_es]
+  for E in [:F, :U, :U_nfe, :U_tb, :U_bond, :U_es]
     ΔE = Symbol(:Δ, E)
     @eval plot!(0:0.1:1.0, 2625.5*($ΔE), label=$(string(E)))
   end

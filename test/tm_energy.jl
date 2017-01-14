@@ -59,7 +59,7 @@ for B in 3:M
     c = [1-x₂, x₂]
 
     ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c, approx = "RFA")
-    wca = TPT.LWCA(ahs, T)
+    wca = TPT.LWCA(ahs, T, struct = :full)
 
     pse = TPT.BretonnetSilbert(zs, rc, a)
     nfe = TPT.NFE(ahs, pse)
@@ -69,9 +69,9 @@ for B in 3:M
     sys = TPT.TPTSystem(wca, nfetb, m = m)
     res[i] = sys
 
-    U_nfe[i] = TPT.internal(sys.ref, sys.pert.nfe)
-    U_tb[i] = TPT.internal(sys.ref, sys.pert.tb)
-    U_es[i] = TPT.internal(sys.pert, sys.ref)
+    U_nfe[i] = TPT.internal_pair(sys.pert.nfe, sys.ref)
+    U_tb[i] = TPT.internal(sys.pert.tb, sys.ref)
+    U_es[i] = TPT.internal_es(sys.pert.nfe, sys.ref)
 
     U[i] = U_nfe[i] + U_tb[i] + U_es[i]
 

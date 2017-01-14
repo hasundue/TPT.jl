@@ -43,13 +43,12 @@ plot([B, B2], 5, 8)
 g0 = TPT.paircorrelation(ahs)[1,1]
 g1 = TPT.paircorrelation(sys)[1,1]
 g2 = TPT.paircorrelation(sys2)[1,1]
-
-plot([g0, g1, g2], 5, 20)
+plot([g0, g1, g2], 5, 15, labels = ["AHS" "LWCA" "WCA"])
 
 S0 = TPT.structurefactor(ahs)[1,1]
 S1 = TPT.structurefactor(sys)[1,1]
-
-plot([S0, S1], 0.1, 5, labels=["AHS" "LWCA"])
+S2 = TPT.structurefactor(sys2)[1,1]
+plot([S0, S1, S2], 0.1, 5, labels=["AHS" "LWCA" "WCA"])
 
 @testset "Unit LWCA" begin
   @test isapprox(σ, 6.55, atol=1e-2)

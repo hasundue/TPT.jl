@@ -15,10 +15,6 @@ function cutoffradius(lj::LennardJones)::Array{Float64,2}
   5 * pairpotential_minimizer(lj)
 end
 
-function hsdiameter_estimate(lj::LennardJones)::Array{Float64,2}
-  0.9 * pairpotential_minimizer(lj)
-end
-
 function pairpotential(lj::LennardJones)::Array{Function,2}
   @attach(lj, ϵ, σ)
 

@@ -118,10 +118,7 @@ function entropy_conf(sys::TPTSystem)::Float64
 end
 
 function internal(sys::TPTSystem)::Float64
-  U_pair = internal(sys.ref, sys.pert)
-  U_pert = internal(sys.pert, sys.ref)
-
-  U = U_pair + U_pert
+  U = internal(sys.pert, sys.ref)
 end
 
 function helmholtz(sys::TPTSystem)::Float64

@@ -19,21 +19,21 @@ nfe = TPT.NFE(wca, pseudo)
 sys = TPT.TPTSystem(wca, nfe, m = 4.191e+4)
 
 B = TPT.blipfunction(sys.ref)[1,1]
-plot(B, 4, 8)
+plot(B, 4, 8, ylims=:auto)
 
 g_ahs = TPT.paircorrelation(ahs)[1,1]
 g_wca = TPT.paircorrelation(sys)[1,1]
 σ_wca = TPT.hsdiameter(sys.ref)[1,1]
 
-plot([g_ahs, g_wca], 2, 20, labels = ["AHS" "WCA"])
+plot([g_ahs, g_wca], 2, 20, labels = ["AHS" "WCA"], ylims=:auto)
 
 S = TPT.entropy(sys)
 U = TPT.internal(sys)
 F = TPT.helmholtz(sys)
 
 @testset "Unit WCA" begin
-  @test isapprox(σ_wca, 6.15, atol=1e-2)
-  @test isapprox(S, 7.64, atol=1e-2)
+  @test isapprox(σ_wca, 6.18, atol=1e-2)
+  @test isapprox(S, 7.52, atol=1e-2)
   @test isapprox(U, -0.236, atol=1e-3)
   @test isapprox(F, -0.244, atol=1e-3)
 end

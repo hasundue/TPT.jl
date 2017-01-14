@@ -44,7 +44,7 @@ function dielectric(nfe::NFE)::Function
 
   kF::Float64 = fermiwavenumber(nfe)
 
-  return ϵ(q)::Float64 = begin
+  ϵ(q)::Float64 = begin
     x = q / 2kF
     1 + 1/(2π*kF) * (1/x^2) * (1 + (1-x^2)/2x * log(abs((1+x)/(1-x))))
   end
@@ -61,7 +61,7 @@ function screenedformfactor(nfe::NFE)::Vector{Function}
     ω[i] = q -> ω₀[i](q) / ϵ(q)
   end
 
-  return ω
+  ω
 end
 
 # local-field exchange-correlation function (Vashishta-Singwi)
@@ -76,8 +76,6 @@ function localfiled(nfe::NFE)::Function
   B::Float64 = 0.42 - 0.0582rs + 0.0079rs^2 - 0.0005rs^3
 
   G(q)::Float64 = A*(1 - exp(-B*(q/kF)^2))
-
-  return G
 end
 
 #
@@ -103,7 +101,7 @@ function wnechar(nfe::NFE)::Array{Function,2}
     ret[i,j] = ret[j,i] = F
   end
 
-  return ret
+  ret
 end
 
 function coreradius(nfe::NFE)::Array{Float64,2}
@@ -144,7 +142,7 @@ function pairpotential(nfe::NFE)::Array{Function,2}
     ret[i,j] = ret[j,i] = u
   end
 
-  return ret
+  ret
 end
 
 function pairpotential_minimizer(nfe::NFE)::Array{Float64,2}
@@ -163,7 +161,7 @@ function pairpotential_minimizer(nfe::NFE)::Array{Float64,2}
     ret[i,j] = ret[j,i] =  Optim.minimizer(opt)
   end
 
-  return ret
+  ret
 end
 
 function pairpotential_derivative(nfe::NFE)::Array{Function,2}
@@ -187,7 +185,7 @@ function pairpotential_derivative(nfe::NFE)::Array{Function,2}
     ret[i,j] = ret[j,i] = u′
   end
 
-  return ret
+  ret
 end
 
 function entropy(nfe::NFE, ref::ReferenceSystem, T::Float64)::Float64
@@ -198,10 +196,11 @@ function entropy(nfe::NFE, ref::ReferenceSystem, T::Float64)::Float64
 end
 
 function internal(nfe::NFE, ref::ReferenceSystem)::Float64
-  U_eg::Float64 = internal_eg(nfe)
-  U_es::Float64 = internal_es(nfe, ref)
+  U_eg = internal_eg(nfe)
+  U_es = internal_es(nfe, ref)
+  U_pair = internal_pair(nfe, ref)
 
-  U = U_eg + U_es
+  U = U_eg + U_es + U_pair
 end
 
 # Internal energy of electron gas
@@ -230,5 +229,9 @@ function internal_es(nfe::NFE, ref::ReferenceSystem)::Float64
     U_ρ += 1 / (2π^2*ρ) * c[i] * ∫(q -> F[i,i](q)*q^2, 0, Q_MAX)
   end
 
-  return U_ρ
+  U_ρ
+end
+
+function internal_pair(nfe::NFE, ref::ReferenceSystem)::Float64
+  internal(ref, nfe)
 end

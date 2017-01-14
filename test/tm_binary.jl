@@ -155,7 +155,7 @@ Threads.@threads for k in 1:(M^2)
   nfe = TPT.NFE(ahs[a,b], pse)
   tb = TPT.WHTB(zd, rd, c, version=:modified)
   nfetb = TPT.NFETB(nfe, tb)
-  wca = TPT.LWCA(ahs[a,b], T)
+  wca = TPT.LWCA(ahs[a,b], T, struct=:full)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb, m = m)
@@ -232,18 +232,17 @@ for a in 1:M, b in 1:M
 
   for (i,j) in [(1,1), (1,2), (2,2)]
     # Partial structure factors Sᵢⱼ(q)
-    plot(q_exp[a,b], S_exp[a,b][i,j], label="exp")
+    plot(q_exp[a,b], S_exp[a,b][i,j], label="exp", ylims=:auto)
     plot!(S_ahs[i,j], q_min, q_max, label="AHS")
     plot!(S_wca[i,j], q_min, q_max, label="WCA")
     xlabel!("q (a.u.)")
     ylabel!("S(q)")
-    file = string("$(A)-$(B)_S", i, j)
+    file = string("$(a)-$(b)_$(A)-$(B)_S", i, j)
     path = joinpath(resdir, file)
     png(path)
 
     # Pair distribution functions gᵢⱼ(r)
-    plot([g_exp[a,b][i,j], g_ahs[i,j], g_wca[i,j]], 2, 20, labels=["exp" "AHS" "WCA"])
-    ylims!(0, 4.5)
+    plot([g_exp[a,b][i,j], g_ahs[i,j], g_wca[i,j]], 2, 20, labels=["exp" "AHS" "WCA"], ylims=(0, 4.5))
     xlabel!("r (a.u.)")
     ylabel!("g(r)")
     file = string("$(a)-$(b)_$(A)-$(B)_g", i, j)
@@ -259,7 +258,7 @@ for a in 1:M, b in 1:M
     png(path)
 
     # blip function B(r)
-    plot(Bl[i,j], 3, 6, xlabel="r (a.u.)", ylabel="B(r)", label = "")
+    plot(Bl[i,j], 3, 6, xlabel="r (a.u.)", ylabel="B(r)", label = "", ylims=:auto)
     file = string("$(a)-$(b)_$(A)-$(B)_B", i, j)
     path = joinpath(resdir, file)
     png(path)

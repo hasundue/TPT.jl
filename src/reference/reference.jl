@@ -22,14 +22,12 @@ function nndistance(ref::ReferenceSystem)::Array{Float64,2}
 end
 
 # pairwise contribution to internal energy
-function internal(ref::ReferenceSystem, pert::Perturbation)::Float64
+function internal(ref::ReferenceSystem, pert::Perturbation, u::Matrix{Pairpotential})::Float64
   N::Int = ncomp(ref)
   ρ::Float64 = totalnumberdensity(ref)
   c::Vector{Float64} = composition(ref)
-  g::Array{Function,2} = paircorrelation(ref)
-  rcore::Array{Float64,2} = emptyradius(ref)
-
-  u::Array{Function,2} = pairpotential(pert)
+  g::Matrix{Function} = paircorrelation(ref)
+  rcore::Matrix{Float64} = emptyradius(ref)
   rcut::Array{Float64,2} = cutoffradius(pert)
 
   U::Float64 = 0
@@ -44,4 +42,8 @@ function internal(ref::ReferenceSystem, pert::Perturbation)::Float64
   end
 
   return U
+end
+
+function internal(ref::ReferenceSystem, pert::Perturbation)::Float64
+  internal(ref, pert, pairpotential(pert))
 end

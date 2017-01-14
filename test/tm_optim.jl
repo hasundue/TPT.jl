@@ -49,7 +49,7 @@ tb = Vector{TPT.WHTB}(N)
 
 for i in 1:N
   ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
-  wca[i] = TPT.LWCA(ahs[i], p[:T][i])
+  wca[i] = TPT.LWCA(ahs[i], p[:T][i], struct=:full)
   tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
 end
 
@@ -110,7 +110,7 @@ Threads.@threads for i in 1:N
     ρₖ = (0.8 + (k-1)*0.1) * p[:ρ][i]
 
     ahsₖ = TPT.AHS(σ = p[:σ][i], ρ = ρₖ)
-    wcaₖ = TPT.LWCA(ahsₖ, p[:T][i])
+    wcaₖ = TPT.LWCA(ahsₖ, p[:T][i], struct=:full)
     tbₖ = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
     pseₖ = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a[i])
     nfeₖ = TPT.NFE(wcaₖ, pseₖ)
@@ -165,8 +165,7 @@ for i in 1:N
   u_tb = TPT.pairpotential(sys[i].pert.tb)[1,1]
   u_tot = TPT.pairpotential(sys[i].pert)[1,1]
 
-  plot([u_nfe, u_tb, u_tot], 2, 20, ylims=(-0.05, 0.05),
-       labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
+  plot([u_nfe, u_tb, u_tot], 2, 20, ylims=(-0.05, 0.05), labels = ["NFE" "TB" "total"], xlabel="r (a.u.)", ylabel="u(r) (a.u.)")
   vline!([σ_hs[i]], label="HS")
   png(joinpath(resdir, "$(i)-$(p[:X][i])_u"))
 end
@@ -177,7 +176,7 @@ for i in 1:N
   g_wca = TPT.paircorrelation(sys[i])[1,1]
 
   plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)")
-  plot!(g_exp[i], label="exp", xlims=(2,20))
+  plot!(g_exp[i], label="exp", xlims=(2,20), ylims=:auto)
   png(joinpath(resdir, "$(i)-$(p[:X][i])_g"))
 end
 

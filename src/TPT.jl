@@ -17,7 +17,9 @@ export TPTSystem,
 
        # Interatomic interaction
        pairpotential,
+       pairpotential_minimum,
        pairpotential_minimizer,
+       hsdiameter_estimate,
 
        # Thermodynamic properties
        kinetic,
@@ -74,9 +76,12 @@ include("utils.jl")
 include("types.jl")
 include("tptsystem.jl")
 include("constants.jl")
+include(joinpath("reference", "reference.jl"))
+include(joinpath("reference", "abstractwca.jl"))
 include(joinpath("reference", "ahs.jl"))
 include(joinpath("reference", "wca.jl"))
-include(joinpath("reference", "reference.jl"))
+include(joinpath("reference", "lwca.jl"))
+include(joinpath("perturbation", "perturbation.jl"))
 include(joinpath("perturbation", "nullpert.jl"))
 include(joinpath("perturbation", "lennardjones.jl"))
 include(joinpath("perturbation", "nfetb.jl"))

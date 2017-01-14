@@ -175,15 +175,14 @@ for i in 1:N
   g_hs = TPT.paircorrelation(ahs[i])[1,1]
   g_wca = TPT.paircorrelation(sys[i])[1,1]
 
-  plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)")
+  plot([g_hs, g_wca], 2, 20, labels=["HS" "WCA"], xlabel="r (a.u.)", ylabel="g(r)", ylims=:auto)
   plot!(g_exp[i], label="exp", xlims=(2,20), ylims=:auto)
   png(joinpath(resdir, "$(i)-$(p[:X][i])_g"))
 end
 
 # 3. Density dependency of free-energy
 for i in 1:N
-  plot(0.8:0.1:1.2, 2625.5*F[i], xlabel="Relative density",
-  ylabel="F (kJ/mol)", ylims=:auto)
+  plot(0.8:0.1:1.2, 2625.5*F[i], xlabel="Relative density", ylabel="F (kJ/mol)", ylims=:auto)
   png(joinpath(resdir, "$(i)-$(p[:X][i])_F"))
 end
 

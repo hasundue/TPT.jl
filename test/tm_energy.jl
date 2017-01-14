@@ -66,7 +66,7 @@ for B in 3:M
     tb = TPT.WHTB(zd, rd, c, version=:modified)
     nfetb = TPT.NFETB(nfe, tb)
 
-    sys = TPT.TPTSystem(ahs, nfetb, m = m)
+    sys = TPT.TPTSystem(wca, nfetb, m = m)
     res[i] = sys
 
     U_nfe[i] = TPT.internal_pair(sys.pert.nfe, sys.ref)

@@ -155,7 +155,8 @@ Threads.@threads for k in 1:(M^2)
   nfe = TPT.NFE(ahs[a,b], pse)
   tb = TPT.WHTB(zd, rd, c, version=:modified)
   nfetb = TPT.NFETB(nfe, tb)
-  wca = TPT.LWCA(ahs[a,b], T, struct=:full)
+  # wca = TPT.LWCA(ahs[a,b], T, struct=:full)
+  wca = TPT.WCA(ahs[a,b], T)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb, m = m)

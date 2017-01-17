@@ -64,7 +64,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
 
   opt = NLopt.Opt(:LN_BOBYQA, N)
   NLopt.min_objective!(opt, fopt)
-  NLopt.xtol_rel!(opt, 1e-3)
+  NLopt.xtol_rel!(opt, 1e-5)
   NLopt.lower_bounds!(opt, [ rcore[i,i] for i in 1:N ])
   NLopt.upper_bounds!(opt, [ 0.99rmin[i,i] for i in 1:N ])
   NLopt.initial_step!(opt, [ 0.01rmin[i,i] for i in 1:N ])

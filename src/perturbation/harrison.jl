@@ -108,8 +108,11 @@ function pairpotential(whtb::WHTB, A::Float64, B::Float64)::Matrix{Function}
     z̄d = (zd[i] + zd[j]) / 2
     r̄d = √(rd[i]*rd[j])
 
-    u(r) = -A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^5 +
-           B * z̄d * r̄d^6 / r^8
+    # u(r) = -A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^5 +
+    #        B * z̄d * r̄d^6 / r^8
+
+    u(r) = -A * sqrt(12/γ) * (zd[i] + zd[j]) / 2 * (1 - z̄d/10) * r̄d^3 / r^5 +
+           B * sum(c .* zd) * r̄d^6 / r^8
 
     ret[i,j] = ret[j,i] = u
   end

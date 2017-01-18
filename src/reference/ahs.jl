@@ -11,13 +11,13 @@ References:
 """
 
 immutable AHS <: IndependentReferenceSystem
-  approx::AbstractString # approximation
+  approx::Symbol # approximation
   σ::Vector{Float64} # hard-sphere diameters
   ρ::Vector{Float64} # number densities
   α::Float64 # α parameter for RFA approximation
 end # type
 
-function AHS(approx::AbstractString, σ::Vector{Float64}, ρ::Vector{Float64})
+function AHS(approx::Symbol, σ::Vector{Float64}, ρ::Vector{Float64})
   optimizealpha(AHS(approx, σ, ρ, 0.))
 end
 
@@ -47,12 +47,12 @@ function AHS(; kwargs...)
     ind = findfirst(keys, :approx)
     approx = vals[ind]
 
-    @assert in(approx, ["PY", "RFA"]) "unsuportted type of approximation for AHS"
+    @assert in(approx, [:PY, :RFA]) "unsuportted type of approximation for AHS"
 
     deleteat!(keys, ind)
     deleteat!(vals, ind)
   else
-    approx = "RFA" # default
+    approx = :RFA # default
   end
 
   @assert 2 ≤ length(keys) ≤ 3 "wrong number of arguments for AHS"
@@ -155,7 +155,20 @@ function pairpotential(ahs::AHS)::Array{Function,2}
   return ret
 end
 
-function contactvalue(ahs::AHS)::Array{Float64,2}
+# Ref: A. Meyer et al. CHemical Physics 49 (1980) 147-152
+function contactvaluePY(ahs::AHS)::Matrix{Float64}
+  N = ncomp(ahs)
+  if N > 1
+    error("calculation of contact values of multi-component system in PY approxmation is not implemented")
+  end
+  η = totalpackingfraction(ahs)
+  ξ₀ = (1 + η/2) / (1 - η)^2
+  g₀ = Matrix{Float64}(N,N)
+  g₀[1,1] = ξ₀
+  g₀
+end
+
+function contactvalueRFA(ahs::AHS)::Matrix{Float64}
   N::Int = ncomp(ahs)
   σ::Array{Float64,2} = hsdiameter(ahs)
   ρ::Vector{Float64} = numberdensity(ahs)
@@ -172,7 +185,28 @@ function contactvalue(ahs::AHS)::Array{Float64,2}
     for i = 1:N, j = 1:N ]
 end
 
-function contactgradient(ahs::AHS)::Array{Float64,2}
+function contactvalue(ahs::AHS)::Matrix{Float64}
+  if ahs.approx == :PY
+    contactvaluePY(ahs)
+  elseif ahs.approx == :RFA
+    contactvalueRFA(ahs)
+  end
+end
+
+function contactgradientPY(ahs::AHS)::Matrix{Float64}
+  N = ncomp(ahs)
+  if N > 1
+    error("calculation of contact gradients of multi-component system in PY approxmation is not implemented")
+  end
+  η = totalpackingfraction(ahs)
+  ξ₀ = (1 + η/2) / (1 - η)^2
+  ξ₁ = 9/2 * η * (1 + η) / (1 - η)^3
+  Y = Matrix{Float64}(N,N)
+  Y[1,1] = ξ₀ / ξ₁
+  Y
+end
+
+function contactgradientRFA(ahs::AHS)::Matrix{Float64}
   N::Int = ncomp(ahs)
   σ::Array{Float64,2} = hsdiameter(ahs)
   ρ::Vector{Float64} = numberdensity(ahs)
@@ -194,14 +228,16 @@ function contactgradient(ahs::AHS)::Array{Float64,2}
       for i = 1:N, j = 1:N ]
 
   g′::Array{Float64,2} =
-    if ahs.approx == "PY"
-      [ 1 / (2π*α*σ[i,j]) * L¹[i,j] for i in 1:N, j in 1:N ]
-    elseif ahs.approx == "RFA"
-      [ 1 / (2π*α*σ[i,j]) * (L¹[i,j] - L²[i,j]*(1/α + 1/σ[i,j]))
-        for i in 1:N, j in 1:N ]
-    else
-      error("unsupported type of approximation for AHS")
-    end
+    [ 1 / (2π*α*σ[i,j]) * (L¹[i,j] - L²[i,j]*(1/α + 1/σ[i,j]))
+      for i in 1:N, j in 1:N ]
+end
+
+function contactgradient(ahs::AHS)::Matrix{Float64}
+  if ahs.approx == :PY
+    contactvaluePY(ahs)
+  elseif ahs.approx == :RFA
+    contactvalueRFA(ahs)
+  end
 end
 
 #
@@ -209,7 +245,7 @@ end
 # ref: S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
 #
 function optimizealpha(ahs::AHS)
-  ahs.approx == "PY" && return ahs
+  ahs.approx == :PY && return ahs
 
   N::Int = ncomp(ahs)
   x::Vector{Float64} = composition(ahs)

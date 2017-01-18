@@ -21,7 +21,7 @@ default(xlabel = "r", ylabel = "g(r)", label = "")
 # A binary hard-sphere mixture
 # Ref: S. B. Yuste et al. J. Chem. Phys. 108 (1998) 3683-3693
 #
-ahs1 = TPT.AHS(η = 0.49, σ = [1.0, 0.3], c = [1/16, 15/16], approx="RFA")
+ahs1 = TPT.AHS(η = 0.49, σ = [1.0, 0.3], c = [1/16, 15/16], approx=:RFA)
 
 α1 = ahs1.α
 g1 = TPT.paircorrelation(ahs1)
@@ -56,11 +56,11 @@ png(joinpath(resdir, "g22b"))
 #
 # Tests for α values
 #
-ahs2 = TPT.AHS(η = 0.49, σ = [1.0, 0.3], c = [1/2, 1/2], approx="RFA")
+ahs2 = TPT.AHS(η = 0.49, σ = [1.0, 0.3], c = [1/2, 1/2], approx=:RFA)
 α2 = ahs2.α
 
 ahs3 = TPT.AHS(η = 0.49, σ = [1.0, 0.3, 0.1], c = [1/102, 1/102, 100/102],
-               approx="RFA")
+               approx=:RFA)
 α3 = ahs3.α
 
 @testset "Unit AHS" begin

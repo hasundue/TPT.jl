@@ -34,7 +34,7 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
   T::Float64 = temperature(lwca)
   β::Float64 = 1 / (kB * T)
 
-  approx::AbstractString = lwca.trial.approx
+  approx::Symbol = lwca.trial.approx
   c::Vector{Float64} = composition(lwca)
   ρ₀::Vector{Float64} = numberdensity(lwca.trial)
 

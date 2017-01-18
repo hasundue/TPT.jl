@@ -26,7 +26,7 @@ resdir = joinpath("results", "tm_optim")
 # Load experimental g(r) from csv files
 #
 g_exp = Vector{Vector{Tuple{Float64,Float64}}}(N)
-for i in 1:N
+for i in 5
     elem = p[:X][i]
     T = convert(Int, p[:T][i])
 
@@ -49,16 +49,16 @@ ahs = Vector{TPT.AHS}(N)
 wca = Vector{TPT.LWCA}(N)
 # tb = Vector{TPT.WHTB}(N)
 
-for i in 1:N
-  ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
+for i in 5
+  ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i], approx=:RFA)
   wca[i] = TPT.LWCA(ahs[i], p[:T][i], struct=:full)
   # tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i], version=:original)
 end
 
 a₀ = p[:a]
 a = zeros(N)
-rd₀ = p[:rd]
-rd = zeros(N)
+rc₀ = p[:rc]
+rc = zeros(N)
 res = zeros(N)
 sys = Vector{TPT.TPTSystem}(N)
 F = Vector{Vector{Float64}}(N)
@@ -67,16 +67,16 @@ F = Vector{Vector{Float64}}(N)
 # Performe optimization of rc
 #
 # Threads.@threads for i in 1:N
-for i in 7
-  function foptrd(rd::Float64)::Float64
-    @printf "rd = %1.5f\n" rd
+for i in 5
+  function foptrc(rc::Float64)::Float64
+    @printf "rc = %1.5f\n" rc
 
     function fopta(a::Float64)::Float64
-      local ahs = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
+      local ahs = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i], approx=:RFA)
       local wca = TPT.LWCA(ahs, p[:T][i], struct=:full)
-      local pse = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a)
+      local pse = TPT.BretonnetSilbert(p[:zs][i], rc, a)
       local nfe = TPT.NFE(wca, pse)
-      local tb = TPT.WHTB(p[:zd][i], rd, version=:original)
+      local tb = TPT.WHTB(p[:zd][i], p[:rd][i], version=:original)
       local nfetb = TPT.NFETB(nfe, tb)
       sys[i] = TPT.TPTSystem(wca, nfetb)
       local g = TPT.paircorrelation(sys[i])[1,1]
@@ -88,7 +88,7 @@ for i in 7
       residue
     end
 
-    opt = Optim.optimize(fopta, 0.25, 0.35, rel_tol = 1e-3)
+    opt = Optim.optimize(fopta, 0.7a₀[i], 1.3a₀[i], rel_tol = 1e-3)
     a[i] = Optim.minimizer(opt)
     @printf "a = %1.5f\n" a[i]
 
@@ -96,11 +96,11 @@ for i in 7
     Threads.@threads for k in 1:7
       local ρ = (0.7 + (k-1)*0.1) * p[:ρ][i]
 
-      local ahs = TPT.AHS(σ = p[:σ][i], ρ = ρ)
+      local ahs = TPT.AHS(σ = p[:σ][i], ρ = ρ, approx=:RFA)
       local wca = TPT.LWCA(ahs, p[:T][i], struct=:full)
-      local pse = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a[i])
+      local pse = TPT.BretonnetSilbert(p[:zs][i], rc, a[i])
       local nfe = TPT.NFE(wca, pse)
-      local tb = TPT.WHTB(p[:zd][i], rd, version=:original)
+      local tb = TPT.WHTB(p[:zd][i], p[:rc][i], version=:original)
       local nfetb = TPT.NFETB(nfe, tb)
       sys[i] = TPT.TPTSystem(wca, nfetb, m = p[:m][i])
 
@@ -108,54 +108,54 @@ for i in 7
     end
     @show F[i]
 
-    spl = Dierckx.Spline1D(collect(0.7:0.1:1.3), F[i], k=3, bc="error")
+    spl = Dierckx.Spline1D(collect(0.7:0.1:1.3), F[i], k=2, bc="error")
     opt = Optim.optimize(x -> spl(x), 0.7, 1.3)
 
     residue = abs(1.0 - Optim.minimizer(opt))
     @show residue
   end # foptrd
 
-  fnlopt(x::Vector{Float64}, g)::Float64 = foptrd(x[1])
+  fnlopt(x::Vector{Float64}, g)::Float64 = foptrc(x[1])
 
-  # opt = NLopt.Opt(:GN_DIRECT, 1)
-  opt = NLopt.Opt(:LN_BOBYQA, 1)
+  opt = NLopt.Opt(:GN_DIRECT, 1)
+  # opt = NLopt.Opt(:LN_BOBYQA, 1)
   NLopt.min_objective!(opt, fnlopt)
   NLopt.stopval!(opt, 1e-2)
   NLopt.xtol_abs!(opt, 1e-3)
   NLopt.ftol_abs!(opt, 1e-4)
-  NLopt.lower_bounds!(opt, [0.95rd₀[i]])
-  NLopt.upper_bounds!(opt, [1.05rd₀[i]])
+  NLopt.lower_bounds!(opt, [0.8rc₀[i]])
+  NLopt.upper_bounds!(opt, [1.2rc₀[i]])
 
-  (fmin, xmin, result) = NLopt.optimize(opt, [rd₀[i]])
+  (fmin, xmin, result) = NLopt.optimize(opt, [rc₀[i]])
 
   res[i] = fmin
-  rd[i] = xmin[1]
-  foptrd(rd[i])
+  rc[i] = xmin[1]
+  foptrc(rc[i])
 end
 
 #
 # Print the numerical results to console
 #
 println("The optimized values of a:")
-for i in 1:N
+for i in 5
   @printf "  %2s: %1.5f\n" p[:X][i] a[i]
 end
 
-println("The optimized values of rd:")
-for i in 1:N
-  @printf "  %2s: %1.5f\n" p[:X][i] rd[i]
+println("The optimized values of rc:")
+for i in 5
+  @printf "  %2s: %1.5f\n" p[:X][i] rc[i]
 end
 
 rmin = zeros(N)
 println("The positions of minimum of pairpotentials:")
-for i in 1:N
+for i in 5
   rmin[i] = sys[i].ref.rmin[1,1]
   @printf "  %2s: %1.3f\n" p[:X][i] rmin[i]
 end
 
 σ_hs = zeros(N)
 println("The effective hard-sphere diameters:")
-for i in 7
+for i in 5
   σ_hs[i] = sys[i].ref.trial.σ[1]
   @printf "  %2s: %1.3f\n" p[:X][i] σ_hs[i]
 end
@@ -164,12 +164,12 @@ end
 #
 # Save the numerical results as a csv file
 #
-df = DataFrame(X = p[:X], a = round(a, 5), rd = round(a, 5), res = round(res, 1), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
+df = DataFrame(X = p[:X], a = round(a, 5), rc = round(a, 5), res = round(res, 1), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
 writetable(joinpath(resdir, "results.csv"), df)
 
 # Overwrite the parameters for the subsequent tests
 p[:a] = round(a, 5)
-p[:rd] = round(a, 5)
+p[:rc] = round(a, 5)
 writetable(joinpath("data", "parameters", "tm_optim.csv"), p)
 
 #

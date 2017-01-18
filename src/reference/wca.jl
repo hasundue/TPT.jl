@@ -29,7 +29,7 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   β::Float64 = 1 / (kB * T)
 
   N::Int = ncomp(wca)
-  approx::AbstractString = wca.trial.approx
+  approx::Symbol = wca.trial.approx
   c::Vector{Float64} = composition(wca)
   σ₀::Matrix{Float64} = hsdiameter(wca.trial)
   ρ₀::Vector{Float64} = numberdensity(wca)

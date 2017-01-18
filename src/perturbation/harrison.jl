@@ -1,10 +1,12 @@
 """
 harrison.jl
 
-Types and functions for perturbation using Wills-Harrison's tight-binding
-approach.
+Harrison's tight-binding approach.
 
 References:
+
+* W.A. Harrison: Elementary Electronic Structure Revised Edition (2004).
+* L. Shi and A. Papaconstantopoulos: Physical Review B, 70 (2004) 205101.
 """
 
 const η_original = (-16.2, 8.75, -2.39)
@@ -98,7 +100,7 @@ function bandwidth(whtb::WHTB, ref::ReferenceSystem)::Float64
   Wd = √Wd²
 end
 
-function pairpotential(whtb::WHTB, A::Float64, B::Float64)::Matrix{Function}
+function pairpotential(whtb::WHTB, A::Float64, B::Float64, n::Int, m::Int)::Matrix{Function}
   @attach(whtb, zd, rd, c)
   N::Int = ncomp(whtb)
   ret = Matrix{Pairpotential}(N,N)
@@ -108,11 +110,8 @@ function pairpotential(whtb::WHTB, A::Float64, B::Float64)::Matrix{Function}
     z̄d = (zd[i] + zd[j]) / 2
     r̄d = √(rd[i]*rd[j])
 
-    # u(r) = -A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^5 +
-    #        B * z̄d * r̄d^6 / r^8
-
-    u(r) = -A * sqrt(12/γ) * (zd[i] + zd[j]) / 2 * (1 - z̄d/10) * r̄d^3 / r^5 +
-           B * sum(c .* zd) * r̄d^6 / r^8
+    u(r) = -A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^n +
+           B * z̄d * r̄d^6 / r^m
 
     ret[i,j] = ret[j,i] = u
   end
@@ -122,19 +121,19 @@ end
 function pairpotential(whtb::WHTB)::Matrix{Function}
   A = transfercoefficient(whtb)
   B = overlapcoefficient(whtb)
-  pairpotential(whtb, A, B)
+  pairpotential(whtb, A, B, 5, 8)
 end
 
 function pairpotential_attractive(whtb::WHTB)::Matrix{Function}
   A = transfercoefficient(whtb)
   B = 0.
-  pairpotential(whtb, A, B)
+  pairpotential(whtb, A, B, 5, 8)
 end
 
 function pairpotential_repulsive(whtb::WHTB)::Matrix{Function}
   A = 0.
   B = overlapcoefficient(whtb)
-  pairpotential(whtb, A, B)
+  pairpotential(whtb, A, B, 5, 8)
 end
 
 function pairpotential_derivative(whtb::WHTB)::Matrix{Function}
@@ -142,16 +141,7 @@ function pairpotential_derivative(whtb::WHTB)::Matrix{Function}
   N = ncomp(whtb)
   A = transfercoefficient(whtb)
   B = overlapcoefficient(whtb)
-  ret = Matrix{Pairpotential}(N,N)
-  for i in 1:N, j in 1:N
-    i > j && continue
-    z̄d = (zd[i] + zd[j]) / 2
-    r̄d = √(rd[i]*rd[j])
-    u(r) = 5A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^6 +
-           -8B * z̄d * r̄d^6 / r^9
-    ret[i,j] = ret[j,i] = u
-  end
-  ret
+  pairpotential(whtb, -5A, -8B, 6, 9)
 end
 
 function entropy(whtb::WHTB, Wd::Float64, T::Float64)::Float64

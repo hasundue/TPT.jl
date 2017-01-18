@@ -20,6 +20,7 @@ LWCA(trial::IndependentReferenceSystem, temp::Real; struct = :linear) =
 immutable OptimizedLWCA{T <: IndependentReferenceSystem} <: AbstractOptimizedWCA
   trial::T
   temp::Float64
+  rmin::Matrix{Float64}
   C₁::Matrix{Float64}
   C₂::Matrix{Float64}
   K₁::Matrix{Float64}
@@ -110,7 +111,7 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
   end
 
   if lwca.struct == :linear
-    optwca = OptimizedLWCA(ahs, T, C₁, C₂, K₁, K₂, fmin)
+    optwca = OptimizedLWCA(ahs, T, rmin, C₁, C₂, K₁, K₂, fmin)
   elseif lwca.struct == :full
     optwca = OptimizedWCA(ahs, T, rmin, u₀, fmin)
   end

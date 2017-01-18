@@ -7,6 +7,7 @@ References:
 
 * S. B. Yuste et al: J. Chem. Phys., Vol. 108, No.9, 1 (1998), 3683-3693.
 * K. Hoshino. and W. H. Young: J. Phys. F: Metal Phys., Vol. 10 (1980), 1365-1374.
+
 """
 
 immutable AHS <: IndependentReferenceSystem
@@ -424,7 +425,7 @@ function structurefactor(ahs::AHS)::Array{Function,2}
   return ret
 end
 
-function paircorrelation(ahs::AHS, rmin::Real, rmax::Real)::Matrix{Function}
+function paircorrelation(ahs::AHS)::Array{Function,2}
   N::Int = ncomp(ahs)
   σ::Array{Float64,2} = hsdiameter(ahs)
   ρ::Vector{Float64} = numberdensity(ahs)
@@ -440,7 +441,7 @@ function paircorrelation(ahs::AHS, rmin::Real, rmax::Real)::Matrix{Function}
   for i in 1:N, j in 1:N
     i > j && continue
 
-    function g_raw(r)::Float64
+    function g(r)::Float64
       if r < σ[i,j]
         0
       elseif r == σ[i,j]
@@ -451,17 +452,10 @@ function paircorrelation(ahs::AHS, rmin::Real, rmax::Real)::Matrix{Function}
       end
     end
 
-    nterm = trunc(Int, 32*(rmax - σ[i,j])/σ[i,j])
-    g::Function = spline(g_raw, σ[i,j], rmax, nterm)
-
     ret[i,j] = ret[j,i] = g
   end
 
   return ret
-end
-
-function paircorrelation(ahs::AHS)::Matrix{Function}
-  paircorrelation(ahs, R_MIN, R_MAX)
 end
 
 # Ref: K. Hoshino. and W. H. Young: J. Phys. F: Metal Phys. 10 (1980) 1365-1374.

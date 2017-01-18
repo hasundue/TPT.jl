@@ -30,37 +30,14 @@ function TPTSystem(ref::ReferenceSystem, pert::Perturbation = NullPerturbation(n
   TPTSystem(N, ρ, c, temp, mass, ref, pert)
 end
 
-function paircorrelation(sys::TPTSystem)
-  paircorrelation(sys.ref)
-end
-
-function structurefactor(sys::TPTSystem)
-  structurefactor(sys.ref)
-end
-
-function pairpotential(sys::TPTSystem)
-  pairpotential(sys.pert)
-end
-
-function ncomp(sys::TPTSystem)::Int
-  sys.ncomp
-end
-
-function totalnumberdensity(sys::TPTSystem)::Float64
-  sys.density
-end
-
-function composition(sys::TPTSystem)::Vector{Float64}
-  sys.composition
-end
-
-function temperature(sys::TPTSystem)::Float64
-  sys.temp
-end
-
-function mass(sys::TPTSystem)::Vector{Float64}
-  sys.mass
-end
+paircorrelation(sys::TPTSystem) = paircorrelation(sys.ref)
+structurefactor(sys::TPTSystem) = structurefactor(sys.ref)
+pairpotential(sys::TPTSystem) = pairpotential(sys.pert)
+ncomp(sys::TPTSystem) = sys.ncomp
+totalnumberdensity(sys::TPTSystem) = sys.density
+composition(sys::TPTSystem) = sys.composition
+temperature(sys::TPTSystem) = sys.temp
+mass(sys::TPTSystem) = sys.mass
 
 function kinetic(sys::TPTSystem)::Float64
   T = temperature(sys)

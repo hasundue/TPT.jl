@@ -62,22 +62,22 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
   fs(s::Complex{Float64})::Float64 = real(F(s))
 
   suma::Float64 = fs(x + 0im)/2
-  for n in 1:nterm
-    suma = suma + (-1)^n * fs(x + im*n*h)
+  @simd for n in 1:nterm
+    @inbounds suma += (-1)^n * fs(x + im*n*h)
   end
 
   su = Vector{Float64}(meuler+2)
   su[1] = suma
   for k in 1:meuler+1
     n = nterm + k
-    su[k+1] = su[k] + (-1)^n * fs(x + im*n*h)
+    @inbounds su[k+1] = su[k] + (-1)^n * fs(x + im*n*h)
   end
 
   # argsu = 0
   argsu1::Float64 = 0
-  for j in 1:meuler+1
+  @simd for j in 1:meuler+1
     # argsu = argsu + c(j)*su[j]
-    argsu1 = argsu1 + c(j)*su[j+1]
+    @inbounds argsu1 += c(j)*su[j+1]
   end
 
   # fun = u * argsu / 2^meuler

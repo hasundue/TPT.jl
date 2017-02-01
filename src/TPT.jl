@@ -45,6 +45,7 @@ export TPTSystem,
        NFE,
        WHTB,
        NFETB,
+       BOTB,
 
        # WCA
        blipfunction,
@@ -71,6 +72,7 @@ export TPTSystem,
 import Optim
 import NLopt
 using Dierckx
+using Polynomials
 
 include("utils.jl")
 include("types.jl")
@@ -89,5 +91,6 @@ include(joinpath("perturbation", "nfe.jl"))
 include(joinpath("perturbation", "ashcroft.jl"))
 include(joinpath("perturbation", "bretonnet_silbert.jl"))
 include(joinpath("perturbation", "harrison.jl"))
+include(joinpath("perturbation", "hausleitner.jl"))
 
 end # module

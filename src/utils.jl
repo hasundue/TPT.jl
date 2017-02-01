@@ -114,3 +114,31 @@ function spline_spl(f::Function, a::Float64, b::Float64, N::Int,
 
   Spline1D(𝐱, 𝐲, k=3, bc=bc)
 end
+
+function cardano(a₃::Real, a₂::Real, a₁::Real, a₀::Real)
+  A₂ = a₂ / a₃
+  A₁ = a₁ / a₃
+  A₀ = a₀ / a₃
+
+  p = (A₁ - 1/3*A₂^2) / 3
+  q = (A₀ - 1/3*A₁*A₂ + 2/27*A₂^3) / 2
+
+  D = - (q^2 + p^3)
+
+  if D ≈ 0 && q ≈ 0
+    y = [0]
+  elseif D ≈ 0
+    y = [-2*∛q, ∛q]
+  elseif D > 0
+    Θ = atan2(√D, -q)
+    R = (q^2 + D)^(1/6) * cos(Θ/3)
+    Q = (q^2 + D)^(1/6) * sin(Θ/3)
+    y = [2R, -R - √3*Q, -R + √3*Q]
+  elseif D < 0
+    S = ∛(-q + √(-D))
+    T = ∛(-q - √(-D))
+    y = [S+T, -1/2*(S+T) + √3/2*im*(S-T), -1/2*(S+T) - √3/2*im*(S-T)]
+  end
+
+  x = y - A₂/3
+end

@@ -14,19 +14,20 @@ immutable BOTB <: TBPerturbation
   σ::Float64 # ordering parameter
   x::Vector{Float64} # composition
   p::Matrix{Float64} # probability
+  Nd::Vector{Float64} # number of d-electrons
   Ed::Vector{Float64} # d-state energy
   Wd::Vector{Float64} # band width
   r₀::Vector{Float64} # atomic radius
 end
 
-function BOTB(Ed::Real, Wd::Real, r₀::Real; Z::Int = 12)
-  BOTB(1, Z, 0, ones(1), ones(1,1), [Ed], [Wd], [r₀])
+function BOTB(Nd::Real, Ed::Real, Wd::Real, r₀::Real; Z::Int = 12)
+  BOTB(1, Z, 0, ones(1), ones(1,1), [Nd], [Ed], [Wd], [r₀])
 end
 
-function BOTB(x::Vector{Float64}, Ed::Vector{Float64}, Wd::Vector{Float64}, r₀::Vector{Float64}; Z::Int = 12, σ::Real = 0)
+function BOTB(x::Vector{Float64}, Nd::Vector{Float64}, Ed::Vector{Float64}, Wd::Vector{Float64}, r₀::Vector{Float64}; Z::Int = 12, σ::Real = 0)
   N = length(x)
   p = [ x[j] for i in 1:N, j in 1:N ]
-  BOTB(N, Z, σ, x, p, Ed, Wd, r₀)
+  BOTB(N, Z, σ, x, p, Nd, Ed, Wd, r₀)
 end
 
 ncomp(botb::BOTB) = botb.N
@@ -124,7 +125,7 @@ function diagonalgreenfunction(botb::BOTB)::Vector{Function}
   [ Gᵢᵢ(E) = 1 / (E - Ed[i] - Δ[i](E)) for i in 1:N ]
 end
 
-function greenfunction(botb::BOTB)::Matrix{Function}
+function offdiagonalgreenfunction(botb::BOTB)::Matrix{Function}
   @attach(botb, Z, N, Ed)
   h::Matrix{Float64} = nntransferintegral(botb)
   Δ::Vector{Function} = selfenergy(botb)
@@ -135,5 +136,16 @@ end
 function densityofstate(botb::BOTB)::Vector{Function}
   @attach(botb, Z, N, Ed)
   G::Vector{Function} = diagonalgreenfunction(botb)
-  [ D(E) = 10 * 1/π * G[i](E) for i in 1:N ]
+  [ D(E) = 10 * 1/π * imag(G[i](E)) for i in 1:N ]
+end
+
+function fermienergy(botb::BOTB)::Float64
+  @attach(botb, N, Nd, Ed, Wd)
+  D::Vector{Function} = densityofstate(botb)
+  Dtotal(E) = sum(D[i](E) for i in 1:N)
+  Emin = minimum(Ed) - maximum(Wd)
+  Emax = maximum(Ed) + maximum(Wd)
+  fopt(E) = abs(sum(Nd) - ∫(Dtotal, Emin, E))
+  opt = Optim.optimize(fopt, Emin, Emax)
+  Ef = Optim.minimizer(opt)
 end

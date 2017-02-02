@@ -8,7 +8,7 @@ References:
 * C. Hausleitner and J. Hafner: Phys. Rev. B, 45 (1992) 115-127.
 """
 
-immutable BOTB <: TBPerturbation
+immutable HHTB <: TBPerturbation
   N::Int # number of components
   Z::Int # total coordination number on the Bethe lattice
   σ::Float64 # ordering parameter
@@ -20,20 +20,20 @@ immutable BOTB <: TBPerturbation
   r₀::Vector{Float64} # atomic radius
 end
 
-function BOTB(Nd::Real, Ed::Real, Wd::Real, r₀::Real; Z::Int = 12)
-  BOTB(1, Z, 0, ones(1), ones(1,1), [Nd], [Ed], [Wd], [r₀])
+function HHTB(Nd::Real, Ed::Real, Wd::Real, r₀::Real; Z::Int = 12)
+  HHTB(1, Z, 0, ones(1), ones(1,1), [Nd], [Ed], [Wd], [r₀])
 end
 
-function BOTB(x::Vector{Float64}, Nd::Vector{Float64}, Ed::Vector{Float64}, Wd::Vector{Float64}, r₀::Vector{Float64}; Z::Int = 12, σ::Real = 0)
+function HHTB(x::Vector{Float64}, Nd::Vector{Float64}, Ed::Vector{Float64}, Wd::Vector{Float64}, r₀::Vector{Float64}; Z::Int = 12, σ::Real = 0)
   N = length(x)
   p = [ x[j] for i in 1:N, j in 1:N ]
-  BOTB(N, Z, σ, x, p, Nd, Ed, Wd, r₀)
+  HHTB(N, Z, σ, x, p, Nd, Ed, Wd, r₀)
 end
 
-ncomp(botb::BOTB) = botb.N
+ncomp(hhtb::HHTB) = hhtb.N
 
-function nntransferintegral(botb::BOTB)::Matrix{Float64}
-  @attach(botb, Z, N, Wd)
+function nntransferintegral(hhtb::HHTB)::Matrix{Float64}
+  @attach(hhtb, Z, N, Wd)
   hd = Matrix{Float64}(N,N)
   for i in 1:N
     hd[i,i] = Wd[i] / 12
@@ -45,8 +45,8 @@ function nntransferintegral(botb::BOTB)::Matrix{Float64}
   hd
 end
 
-function transferintegral(botb::BOTB)::Matrix{Function}
-  @attach(botb, N, Wd, r₀)
+function transferintegral(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, N, Wd, r₀)
   ret = Matrix{Function}(N,N)
   η_ddσ = -6 * 2/5
   η_ddπ =  4 * 2/5
@@ -63,47 +63,29 @@ function transferintegral(botb::BOTB)::Matrix{Function}
   ret
 end
 
-function transfermatrix1(botb::BOTB)::Function
-  @attach(botb, Z, Ed)
-  h::Matrix{Float64} = nntransferintegral(botb)
-  function S(E::Real)
-    A₂ = Z*h[1,1]
-    A₁ = -(E - Ed[1])
-    A₀ = h[1,1]
-    roots = Polynomials.roots( Poly([A₀, A₁, A₂]) )
-    roots[1]
-  end
-end
-
-function selfenergy1(botb::BOTB)::Function
-  @attach(botb, Z)
-  h::Matrix{Float64} = nntransferintegral(botb)
-  S::Function = transfermatrix1(botb)
-
-  Δ(E) = Z*h[1,1]*S(E)
-end
-
-function greenfunction1(botb::BOTB)::Function
-  @attach(botb, Z, Ed)
-  Δ = selfenergy1(botb)
-  G(E) = 1 / (E - Ed[1] - Δ(E))
-end
-
-function transfermatrix(botb::BOTB)
-  @attach(botb, Z, N, x, Ed, p)
-  if N == 1
-    return transfermatrix1(botb::BOTB)
-  end
-  h::Matrix{Float64} = nntransferintegral(botb)
+function transfermatrix(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, Z, N, x, Ed, p)
+  h::Matrix{Float64} = nntransferintegral(hhtb)
   ret = Matrix{Function}(N,N)
+  if N == 1
+    function S(E::Real)
+      A₂ = Z*h[1,1]
+      A₁ = -(E - Ed[1])
+      A₀ = h[1,1]
+      roots = Polynomials.roots( Poly([A₀, A₁, A₂]) )
+      roots[1]
+    end
+    ret[1,1] = S
+    return ret
+  end
   function S₁₁(E::Real)
     A₄ = (Z-1)^2 * ( p[1,1]^2*p[2,2] - p[1,1]*p[1,2]*p[2,1] )
     A₃ = (Z-1) * ( (p[1,2]*p[2,1] - 2p[1,1]*p[2,2]) * (E - Ed[1]) / h[1,1] + p[1,1]*p[1,2] * (E - Ed[2]) / h[2,2] )
     A₂ = p[2,2] * ( (E - Ed[1]) / h[1,1] )^2 - p[1,2] * (E - Ed[1])*(E - Ed[2]) / ( h[1,1] * h[2,2] ) + (Z-1) * (2*p[1,1]*p[2,2] + p[1,2]^2 - p[1,2]*p[2,1])
     A₁ = p[1,2]*(E - Ed[2])/h[2,2] - 2*p[2,2]*(E - Ed[1])/h[1,1]
     A₀ = p[2,2]
-    S::Vector{Number} = cardano(A₃, A₂, A₁, A₀)
-    S[2]
+    roots::Vector{Number} = cardano(A₃, A₂, A₁, A₀)
+    roots[2]
   end
   S₁₂(E) = h[1,2]/h[1,1]*S₁₁(E)
   S₂₁(E) = (-(Z-1)*p[1,1]*h[1,1]*S₁₁(E)^2 + (E-Ed[1])*S₁₁(E) - h[1,1]) / ((Z-1)*p[1,2]*h[1,2]*S₁₁(E))
@@ -111,45 +93,46 @@ function transfermatrix(botb::BOTB)
   [ S₁₁ S₁₂; S₂₁ S₂₂ ]
 end
 
-function selfenergy(botb::BOTB)::Vector{Function}
-  @attach(botb, Z, N, x, p)
-  h::Matrix{Float64} = nntransferintegral(botb)
-  S::Matrix{Function} = transfermatrix(botb)
-  [ Δ₁(E) = Z * ( p[1,1]*h[1,1]*S[1,1](E) + p[1,2]*h[1,2]*S[2,1](E) ),
-    Δ₂(E) = Z * ( p[2,2]*h[2,2]*S[2,2](E) + p[2,1]*h[2,1]*S[1,2](E) ) ]
+function selfenergy(hhtb::HHTB)::Vector{Function}
+  @attach(hhtb, Z, N, x, p)
+  h::Matrix{Float64} = nntransferintegral(hhtb)
+  S::Matrix{Function} = transfermatrix(hhtb)
+  [ Δ(E) = Z*sum( p[i,j]*h[i,j]*S[j,i](E) for j in 1:N ) for i in 1:N ]
+  # [ Δ₁(E) = Z * ( p[1,1]*h[1,1]*S[1,1](E) + p[1,2]*h[1,2]*S[2,1](E) ),
+    # Δ₂(E) = Z * ( p[2,2]*h[2,2]*S[2,2](E) + p[2,1]*h[2,1]*S[1,2](E) ) ]
 end
 
-function diagonalgreenfunction(botb::BOTB)::Vector{Function}
-  @attach(botb, Z, N, Ed)
-  Δ::Vector{Function} = selfenergy(botb)
+function diagonalgreenfunction(hhtb::HHTB)::Vector{Function}
+  @attach(hhtb, Z, N, Ed)
+  Δ::Vector{Function} = selfenergy(hhtb)
   [ Gᵢᵢ(E) = 1 / (E - Ed[i] - Δ[i](E)) for i in 1:N ]
 end
 
-function offdiagonalgreenfunction(botb::BOTB)::Matrix{Function}
-  @attach(botb, Z, N, Ed)
-  h::Matrix{Float64} = nntransferintegral(botb)
-  Δ::Vector{Function} = selfenergy(botb)
-  S::Matrix{Function} = transfermatrix(botb)
+function offdiagonalgreenfunction(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, Z, N, Ed)
+  h::Matrix{Float64} = nntransferintegral(hhtb)
+  Δ::Vector{Function} = selfenergy(hhtb)
+  S::Matrix{Function} = transfermatrix(hhtb)
   [ Gᵢⱼ(E) = h[i,j] / ( E - Ed[i] - (Z-1)/Z * Δ[i](E) ) / ( E - Ed[j] - Δ[j](E) ) for i in 1:N, j in 1:N ]
 end
 
-function partialdensityofstate(botb::BOTB)::Vector{Function}
-  @attach(botb, N, Z, x, Ed)
-  G::Vector{Function} = diagonalgreenfunction(botb)
+function partialdensityofstate(hhtb::HHTB)::Vector{Function}
+  @attach(hhtb, N, Z, x, Ed)
+  G::Vector{Function} = diagonalgreenfunction(hhtb)
   [ D(E) = 10*x[i]*1/π*imag(G[i](E)) for i in 1:N ]
 end
 
-function totaldensityofstate(botb::BOTB)::Function
-  @attach(botb, N)
-  Dᵢ = partialdensityofstate(botb)
+function totaldensityofstate(hhtb::HHTB)::Function
+  @attach(hhtb, N)
+  Dᵢ = partialdensityofstate(hhtb)
   D(E) = sum(Dᵢ[i](E) for i in 1:N)
 end
 
-densityofstate(botb) = totaldensityofstate(botb)
+densityofstate(hhtb) = totaldensityofstate(hhtb)
 
-function fermienergy(botb::BOTB)::Float64
-  @attach(botb, N, x, Nd, Ed, Wd)
-  D::Function = totaldensityofstate(botb)
+function fermienergy(hhtb::HHTB)::Float64
+  @attach(hhtb, N, x, Nd, Ed, Wd)
+  D::Function = totaldensityofstate(hhtb)
   Emin = minimum(Ed) - maximum(Wd)
   Emax = maximum(Ed) + maximum(Wd)
   fopt(E) = abs(sum(x .* Nd) - ∫(D, Emin, E))
@@ -157,10 +140,10 @@ function fermienergy(botb::BOTB)::Float64
   Ef = Optim.minimizer(opt)
 end
 
-function bondorder(botb::BOTB)::Matrix{Float64}
-  @attach(botb, N, Ed, Wd)
-  G::Matrix{Function} = offdiagonalgreenfunction(botb)
-  Ef::Float64 = fermienergy(botb::BOTB)
+function bondorder(hhtb::HHTB)::Matrix{Float64}
+  @attach(hhtb, N, Ed, Wd)
+  G::Matrix{Function} = offdiagonalgreenfunction(hhtb)
+  Ef::Float64 = fermienergy(hhtb::HHTB)
   Emin = minimum(Ed) - maximum(Wd)
   Θ = Matrix{Float64}(N,N)
   for i in 1:N
@@ -173,22 +156,22 @@ function bondorder(botb::BOTB)::Matrix{Float64}
   Θ
 end
 
-function pairpotential_bond(botb::BOTB)::Matrix{Function}
-  @attach(botb, N)
-  h::Matrix{Function} = transferintegral(botb)
-  Θ::Matrix{Float64} = bondorder(botb)
+function pairpotential_bond(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, N)
+  h::Matrix{Function} = transferintegral(hhtb)
+  Θ::Matrix{Float64} = bondorder(hhtb)
   [ u_bond(r) = h[i,j](r) * Θ[i,j] for i in 1:N, j in 1:N ]
 end
 
-function pairpotential_rep(botb::BOTB)::Matrix{Function}
-  @attach(botb, N, Nd, Wd, r₀)
+function pairpotential_rep(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, N, Nd, Wd, r₀)
   [ u_rep(r) = 8/25*√(Nd[i]*Nd[j])*Wd[i]*Wd[j]*r₀[i]^5*r₀[j]^5 / r^8
     for i in 1:N, j in 1:N ]
 end
 
-function pairpotential(botb::BOTB)::Matrix{Function}
-  @attach(botb, N)
-  u_bond = pairpotential_bond(botb)
-  u_rep = pairpotential_rep(botb)
+function pairpotential(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, N)
+  u_bond = pairpotential_bond(hhtb)
+  u_rep = pairpotential_rep(hhtb)
   [ u(r) = u_rep[i,j](r) + u_bond[i,j](r) for i in 1:N, j in 1:N ]
 end

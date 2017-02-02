@@ -131,3 +131,9 @@ function greenfunction(botb::BOTB)::Matrix{Function}
   S::Matrix{Function} = transfermatrix(botb)
   [ Gᵢⱼ(E) = h[i,j] / ( E - Ed[i] - (Z-1)/Z * Δ[i](E) ) / ( E - Ed[j] - Δ[j](E) ) for i in 1:N, j in 1:N ]
 end
+
+function densityofstate(botb::BOTB)::Vector{Function}
+  @attach(botb, Z, N, Ed)
+  G::Vector{Function} = diagonalgreenfunction(botb)
+  [ D(E) = 10 * 1/π * G[i](E) for i in 1:N ]
+end

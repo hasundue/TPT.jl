@@ -133,19 +133,31 @@ function offdiagonalgreenfunction(botb::BOTB)::Matrix{Function}
   [ Gᵢⱼ(E) = h[i,j] / ( E - Ed[i] - (Z-1)/Z * Δ[i](E) ) / ( E - Ed[j] - Δ[j](E) ) for i in 1:N, j in 1:N ]
 end
 
-function densityofstate(botb::BOTB)::Vector{Function}
-  @attach(botb, Z, N, Ed)
+function partialdensityofstate(botb::BOTB)::Vector{Function}
+  @attach(botb, N, Z, x, Ed)
   G::Vector{Function} = diagonalgreenfunction(botb)
-  [ D(E) = 10 * 1/π * imag(G[i](E)) for i in 1:N ]
+  [ D(E) = 10*x[i]*1/π*imag(G[i](E)) for i in 1:N ]
 end
 
+function totaldensityofstate(botb::BOTB)::Function
+  @attach(botb, N)
+  Dᵢ = partialdensityofstate(botb)
+  D(E) = sum(Dᵢ[i](E) for i in 1:N)
+end
+
+densityofstate(botb) = totaldensityofstate(botb)
+
 function fermienergy(botb::BOTB)::Float64
-  @attach(botb, N, Nd, Ed, Wd)
-  D::Vector{Function} = densityofstate(botb)
-  Dtotal(E) = sum(D[i](E) for i in 1:N)
+  @attach(botb, N, x, Nd, Ed, Wd)
+  D::Function = totaldensityofstate(botb)
   Emin = minimum(Ed) - maximum(Wd)
   Emax = maximum(Ed) + maximum(Wd)
-  fopt(E) = abs(sum(Nd) - ∫(Dtotal, Emin, E))
+  fopt(E) = abs(sum(x .* Nd) - ∫(D, Emin, E))
   opt = Optim.optimize(fopt, Emin, Emax)
   Ef = Optim.minimizer(opt)
 end
+
+# function bondorder(botb::BOTB)::Matrix{Float64}
+#   G::Matrix{Function} = offdiagonalgreenfunction(botb)
+#   Ef::Float64 = fermienergy(botb::BOTB)
+# end

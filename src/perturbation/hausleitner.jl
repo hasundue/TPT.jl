@@ -157,7 +157,18 @@ function fermienergy(botb::BOTB)::Float64
   Ef = Optim.minimizer(opt)
 end
 
-# function bondorder(botb::BOTB)::Matrix{Float64}
-#   G::Matrix{Function} = offdiagonalgreenfunction(botb)
-#   Ef::Float64 = fermienergy(botb::BOTB)
-# end
+function bondorder(botb::BOTB)::Matrix{Float64}
+  @attach(botb, N, Ed, Wd)
+  G::Matrix{Function} = offdiagonalgreenfunction(botb)
+  Ef::Float64 = fermienergy(botb::BOTB)
+  Emin = minimum(Ed) - maximum(Wd)
+  Θ = Matrix{Float64}(N,N)
+  for i in 1:N
+    Θ[i,i] = 10 * 2/π * ∫(E -> imag(G[i,i](E)), Emin, Ef)
+  end
+  for i in 1:N, j in 1:N
+    i == j && continue
+    Θ[i,j] = 10 * 2/π * 1/2 * ∫(E -> imag(G[i,j](E) + G[j,i](E)), Emin, Ef)
+  end
+  Θ
+end

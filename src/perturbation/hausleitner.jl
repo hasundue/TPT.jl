@@ -57,7 +57,7 @@ function transferintegral(botb::BOTB)::Matrix{Function}
   end
   for i in 1:N, j in 1:N
     i == j && continue
-    h(r) = √( h[i,i](r) * h[j,j](r) )
+    h(r) = √( ret[i,i](r) * ret[j,j](r) )
     ret[i,j] = h
   end
   ret
@@ -171,4 +171,24 @@ function bondorder(botb::BOTB)::Matrix{Float64}
     Θ[i,j] = 10 * 2/π * 1/2 * ∫(E -> imag(G[i,j](E) + G[j,i](E)), Emin, Ef)
   end
   Θ
+end
+
+function pairpotential_bond(botb::BOTB)::Matrix{Function}
+  @attach(botb, N)
+  h::Matrix{Function} = transferintegral(botb)
+  Θ::Matrix{Float64} = bondorder(botb)
+  [ u_bond(r) = h[i,j](r) * Θ[i,j] for i in 1:N, j in 1:N ]
+end
+
+function pairpotential_rep(botb::BOTB)::Matrix{Function}
+  @attach(botb, N, Nd, Wd, r₀)
+  [ u_rep(r) = 8/25*√(Nd[i]*Nd[j])*Wd[i]*Wd[j]*r₀[i]^5*r₀[j]^5 / r^8
+    for i in 1:N, j in 1:N ]
+end
+
+function pairpotential(botb::BOTB)::Matrix{Function}
+  @attach(botb, N)
+  u_bond = pairpotential_bond(botb)
+  u_rep = pairpotential_rep(botb)
+  [ u(r) = u_rep[i,j](r) + u_bond[i,j](r) for i in 1:N, j in 1:N ]
 end

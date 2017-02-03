@@ -32,6 +32,13 @@ end
 
 ncomp(hhtb::HHTB) = hhtb.N
 
+function cutoffenergy(hhtb)::Tuple{Float64,Float64}
+  @attach(hhtb, Ed, Wd)
+  Emin = minimum(Ed) - maximum(Wd)
+  Emax = maximum(Ed) + maximum(Wd)
+  (Emin, Emax)
+end
+
 function nntransferintegral(hhtb::HHTB)::Matrix{Float64}
   @attach(hhtb, Z, N, Wd)
   hd = Matrix{Float64}(N,N)
@@ -133,8 +140,7 @@ densityofstate(hhtb) = totaldensityofstate(hhtb)
 function fermienergy(hhtb::HHTB)::Float64
   @attach(hhtb, N, x, Nd, Ed, Wd)
   D::Function = totaldensityofstate(hhtb)
-  Emin = minimum(Ed) - maximum(Wd)
-  Emax = maximum(Ed) + maximum(Wd)
+  Emin, Emax = cutoffenergy(hhtb)
   fopt(E) = abs(sum(x .* Nd) - ∫(D, Emin, E))
   opt = Optim.optimize(fopt, Emin, Emax)
   Ef = Optim.minimizer(opt)
@@ -143,8 +149,8 @@ end
 function bondorder(hhtb::HHTB)::Matrix{Float64}
   @attach(hhtb, N, Ed, Wd)
   G::Matrix{Function} = offdiagonalgreenfunction(hhtb)
-  Ef::Float64 = fermienergy(hhtb::HHTB)
-  Emin = minimum(Ed) - maximum(Wd)
+  Ef::Float64 = fermienergy(hhtb)
+  Emin, Emax = cutoffenergy(hhtb)
   Θ = Matrix{Float64}(N,N)
   for i in 1:N
     Θ[i,i] = 10 * 2/π * ∫(E -> imag(G[i,i](E)), Emin, Ef)
@@ -174,4 +180,25 @@ function pairpotential(hhtb::HHTB)::Matrix{Function}
   u_bond = pairpotential_bond(hhtb)
   u_rep = pairpotential_rep(hhtb)
   [ u(r) = u_rep[i,j](r) + u_bond[i,j](r) for i in 1:N, j in 1:N ]
+end
+
+function chargetransfer(hhtb::HHTB)::Vector{Float64}
+  @attach(hhtb, N, x, Nd)
+  Emin, Emax = cutoffenergy(hhtb)
+  Ef::Float64 = fermienergy(hhtb)
+  D::Vector{Function} = partialdensityofstate(hhtb)
+  [ ∫(D[i], Emin, Ef) / x[i] - Nd[i] for i in 1:N ]
+end
+
+function bondenergy(hhtb::HHTB)::Float64
+  D::Function = totaldensityofstate(hhtb)
+  Ef::Float64 = fermienergy(hhtb)
+  Emin, Emax = cutoffenergy(hhtb)
+  E_bond = ∫(E -> D(E)*E, Emin, Ef)
+end
+
+function onsiteenergy(hhtb::HHTB)::Float64
+  @attach(hhtb, N, x, Nd, Ed)
+  ΔNd = chargetransfer(hhtb)
+  E_site = sum( x[i]*(Nd[i] + ΔNd[i])*Ed[i] for i in 1:N ) 
 end

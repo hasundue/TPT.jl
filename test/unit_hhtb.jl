@@ -46,11 +46,16 @@ plot(D, Emin, Emax, label="Ni")
 vline!([Ef], label="Ef")
 png("D_Ni")
 
+ΔNd = TPT.chargetransfer(hhtb1)[1]
+
 Θ = TPT.bondorder(hhtb1)[1,1]
 
 u = TPT.pairpotential(hhtb1)[1,1]
 plot(u, 0, 10, ylims=(-0.05, 0.05))
 png("u_Ni")
+
+E_bond = TPT.bondenergy(hhtb1)
+E_site = TPT.onsiteenergy(hhtb1)
 
 #
 # Binary case: Ni-Y
@@ -93,11 +98,16 @@ plot!(E -> Dtotal(E), Emin, Emax, label="total")
 vline!([Ef], label="Ef")
 png("D")
 
+ΔNd = TPT.chargetransfer(hhtb)
+
 Θ = TPT.bondorder(hhtb)
 
 u = TPT.pairpotential(hhtb)
 plot([u[1,1], u[1,2], u[2,2]], 0, 10, labels=["Ni-Ni" "Ni-Y" "Y-Y"], ylims=(-0.12,0.12))
 png("u")
+
+E_bond = TPT.bondenergy(hhtb)
+E_site = TPT.onsiteenergy(hhtb)
 
 @testset "TM Binary" begin
 end

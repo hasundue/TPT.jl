@@ -5,6 +5,11 @@ using Plots; pyplot()
 
 println("--- Unit HHTB ---")
 
+!isdir("results") && mkdir("results")
+
+resdir = joinpath("results", "unit_hhtb")
+!isdir(resdir) && mkdir(resdir)
+
 Z = 12
 X = ["Ni", "Y"]
 V = [10.04, 33.05] / (5.292^3 * 1E-3) # a.u.
@@ -18,6 +23,9 @@ x = [1-x₂, x₂]
 Ec = mean(Ed)
 Ed = Ed - Ec
 Ec = 0
+
+Emin = Ec - 0.4
+Emax = Ec + 0.4
 
 #
 # Single-component case: Ni
@@ -54,15 +62,12 @@ u = TPT.pairpotential(hhtb1)[1,1]
 plot(u, 0, 10, ylims=(-0.05, 0.05))
 png("u_Ni")
 
-E_bond = TPT.bondenergy(hhtb1)
+E_band = TPT.bandenergy(hhtb1)
 E_site = TPT.onsiteenergy(hhtb1)
 
 #
 # Binary case: Ni-Y
 #
-Emin = Ec - 0.4
-Emax = Ec + 0.4
-
 hhtb = TPT.HHTB(x, Nd, Ed, Wd, r₀)
 
 h = TPT.transferintegral(hhtb)
@@ -106,7 +111,7 @@ u = TPT.pairpotential(hhtb)
 plot([u[1,1], u[1,2], u[2,2]], 0, 10, labels=["Ni-Ni" "Ni-Y" "Y-Y"], ylims=(-0.12,0.12))
 png("u")
 
-E_bond = TPT.bondenergy(hhtb)
+E_band = TPT.bandenergy(hhtb)
 E_site = TPT.onsiteenergy(hhtb)
 
 @testset "TM Binary" begin

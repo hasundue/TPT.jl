@@ -190,7 +190,7 @@ function chargetransfer(hhtb::HHTB)::Vector{Float64}
   [ ∫(D[i], Emin, Ef) / x[i] - Nd[i] for i in 1:N ]
 end
 
-function bondenergy(hhtb::HHTB)::Float64
+function bandenergy(hhtb::HHTB)::Float64
   D::Function = totaldensityofstate(hhtb)
   Ef::Float64 = fermienergy(hhtb)
   Emin, Emax = cutoffenergy(hhtb)
@@ -200,5 +200,5 @@ end
 function onsiteenergy(hhtb::HHTB)::Float64
   @attach(hhtb, N, x, Nd, Ed)
   ΔNd = chargetransfer(hhtb)
-  E_site = sum( x[i]*(Nd[i] + ΔNd[i])*Ed[i] for i in 1:N ) 
+  E_site = sum( x[i]*(Nd[i] + ΔNd[i])*Ed[i] for i in 1:N )
 end

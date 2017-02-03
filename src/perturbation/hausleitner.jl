@@ -110,8 +110,6 @@ function selfenergy(hhtb::HHTB)::Vector{Function}
   h::Matrix{Float64} = nntransferintegral(hhtb)
   S::Matrix{Function} = transfermatrix(hhtb)
   [ Δ(E) = Z*sum( p[i,j]*h[i,j]*S[j,i](E) for j in 1:N ) for i in 1:N ]
-  # [ Δ₁(E) = Z * ( p[1,1]*h[1,1]*S[1,1](E) + p[1,2]*h[1,2]*S[2,1](E) ),
-    # Δ₂(E) = Z * ( p[2,2]*h[2,2]*S[2,2](E) + p[2,1]*h[2,1]*S[1,2](E) ) ]
 end
 
 function diagonalgreenfunction(hhtb::HHTB)::Vector{Function}

@@ -32,6 +32,11 @@ end
 
 ncomp(hhtb::HHTB) = hhtb.N
 
+function cutoffradius(hhtb)::Matrix{Float64}
+  @attach(hhtb, N, r₀)
+  [ 5 * (r₀[i] + r₀[j]) / 2 for i in 1:N, j in 1:N ]
+end
+
 function cutoffenergy(hhtb)::Tuple{Float64,Float64}
   @attach(hhtb, Ed, Wd)
   Emin = minimum(Ed) - maximum(Wd)
@@ -201,4 +206,11 @@ function onsiteenergy(hhtb::HHTB)::Float64
   @attach(hhtb, N, x, Nd, Ed)
   ΔNd = chargetransfer(hhtb)
   E_site = sum( x[i]*(Nd[i] + ΔNd[i])*Ed[i] for i in 1:N )
+end
+
+function internal(hhtb::HHTB, ref::ReferenceSystem)::Float64
+  u_rep = pairpotential_rep(hhtb)
+  U_band = bandenergy(hhtb)
+  U_rep = internal(ref, hhtb, u_rep)
+  U = U_band + U_rep
 end

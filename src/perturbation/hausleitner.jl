@@ -62,14 +62,14 @@ function nntransferintegral(hhtb::HHTB)::Matrix{Float64}
   hd
 end
 
-function transferintegral(hhtb::HHTB)::Matrix{Function}
+function transferintegral(hhtb::HHTB, a::Real, n::Int)::Matrix{Function}
   @attach(hhtb, N, Wd, r₀)
   ret = Matrix{Function}(N,N)
   η_ddσ = -6 * 2/5
   η_ddπ =  4 * 2/5
   η_ddδ = -1 * 2/5
   for i in 1:N
-    h(r) = √( 1/5 * (η_ddσ^2 + 2η_ddπ^2 + 2η_ddδ^2) ) * Wd[i] * (r₀[i]/r)^5
+    h(r) = a * √( 1/5 * (η_ddσ^2 + 2η_ddπ^2 + 2η_ddδ^2) ) * Wd[i] * r₀[i]^5 / r^n
     ret[i,i] = h
   end
   for i in 1:N, j in 1:N
@@ -78,6 +78,14 @@ function transferintegral(hhtb::HHTB)::Matrix{Function}
     ret[i,j] = h
   end
   ret
+end
+
+function transferintegral(hhtb::HHTB)::Matrix{Function}
+  transferintegral(hhtb, 1, 5)
+end
+
+function transferintegral_derivative(hhtb::HHTB)::Matrix{Function}
+  transferintegral(hhtb, -5, 6)
 end
 
 function transfermatrix(hhtb::HHTB)::Matrix{Function}
@@ -177,10 +185,18 @@ function pairpotential_bond(hhtb::HHTB)::Matrix{Function}
   [ u_bond(r) = h[i,j](r) * Θ[i,j] for i in 1:N, j in 1:N ]
 end
 
-function pairpotential_rep(hhtb::HHTB)::Matrix{Function}
+function pairpotential_rep(hhtb::HHTB, a::Real, n::Int)::Matrix{Function}
   @attach(hhtb, N, Nd, Wd, r₀)
-  [ u_rep(r) = 8/25*√(Nd[i]*Nd[j])*Wd[i]*Wd[j]*r₀[i]^5*r₀[j]^5 / r^8
+  [ u_rep(r) = a * 8/25*√(Nd[i]*Nd[j])*Wd[i]*Wd[j]*r₀[i]^5*r₀[j]^5 / r^n
     for i in 1:N, j in 1:N ]
+end
+
+function pairpotential_rep(hhtb::HHTB)::Matrix{Function}
+  pairpotential_rep(hhtb, 1, 8)
+end
+
+function pairpotential_rep_derivative(hhtb::HHTB)::Matrix{Function}
+  pairpotential_rep(hhtb, -8, 9)
 end
 
 function pairpotential(hhtb::HHTB)::Matrix{Function}
@@ -188,6 +204,20 @@ function pairpotential(hhtb::HHTB)::Matrix{Function}
   u_bond = pairpotential_bond(hhtb)
   u_rep = pairpotential_rep(hhtb)
   [ u(r) = u_rep[i,j](r) + u_bond[i,j](r) for i in 1:N, j in 1:N ]
+end
+
+function pairpotential_derivative(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, N)
+  u′_bond = pairpotential_bond_derivative(hhtb)
+  u′_rep = pairpotential_rep_derivative(hhtb)
+  [ u′(r) = u′_bond[i,j](r) + u′_rep[i,j](r) for i in 1:N, j in 1:N ]
+end
+
+function pairpotential_bond_derivative(hhtb::HHTB)::Matrix{Function}
+  @attach(hhtb, N)
+  h′::Matrix{Function} = transferintegral_derivative(hhtb)
+  Θ::Matrix{Float64} = bondorder(hhtb)
+  [ u′_bond(r) = h′[i,j](r) * Θ[i,j] for i in 1:N, j in 1:N ]
 end
 
 function chargetransfer(hhtb::HHTB)::Vector{Float64}

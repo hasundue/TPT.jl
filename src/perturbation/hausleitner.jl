@@ -32,9 +32,14 @@ end
 
 ncomp(hhtb::HHTB) = hhtb.N
 
+function coreradius(hhtb)::Matrix{Float64}
+  @attach(hhtb, N, r₀)
+  [ 0.5 * (r₀[i] + r₀[j]) / 2 for i in 1:N, j in 1:N ]
+end
+
 function cutoffradius(hhtb)::Matrix{Float64}
   @attach(hhtb, N, r₀)
-  [ 5 * (r₀[i] + r₀[j]) / 2 for i in 1:N, j in 1:N ]
+  [ 10 * (r₀[i] + r₀[j]) / 2 for i in 1:N, j in 1:N ]
 end
 
 function cutoffenergy(hhtb)::Tuple{Float64,Float64}

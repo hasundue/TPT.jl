@@ -197,7 +197,15 @@ function bandenergy(hhtb::HHTB)::Float64
   D::Function = totaldensityofstate(hhtb)
   Ef::Float64 = fermienergy(hhtb)
   Emin, Emax = cutoffenergy(hhtb)
-  E_bond = ∫(E -> D(E)*E, Emin, Ef)
+  E_band = ∫(E -> D(E)*E, Emin, Ef)
+end
+
+function bondenergy(hhtb::HHTB)::Float64
+  @attach(hhtb, N, Ed)
+  D::Vector{Function} = partialdensityofstate(hhtb)
+  Ef::Float64 = fermienergy(hhtb)
+  Emin, Emax = cutoffenergy(hhtb)
+  E_bond = sum( ∫(E -> D[i](E)*(E - Ed[i]), Emin, Ef) for i in 1:N )
 end
 
 function onsiteenergy(hhtb::HHTB)::Float64

@@ -10,8 +10,6 @@ println("--- Unit HHTB ---")
 resdir = joinpath("results", "unit_hhtb")
 !isdir(resdir) && mkdir(resdir)
 
-cd(resdir)
-
 Z = 12
 X = ["Ni", "Y"]
 V = [10.04, 33.05] / (5.292^3 * 1E-3) # a.u.
@@ -36,33 +34,35 @@ hhtb1 = TPT.HHTB(Nd[1], Ed[1], Wd[1], r₀[1])
 
 S = TPT.transfermatrix(hhtb1)[1,1]
 plot(E -> imag(S(E)), Emin, Emax, xl="E (a.u.)", yl="S")
-png("S_Ni")
+png(joinpath(resdir, "S_Ni"))
 
 Δ = TPT.selfenergy(hhtb1)[1]
 plot(E -> imag(Δ(E)), Emin, Emax, xl="E (a.u.)", yl="Δ")
-png("Δ_Ni")
+png(joinpath(resdir, "Δ_Ni"))
 
 Gᵢᵢ = TPT.diagonalgreenfunction(hhtb1)[1,1]
 plot(E -> imag(Gᵢᵢ(E)), Emin, Emax, xl="E (a.u.)", yl="Im G_ii")
-png("G_ii_Ni")
+png(joinpath(resdir, "G_ii_Ni"))
 
 G = TPT.offdiagonalgreenfunction(hhtb1)[1,1]
 plot(E -> imag(G(E)), Emin, Emax, xl="E (a.u.)", yl="Im G_ij")
-png("G_ij_Ni")
+png(joinpath(resdir, "G_ij_Ni"))
 
 D = TPT.densityofstate(hhtb1)
 Ef = TPT.fermienergy(hhtb1)
 plot(D, Emin, Emax, label="Ni", xl="E (a.u.)", yl="D (states / Ry atom)")
 vline!([Ef], label="Ef")
-png("D_Ni")
+png(joinpath(resdir, "D_Ni"))
 
 ΔNd = TPT.chargetransfer(hhtb1)[1]
 
 Θ = TPT.bondorder(hhtb1)[1,1]
 
 u = TPT.pairpotential(hhtb1)[1,1]
-plot(u, 2, 8, ylims=(-0.05, 0.05), xl="r (a.u.)", yl="u (Ry)")
-png("u_Ni")
+u′ = TPT.pairpotential_derivative(hhtb1)[1,1]
+plot(u, 2, 8, ylims=(-0.05, 0.05), xl="r (a.u.)", yl="u (Ry)", label="u")
+plot!(u′, 2, 8, ylims=(-0.05, 0.05), xl="r (a.u.)", yl="u (Ry)", label="u'")
+png(joinpath(resdir, "u_Ni"))
 
 E_band = TPT.bandenergy(hhtb1)
 E_site = TPT.onsiteenergy(hhtb1)
@@ -81,26 +81,26 @@ S = TPT.transfermatrix(hhtb)
 plot(E -> imag(S[1,1](E)), Emin, Emax, label=X[1])
 plot!(E -> imag(S[2,2](E)), Emin, Emax, label=X[2])
 ylabel!("S")
-png("S")
+png(joinpath(resdir, "S"))
 
 Δ = TPT.selfenergy(hhtb)
 plot(E -> imag(Δ[1](E)), Emin, Emax)
 plot!(E -> imag(Δ[2](E)), Emin, Emax)
 ylabel!("Δ")
-png("Δ")
+png(joinpath(resdir, "Δ"))
 
 Gd = TPT.diagonalgreenfunction(hhtb)
 plot(E -> imag(Gd[1](E)), Emin, Emax, label=X[1])
 plot!(E -> imag(Gd[2](E)), Emin, Emax, label=X[2])
 ylabel!("Im G_ii")
-png("G_ii")
+png(joinpath(resdir, "G_ii"))
 
 G = TPT.offdiagonalgreenfunction(hhtb)
 plot(E -> imag(G[1,1](E)), Emin, Emax, label="$(X[1])-$(X[1])")
 plot!(E -> imag(G[1,2](E)), Emin, Emax, label="$(X[1])-$(X[2])")
 plot!(E -> imag(G[2,2](E)), Emin, Emax, label="$(X[2])-$(X[2])")
 ylabel!("Im G_ij")
-png("G_ij")
+png(joinpath(resdir, "G_ij"))
 
 D = TPT.partialdensityofstate(hhtb)
 Dtotal = TPT.totaldensityofstate(hhtb)
@@ -110,7 +110,7 @@ plot!(E -> D[2](E), Emin, Emax, label=X[2])
 plot!(E -> Dtotal(E), Emin, Emax, label="total")
 vline!([Ef], label="Ef")
 ylabel!("D (states / a.u. atom)")
-png("D")
+png(joinpath(resdir, "D"))
 
 ΔNd = TPT.chargetransfer(hhtb)
 
@@ -118,12 +118,10 @@ png("D")
 
 u = TPT.pairpotential(hhtb)
 plot([u[1,1], u[1,2], u[2,2]], 2, 8, labels=["Ni-Ni" "Ni-Y" "Y-Y"], ylims=(-0.12,0.12), xl="r (a.u.)", yl="u (Ry)")
-png("u")
+png(joinpath(resdir, "u"))
 
 E_band = TPT.bandenergy(hhtb)
 E_site = TPT.onsiteenergy(hhtb)
 
 @testset "Unit HHTB" begin
 end
-
-cd("../../")

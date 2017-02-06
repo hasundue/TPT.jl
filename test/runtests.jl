@@ -10,11 +10,13 @@ tests = [
   "unit_lwca.jl",
   "unit_nfe.jl",
   "unit_nfetb.jl",
+  "unit_hhtb.jl",
 
   # Investigational calculations
   "tm_optim.jl",
   "tm_binary.jl",
   "tm_energy.jl"
+  "tm_hhtb.jl"
 ]
 
 for test in tests

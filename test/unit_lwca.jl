@@ -7,8 +7,8 @@ using Plots; pyplot()
 println("--- Unit LWCA ---")
 
 #
-# Lennard-Jones
-# ref: A. Meyer et al. CHemical Physics 49 (1980) 147-152
+# Lennard-Jones fluid
+# Ref: A. Meyer et al. Chemical Physics 49 (1980) 147-152
 #
 kB = TPT.kB
 ϵ = 119.8kB
@@ -24,7 +24,7 @@ umin = u(rmin)
 u′ = TPT.pairpotential_derivative(lj)[1,1]
 plot([u, u′], 5, 20, ylims=(umin, -umin))
 
-ahs = TPT.AHS(σ = r₀, ρ = n, approx="RFA")
+ahs = TPT.AHS(σ = r₀, ρ = n, approx=:RFA)
 lwca = TPT.LWCA(ahs, T, :linear)
 wca = TPT.WCA(ahs, T)
 

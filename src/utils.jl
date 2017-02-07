@@ -73,14 +73,14 @@ function inverselaplace(F::Function, t::Float64, nterm::Int, meuler::Int)
     @inbounds su[k+1] = su[k] + (-1)^n * fs(x + im*n*h)
   end
 
-  # argsu = 0
+  # argsu::Float64 = 0
   argsu1::Float64 = 0
   @simd for j in 1:meuler+1
-    # argsu = argsu + c(j)*su[j]
+    # @inbounds argsu = argsu + c(j)*su[j]
     @inbounds argsu1 += c(j)*su[j+1]
   end
 
-  # fun = u * argsu / 2^meuler
+  # fun::Float64 = u * argsu / 2^meuler
   fun1::Float64 = u * argsu1 / 2^meuler
 
   return fun1

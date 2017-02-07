@@ -153,10 +153,9 @@ Threads.@threads for k in 1:(M^2)
   # pse = TPT.Ashcroft(zs, rc)
   pse = TPT.BretonnetSilbert(zs, rc, pa)
   nfe = TPT.NFE(ahs[a,b], pse)
-  tb = TPT.WHTB(zd, rd, c, version=:modified)
+  tb = TPT.WHTB(zd, rd, c, version=:original)
   nfetb = TPT.NFETB(nfe, tb)
-  # wca = TPT.LWCA(ahs[a,b], T, struct=:full)
-  wca = TPT.WCA(ahs[a,b], T)
+  wca = TPT.LWCA(ahs[a,b], T, struct=:full)
 
   # Performing WCA optimization
   sys[a,b] = TPT.TPTSystem(wca, nfetb, m = m)

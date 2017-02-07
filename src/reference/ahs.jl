@@ -233,9 +233,9 @@ end
 
 function contactgradient(ahs::AHS)::Matrix{Float64}
   if ahs.approx == :PY
-    contactvaluePY(ahs)
+    contactgradientPY(ahs)
   elseif ahs.approx == :RFA
-    contactvalueRFA(ahs)
+    contactgradientRFA(ahs)
   end
 end
 

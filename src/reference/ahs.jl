@@ -488,7 +488,7 @@ function paircorrelation(ahs::AHS, rmin::Real, rmax::Real)::Matrix{Function}
     end
 
     nterm = trunc(Int, 32*(rmax - σ[i,j])/σ[i,j])
-    g::Function = spline(g_raw, σ[i,j], rmax, nterm)
+    g::Function = spline(g_raw, σ[i,j], rmax, nterm, bc="zero")
 
     ret[i,j] = ret[j,i] = g
   end

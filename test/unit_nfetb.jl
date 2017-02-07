@@ -19,7 +19,7 @@ a = 0.333
 zd = 6.6
 rd = 1.512
 
-ahs = TPT.AHS(σ = 4.25, ρ = ρ, approx="RFA")
+ahs = TPT.AHS(σ = 4.25, ρ = ρ, approx=:RFA)
 lwca = TPT.LWCA(ahs, T)
 wca = TPT.WCA(ahs, T)
 

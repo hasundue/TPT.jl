@@ -24,7 +24,7 @@ default(xlabel = "r", ylabel = "g(r)", label = "")
 ahs1 = TPT.AHS(η = 0.49, σ = [1.0, 0.3], c = [1/16, 15/16], approx=:RFA)
 
 α1 = ahs1.α
-g1 = TPT.paircorrelation(ahs1)
+g1 = TPT.paircorrelation(ahs1, 0, 2.25)
 
 # Fig.1(a)
 plot(g1[1,1], 1, 1.25, ylims = (0, 10), yticks = 0:1:10)

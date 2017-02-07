@@ -104,14 +104,15 @@ function pairpotential(whtb::WHTB, A::Float64, B::Float64, n::Int, m::Int)::Matr
   @attach(whtb, zd, rd, c)
   N::Int = ncomp(whtb)
   ret = Matrix{Pairpotential}(N,N)
+  z̄d = sum(c.* zd)
   for i in 1:N, j in 1:N
     i > j && continue
 
-    z̄d = (zd[i] + zd[j]) / 2
+    zd_ij = (zd[i] + zd[j]) / 2
     r̄d = √(rd[i]*rd[j])
 
     u(r) = -A * sqrt(12/γ) * z̄d * (1 - z̄d/10) * r̄d^3 / r^n +
-           B * z̄d * r̄d^6 / r^m
+           B * zd_ij * r̄d^6 / r^m
 
     ret[i,j] = ret[j,i] = u
   end

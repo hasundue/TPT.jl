@@ -62,12 +62,12 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
     return norm(I, 1)
   end
 
-  opt = NLopt.Opt(:LN_BOBYQA, N)
+  opt = NLopt.Opt(:GN_DIRECT, N)
   NLopt.min_objective!(opt, fopt)
-  NLopt.xtol_rel!(opt, 1e-5)
+  NLopt.stopval!(opt, 1e-5)
   NLopt.lower_bounds!(opt, [ rcore[i,i] for i in 1:N ])
   NLopt.upper_bounds!(opt, [ 0.99rmin[i,i] for i in 1:N ])
-  NLopt.initial_step!(opt, [ 0.01rmin[i,i] for i in 1:N ])
+  NLopt.initial_step!(opt, [ 0.05rmin[i,i] for i in 1:N ])
 
   σ_init = [ hsdiameter_estimate(pert, u, rmin, T)[i,i] for i in 1:N ]
   (fmin, σ_wca, ret) = NLopt.optimize(opt, σ_init)

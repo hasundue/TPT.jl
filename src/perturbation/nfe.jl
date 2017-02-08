@@ -115,9 +115,6 @@ function cutoffradius(nfe::NFE)::Array{Float64,2}
   10 * coreradius(nfe)
 end
 
-function hsdiameter_estimate(nfe::NFE)::Array{Float64,2}
-  3 * coreradius(nfe)
-end
 #
 # Effective pair-potential between ions including full Coulomb and indirect parts
 # Ref: W. A. Harrison: Elementary Electronic Structure Revised Edition (2004), 490

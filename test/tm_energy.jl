@@ -58,7 +58,7 @@ for B in 3:M
     ρ₀ = (1-x₂)*ρ[1] + x₂*ρ[2]
     c = [1-x₂, x₂]
 
-    ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c, approx = "RFA")
+    ahs = TPT.AHS(ρ = ρ₀, σ = σ, c = c, approx = :RFA)
     wca = TPT.LWCA(ahs, T, struct = :full)
 
     pse = TPT.BretonnetSilbert(zs, rc, a)

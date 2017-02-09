@@ -16,9 +16,11 @@ nfe1 = TPT.NFE(ahs1, pp1)
 sys1 = TPT.TPTSystem(ahs1, nfe1, T = 373, m = 4.191e+4)
 
 kF1 = TPT.fermiwavenumber(nfe1)
+rs = TPT.electrondistance(nfe1)
 
-G1 = TPT.localfiled(nfe1)
-# plot(q -> G(q*kF), 0, 6)
+G_IU = TPT.localfield_IU(nfe1)
+G_VS = TPT.localfield_VS(nfe1)
+plot([q -> G_IU(q*kF1), q -> G_VS(q*kF1)], 0, 10, ylims=(0, 1.5))
 
 ϵ1 = TPT.dielectric(nfe1)
 # plot(q -> ϵ(q*kF), 0, 6, ylims=(-1, 10))

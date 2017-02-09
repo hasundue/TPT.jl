@@ -13,15 +13,20 @@ immutable NFE{T <: PseudoPotential} <: NFEPerturbation
   ρ::Float64 # number density
   z::Float64 # mean number of valence electrons
   pseudo::T # pseudopotential
+  localfield::Symbol # kind of local field function
 end
 
-function NFE(ref::ReferenceSystem, pseudo::PseudoPotential)
+function NFE(ρ::Real, z::Real, pseudo::PseudoPotential, lf::Symbol = :VS)
+  NFE(ρ, z, pseudo, lf)
+end
+
+function NFE(ref::ReferenceSystem, pseudo::PseudoPotential, lf::Symbol = :VS)
   ρ::Float64 = totalnumberdensity(ref)
 
   c::Vector{Float64} = composition(ref)
   z::Float64 = sum(c .* pseudo.z)
 
-  NFE(ρ, z, pseudo)
+  NFE(ρ, z, pseudo, lf)
 end
 
 function TPTSystem(ref::ReferenceSystem, pseudo::PseudoPotential; kwargs...)
@@ -64,18 +69,65 @@ function screenedformfactor(nfe::NFE)::Vector{Function}
   ω
 end
 
+function electrondistance(nfe::NFE)::Float64
+  @attach(nfe, ρ, z)
+  rs = ((3/4π) / ρ / z)^(1/3)
+end
+
+function localfield(nfe::NFE)::Function
+  if nfe.localfield == :IU
+    localfield_IU(nfe)
+  elseif nfe.localfield == :VS
+    localfield_VS(nfe)
+  else
+    error("NFE: unsupported type of local field function")
+  end
+end
+
 # local-field exchange-correlation function (Vashishta-Singwi)
-function localfiled(nfe::NFE)::Function
+function localfield_VS(nfe::NFE)::Function
   ρ::Float64 = nfe.ρ
   z̄::Float64 = nfe.z
 
   kF::Float64 = fermiwavenumber(nfe)
-  rs::Float64 = ((3/4π) / ρ / z̄)^(1/3) # electron distance
+  rs::Float64 = electrondistance(nfe)
 
   A::Float64 = 0.5362 + 0.1874rs - 0.0157rs^2 + 0.0008rs^3
   B::Float64 = 0.42 - 0.0582rs + 0.0079rs^2 - 0.0005rs^3
 
   G(q)::Float64 = A*(1 - exp(-B*(q/kF)^2))
+end
+
+function localfield_IU(nfe::NFE)::Function
+  @attach(nfe, ρ)
+
+  qF = fermiwavenumber(nfe)
+  rs = electrondistance(nfe)
+  α = (4/9π)^(1/3)
+
+  b₀ = 0.0621814
+  b₁ = 9.81379
+  b₂ = 2.82224
+  b₃ = 0.736411
+
+  x = √rs
+  rsΔEc = b₀ * (1 + b₁*x) / (1 + b₁*x + b₂*x^2 + b₃*x^3)
+  rsΔEc′ = b₀ * ( b₁*(1 + b₁*x + b₂*x^2 + b₃*x^3) - (1 + b₁*x)*(b₁ + 2b₂*x + 3b₃*x^2) ) / (1 + b₁*x + b₂*x^2 + b₃*x^3)^2
+
+  γ₀ = 1/4 - π*α/24 * rs^5 * (-3*rs^-4*rsΔEc + rs^-3 * -1/2/√rs * rsΔEc′)
+
+  z = 4*(α*rs/π)^(1/2)
+  I₁(z) = besseli(1, z)
+  g₀ = 1/8*(z/I₁(z))^2
+
+  A = 0.029
+  B = 9/16*γ₀ - 3/64*(1 - g₀) - 16/15*A
+  C = -3/4*γ₀ + 9/16*(1 - g₀) - 16/5*A
+
+  function G(q::Real)::Float64
+    Q = q / qF
+    A*Q^4 + B*Q^2 + C + (A*Q^4 + (B + 8/3*A)*Q^2 - C) * (4 - Q^2)/4Q * log(abs((2+Q)/(2-Q)))
+  end
 end
 
 #
@@ -88,7 +140,7 @@ function wnechar(nfe::NFE)::Array{Function,2}
 
   ω::Vector{Function} = formfactor(nfe)
   ϵ::Function = dielectric(nfe)
-  G::Function = localfiled(nfe)
+  G::Function = localfield(nfe)
 
   N::Int = length(z)
   ret = Array{Function,2}(N,N)

@@ -97,7 +97,11 @@ function bandwidth(whtb::WHTB, ref::ReferenceSystem)::Float64
     Wd² += 12 * 4π*ρ * n*c[i]*c[j] * ∫(f, rmin[i,j], rcut[i,j])
   end
 
-  Wd = √Wd²
+  if Wd² < 0
+    Wd = 0 # sometimes happens
+  else
+    Wd = √Wd²
+  end
 end
 
 function pairpotential(whtb::WHTB, A::Float64, B::Float64, n::Int, m::Int)::Matrix{Function}

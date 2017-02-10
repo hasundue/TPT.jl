@@ -187,7 +187,7 @@ end
 
 function pairpotential_rep(hhtb::HHTB, a::Real, n::Int)::Matrix{Function}
   @attach(hhtb, N, Nd, Wd, r₀)
-  [ u_rep(r) = a * 8/25*√(Nd[i]*Nd[j])*Wd[i]*Wd[j]*r₀[i]^5*r₀[j]^5 / r^n
+  [ u_rep(r) = a * 16/25*√(Nd[i]*Nd[j])*Wd[i]*Wd[j]*r₀[i]^5*r₀[j]^5 / r^n
     for i in 1:N, j in 1:N ]
 end
 

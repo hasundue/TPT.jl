@@ -18,9 +18,9 @@ sys1 = TPT.TPTSystem(ahs1, nfe1, T = 373, m = 4.191e+4)
 kF1 = TPT.fermiwavenumber(nfe1)
 rs = TPT.electrondistance(nfe1)
 
-G_IU = TPT.localfield_IU(nfe1)
-G_VS = TPT.localfield_VS(nfe1)
-plot([q -> G_IU(q*kF1), q -> G_VS(q*kF1)], 0, 10, ylims=(0, 1.5))
+G1_IU = TPT.localfield_IU(nfe1)
+G1_VS = TPT.localfield_VS(nfe1)
+# plot([q -> G1_IU(q*kF1), q -> G1_VS(q*kF1)], 0, 10, ylims=(0, 1.5))
 
 ϵ1 = TPT.dielectric(nfe1)
 # plot(q -> ϵ(q*kF), 0, 6, ylims=(-1, 10))
@@ -75,7 +75,7 @@ F2_total = TPT.helmholtz(sys2)
 
 @testset "Unit NFE" begin
   @test isapprox(kF1, 0.473, atol=1e-3)
-  @test isapprox(G1(kF1), 0.267, atol=1e-3)
+  @test isapprox(G1_VS(kF1), 0.267, atol=1e-3)
   @test isapprox(ϵ1(kF1), 3.46, atol=1e-2)
   @test isapprox(ω1₀(kF1), -0.141, atol=1e-3)
   @test isapprox(F1(kF1), -0.0437, atol=1e-4)

@@ -10,13 +10,14 @@ println("--- Unit HHTB ---")
 resdir = joinpath("results", "unit_hhtb")
 !isdir(resdir) && mkdir(resdir)
 
+# Parameters (Hartree)
 Z = 12
 X = ["Ni", "Y"]
-V = [10.04, 33.05] / (5.292^3 * 1E-3) # a.u.
+V = [10.04, 33.05] / (5.292^3 * 1e-3)
 Nd = [8.60, 1.69]
-Ed = [-4.93, -1.77] / 27.21 * 2 # Ry
-Wd = [3.78, 6.59] / 27.21 * 2 # Ry
-r₀ = (V * 3/4π) .^ (1/3) # a.u.
+Ed = [-4.93, -1.77] / 27.21
+Wd = [3.78, 6.59] / 27.21
+r₀ = (V * 3/4π) .^ (1/3)
 
 x₂ = 0.5
 x = [1-x₂, x₂]
@@ -24,8 +25,8 @@ Ec = mean(Ed)
 Ed = Ed - Ec
 Ec = 0
 
-Emin = Ec - 0.4
-Emax = Ec + 0.4
+Emin = Ec - 0.2
+Emax = Ec + 0.2
 
 #
 # Single-component case: Ni
@@ -50,7 +51,7 @@ png(joinpath(resdir, "G_ij_Ni"))
 
 D = TPT.densityofstate(hhtb1)
 Ef = TPT.fermienergy(hhtb1)
-plot(D, Emin, Emax, label="Ni", xl="E (a.u.)", yl="D (states / Ry atom)")
+plot(D, Emin, Emax, label="Ni", xl="E (a.u.)", yl="D (states / a.u. atom)")
 vline!([Ef], label="Ef")
 png(joinpath(resdir, "D_Ni"))
 
@@ -60,8 +61,7 @@ png(joinpath(resdir, "D_Ni"))
 
 u = TPT.pairpotential(hhtb1)[1,1]
 u′ = TPT.pairpotential_derivative(hhtb1)[1,1]
-plot(u, 2, 8, ylims=(-0.05, 0.05), xl="r (a.u.)", yl="u (Ry)", label="u")
-plot!(u′, 2, 8, ylims=(-0.05, 0.05), xl="r (a.u.)", yl="u (Ry)", label="u'")
+plot([u, u′], 2, 8, ylims=(-0.1, 0.1), xl="r (a.u.)", yl="u (a.u.)", label=["u" "u′"])
 png(joinpath(resdir, "u_Ni"))
 
 E_band = TPT.bandenergy(hhtb1)
@@ -117,7 +117,7 @@ png(joinpath(resdir, "D"))
 Θ = TPT.bondorder(hhtb)
 
 u = TPT.pairpotential(hhtb)
-plot([u[1,1], u[1,2], u[2,2]], 2, 8, labels=["Ni-Ni" "Ni-Y" "Y-Y"], ylims=(-0.12,0.12), xl="r (a.u.)", yl="u (Ry)")
+plot([u[1,1], u[1,2], u[2,2]], 2, 8, labels=["Ni-Ni" "Ni-Y" "Y-Y"], ylims=(-0.1, 0.1), xl="r (a.u.)", yl="u (a.u.)")
 png(joinpath(resdir, "u"))
 
 E_band = TPT.bandenergy(hhtb)

@@ -18,17 +18,22 @@ N = size(p, 1) # number of elements
 resdir = joinpath("results", "tm_hhtb")
 !isdir(resdir) && mkdir(resdir)
 
-# Convertion of parameters
+# Convertion of parameters (Hartree units)
 X = p[:X]
-V = p[:V] / (5.292^3 * 1e-3) # a.u.
-r₀ = (V * 3/4π) .^ (1/3) # a.u.
-ρ = 1 / V * 0.9 # a.u.
-σ = p[:σ] / 5.291 * 10 # a.u.
+Vc = p[:Vc] / (5.292^3 * 1e-3) # a.u
+r₀ = (Vc * 3/4π) .^ (1/3) # a.u.
+Vl = p[:Vl] / (5.292^3 * 1e-3) # a.u.
+ρ = 1 / Vl # a.u.
+σ = p[:σ] / 5.291e-1 # Å -> a.u.
 Ns = p[:Ns]
 Nd = p[:Nd]
-Ed = p[:Ed] / 27.21 * 2 # Ry
-Wd = p[:Wd] / 27.21 * 2 # Ry
-Rc = p[:Rc] / 5.292e-1 # a.u.
+Ed = p[:Ed] / 27.21 # eV -> a.u.
+Wd = p[:Wd] / 27.21 # eV -> a.u.
+Rc = p[:Rc] / 5.292e-1 # Å -> a.u.
+
+# some parameters
+rmin, rmax = (2, 12)
+umin, umax = (-0.04, 0.04)
 
 #
 # Puremetals
@@ -37,43 +42,31 @@ E_band = zeros(N)
 E_bond = zeros(N)
 E_rep = zeros(N)
 E_nfe = zeros(N)
+
 for i in 1:N
   ahs = TPT.AHS(σ = σ[i], ρ = ρ[i])
   pp = TPT.Ashcroft(Ns[i], Rc[i])
   nfe = TPT.NFE(ahs, pp, :IU)
   hhtb = TPT.HHTB(Nd[i], Ed[i], Wd[i], r₀[i])
   nfetb = TPT.NFETB(nfe, hhtb)
-  lwca = TPT.LWCA(ahs, 1873, struct=:full)
-  sys = TPT.TPTSystem(lwca, nfetb)
 
-  # u_rep = TPT.pairpotential_rep(hhtb)
   u_nfe = TPT.pairpotential(nfe)[1,1]
   u_tb = TPT.pairpotential(hhtb)[1,1]
   u_tot = TPT.pairpotential(nfetb)[1,1]
-  plot(u_nfe, 2, 12, ylims=(-0.2, 0.3), xl="r (a.u.)", yl="u (Ry)", label="NFE")
-  plot!(u_tb, 2, 12, ylims=(-0.2, 0.3), xl="r (a.u.)", yl="u (Ry)", label="TB")
-  plot!(u_tot, 2, 12, ylims=(-0.2, 0.3), xl="r (a.u.)", yl="u (Ry)", label="total")
+  plot([u_nfe, u_tb, u_tot], 2, 12, ylims=(umin, umax), xl="r (a.u.)", yl="u (a.u.)", labels=["NFE" "TB" "total"])
   png(joinpath(resdir, "$(i)_$(X[i])_u"))
 
-  g_ahs = TPT.paircorrelation(ahs)[1,1]
-  g_wca = TPT.paircorrelation(sys)[1,1]
-  σ_wca = TPT.hsdiameter(sys.ref)
-  plot([g_ahs, g_wca], 2, 12, xl="r (a.u.)", yl="g(r)", labels=["AHS" "WCA"])
-  vline!([σ_wca], label="eff.HSD")
-  png(joinpath(resdir, "$(i)_$(X[i])_g"))
-
   E_band[i] = TPT.bandenergy(hhtb)
-  # E_bond[i] = TPT.bondenergy(hhtb)
   E_bond[i] = TPT.internal(ahs, hhtb, TPT.pairpotential_bond(hhtb))
   E_rep[i] = TPT.internal(ahs, hhtb, TPT.pairpotential_rep(hhtb))
-  E_nfe[i] = TPT.internal(ahs, hhtb, TPT.pairpotential(nfe)) * 2
+  E_nfe[i] = TPT.internal(ahs, hhtb, TPT.pairpotential(nfe))
 end
 
-plot(X, [E_bond, E_rep, E_nfe, E_bond + E_rep + E_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="X", yl="E (Ry / atom)")
+plot(X, [E_bond, E_rep, E_nfe, E_bond + E_rep + E_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="X", yl="E (a.u. / atom)")
 png(joinpath(resdir, "E"))
 
 #
-# Binary alloys
+# Fe-based binary alloys
 #
 E_alloy = zeros(N)
 ΔE_bond = zeros(N)
@@ -97,30 +90,28 @@ for i in 6, j in 1:N
 
   plot([ D[1], D[2], D_total ], Emin, Emax, labels=[ X[i] X[j] "total" ])
   vline!([Ef], label="E_F")
-  xlabel!("E (Ry)")
-  ylabel!("DOS (states / Ry atom)")
+  xlabel!("E (a.u.)")
+  ylabel!("DOS (states / a.u. atom)")
   png(joinpath(resdir, "$(i)-$(j)_$(X[i])-$(X[j])_D"))
 
   u = TPT.pairpotential(nfetb)
-  plot([ u[1,1], u[1,2], u[2,2] ], 2, 8, labels=["1-1" "1-2" "2-2"], ylims=(-0.2, 0.3), xl="r (a.u.)", yl="u (Ry)")
+  plot([ u[1,1], u[1,2], u[2,2] ], rmin, rmax, labels=["1-1" "1-2" "2-2"], ylims=(umin, umax), xl="r (a.u.)", yl="u (a.u.)")
   png(joinpath(resdir, "$(i)-$(j)_$(X[i])-$(X[j])_u"))
 
   E_rep_alloy = TPT.internal(ahs, hhtb, TPT.pairpotential_rep(hhtb))
-  # E_band_alloy = TPT.bandenergy(hhtb)
   E_bond_alloy = TPT.internal(ahs, hhtb, TPT.pairpotential_bond(hhtb))
-  E_nfe_alloy = TPT.internal(ahs, hhtb, TPT.pairpotential(nfe)) * 2
+  E_nfe_alloy = TPT.internal(ahs, hhtb, TPT.pairpotential(nfe))
   E_alloy[j] = E_rep_alloy + E_bond_alloy + E_nfe_alloy
 
-  # ΔE_bond[j] = E_bond_alloy - x[1]*E_bond[i] - x[2]*E_bond[j]
   ΔE_bond[j] = E_bond_alloy - x[1]*E_bond[i] - x[2]*E_bond[j]
   ΔE_rep[j] = E_rep_alloy - x[1]*E_rep[i] - x[2]*E_rep[j]
   ΔE_nfe[j] = E_nfe_alloy - x[1]*E_nfe[i] - x[2]*E_nfe[j]
 end
 
-plot(X, E_alloy, label="total", m=:o, xl="Fe-X", yl="E (Ry / atom)")
+plot(X, E_alloy, label="total", m=:o, xl="Fe-X", yl="E (a.u. / atom)")
 png(joinpath(resdir, "E_alloy"))
 
-plot(X, [ΔE_bond, ΔE_rep, ΔE_nfe, ΔE_bond + ΔE_rep + ΔE_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="Fe-X", yl="Emix (Ry / atom)")
+plot(X, [ΔE_bond, ΔE_rep, ΔE_nfe, ΔE_bond + ΔE_rep + ΔE_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="Fe-X", yl="Emix (a.u. / atom)")
 png(joinpath(resdir, "Emix"))
 
 @testset "TM HHTB" begin

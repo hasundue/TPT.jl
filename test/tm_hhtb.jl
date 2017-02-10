@@ -40,11 +40,11 @@ E_nfe = zeros(N)
 for i in 1:N
   ahs = TPT.AHS(σ = σ[i], ρ = ρ[i])
   pp = TPT.Ashcroft(Ns[i], Rc[i])
-  nfe = TPT.NFE(ahs, pp)
+  nfe = TPT.NFE(ahs, pp, :IU)
   hhtb = TPT.HHTB(Nd[i], Ed[i], Wd[i], r₀[i])
   nfetb = TPT.NFETB(nfe, hhtb)
-  # lwca = TPT.LWCA(ahs, 1873, struct=:full)
-  # sys = TPT.TPTSystem(lwca, nfetb)
+  lwca = TPT.LWCA(ahs, 1873, struct=:full)
+  sys = TPT.TPTSystem(lwca, nfetb)
 
   # u_rep = TPT.pairpotential_rep(hhtb)
   u_nfe = TPT.pairpotential(nfe)[1,1]
@@ -86,7 +86,7 @@ for i in 6, j in 1:N
   ρ_alloy = (ρ[i] + ρ[j]) / 2
   ahs = TPT.AHS(ρ = ρ_alloy, σ = [ σ[i], σ[j] ], c = [0.5, 0.5])
   pp = TPT.Ashcroft([ Ns[i], Ns[j] ], [ Rc[i], Rc[j] ])
-  nfe = TPT.NFE(ahs, pp)
+  nfe = TPT.NFE(ahs, pp, :IU)
   hhtb = TPT.HHTB(x, [ Nd[i], Nd[j] ], [ Ed[i], Ed[j] ], [ Wd[i], Wd[j] ], [ r₀[i], r₀[j] ])
   nfetb = TPT.NFETB(nfe, hhtb)
 

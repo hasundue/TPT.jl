@@ -11,11 +11,15 @@ References:
 immutable LWCA{T <: IndependentReferenceSystem} <: AbstractWCA
   trial::T
   temp::Float64
+  optim::Symbol
   struct::Symbol
 end
 
-LWCA(trial::IndependentReferenceSystem, temp::Real; struct = :linear) =
-  LWCA(trial, convert(Float64, temp), struct)
+function LWCA(trial::IndependentReferenceSystem, temp::Real; optim::Symbol = :default, struct::Symbol = :linear)
+  @assert optim in [:default, :Sandler] "LWCA: unsupported method of optimization"
+  @assert struct in [:linear, :full] "LWCA: unsupported method of structure calculation"
+  LWCA(trial, convert(Float64, temp), optim, struct)
+end
 
 immutable OptimizedLWCA{T <: IndependentReferenceSystem} <: AbstractOptimizedWCA
   trial::T
@@ -52,26 +56,32 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
 
   function fopt(σ::Vector{Float64})::Float64
     ahs = AHS(approx, σ, ρ₀)
+    σ₀ = hsdiameter(ahs)
     g₀ = contactvalue(ahs)
     g′₀ = contactgradient(ahs)
 
     residue::Float64 = 0
 
-    for i in 1:N
-      Y = g′₀[i,i] / g₀[i,i] * σ[i]
+    for i in 1:N, j in 1:N
+      i ≠ j && lwca.optim ≠ :Sandler && continue
+      i > j && continue
 
-      X = (-2β * σ[i] * u′[i,i](σ[i]) + Y + 2) /
-          (-β * σ[i] * u′[i,i](σ[i]) + Y + 2)
+      Y = g′₀[i,j] / g₀[i,j] * σ₀[i,j]
+
+      X = (-2β * σ₀[i,j] * u′[i,j](σ₀[i,j]) + Y + 2) /
+          (-β * σ₀[i,j] * u′[i,j](σ₀[i,j]) + Y + 2)
 
       if X ≤ 0
         residue += Inf
       else
-        residue += abs(β * u₀[i,i](σ[i]) - log(X))
+        residue += c[i]*c[j] * abs(β * u₀[i,j](σ₀[i,j]) - log(X))
       end
     end
 
     return residue
   end
+
+  Δσ = lwca.optim == :Sander ? 0.05 : 0.01
 
   opt = NLopt.Opt(:LN_BOBYQA, N)
   NLopt.min_objective!(opt, (σ, g) -> fopt(σ))
@@ -79,7 +89,7 @@ function TPTSystem(lwca::LWCA{AHS}, pert::Perturbation; kwargs...)
   NLopt.maxeval!(opt, 100)
   NLopt.lower_bounds!(opt, [ rcore[i,i] for i in 1:N ])
   NLopt.upper_bounds!(opt, [ 0.99rmin[i,i] for i in 1:N ])
-  NLopt.initial_step!(opt, [ 0.01rmin[i,i] for i in 1:N ])
+  NLopt.initial_step!(opt, [ Δσ*rmin[i,i] for i in 1:N ])
 
   σ_init = [ hsdiameter_estimate(pert, u, rmin, T)[i,i] for i in 1:N ]
   (fmin, σ_wca, res) = NLopt.optimize(opt, σ_init)

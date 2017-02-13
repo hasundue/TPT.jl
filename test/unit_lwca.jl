@@ -25,7 +25,7 @@ u′ = TPT.pairpotential_derivative(lj)[1,1]
 plot([u, u′], 5, 20, ylims=(umin, -umin))
 
 ahs = TPT.AHS(σ = r₀, ρ = n, approx=:RFA)
-lwca = TPT.LWCA(ahs, T, :linear)
+lwca = TPT.LWCA(ahs, T, struct=:linear)
 wca = TPT.WCA(ahs, T)
 
 sys = TPT.TPTSystem(lwca, lj)

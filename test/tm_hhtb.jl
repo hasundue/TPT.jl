@@ -29,7 +29,9 @@ Ns = p[:Ns]
 Nd = p[:Nd]
 Ed = p[:Ed] / 27.21 # eV -> a.u.
 Wd = p[:Wd] / 27.21 # eV -> a.u.
-Rc = p[:Rc] / 5.292e-1 # Å -> a.u.
+Rc = p[:Rc] / 5.291e-1 # Å -> a.u.
+rc = p[:rc] # Å -> a.u.
+a = p[:a] # Å -> a.u.
 
 # some parameters
 rmin, rmax = (2, 12)
@@ -43,9 +45,10 @@ E_bond = zeros(N)
 E_rep = zeros(N)
 E_nfe = zeros(N)
 
-for i in 1:N
+for i in 2:8
   ahs = TPT.AHS(σ = σ[i], ρ = ρ[i])
-  pp = TPT.Ashcroft(Ns[i], Rc[i])
+  # pp = TPT.Ashcroft(Ns[i], Rc[i])
+  pp = TPT.BretonnetSilbert(Ns[i], rc[i], a[i])
   nfe = TPT.NFE(ahs, pp, :IU)
   hhtb = TPT.HHTB(Nd[i], Ed[i], Wd[i], r₀[i])
   nfetb = TPT.NFETB(nfe, hhtb)
@@ -62,7 +65,7 @@ for i in 1:N
   E_nfe[i] = TPT.internal(ahs, hhtb, TPT.pairpotential(nfe))
 end
 
-plot(X, [E_bond, E_rep, E_nfe, E_bond + E_rep + E_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="X", yl="E (a.u. / atom)")
+plot(X, [E_bond, E_rep, E_nfe, E_bond + E_rep + E_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="X", yl="E (a.u. / atom)", ylims=:auto)
 png(joinpath(resdir, "E"))
 
 #
@@ -73,12 +76,13 @@ E_alloy = zeros(N)
 ΔE_rep = zeros(N)
 ΔE_nfe = zeros(N)
 x = [0.5, 0.5]
-for i in 6, j in 1:N
+for i in 6, j in 2:8
   i == j && continue
 
   ρ_alloy = (ρ[i] + ρ[j]) / 2
   ahs = TPT.AHS(ρ = ρ_alloy, σ = [ σ[i], σ[j] ], c = [0.5, 0.5])
-  pp = TPT.Ashcroft([ Ns[i], Ns[j] ], [ Rc[i], Rc[j] ])
+  # pp = TPT.Ashcroft([ Ns[i], Ns[j] ], [ Rc[i], Rc[j] ])
+  pp = TPT.BretonnetSilbert([ Ns[i], Ns[j] ], [ rc[i], rc[j] ], [ a[i], a[j] ])
   nfe = TPT.NFE(ahs, pp, :IU)
   hhtb = TPT.HHTB(x, [ Nd[i], Nd[j] ], [ Ed[i], Ed[j] ], [ Wd[i], Wd[j] ], [ r₀[i], r₀[j] ])
   nfetb = TPT.NFETB(nfe, hhtb)
@@ -88,7 +92,7 @@ for i in 6, j in 1:N
   D = TPT.partialdensityofstate(hhtb)
   D_total = TPT.totaldensityofstate(hhtb)
 
-  plot([ D[1], D[2], D_total ], Emin, Emax, labels=[ X[i] X[j] "total" ])
+  plot([ D[1], D[2], D_total ], Emin, Emax, ylims=:auto, labels=[ X[i] X[j] "total" ])
   vline!([Ef], label="E_F")
   xlabel!("E (a.u.)")
   ylabel!("DOS (states / a.u. atom)")
@@ -108,10 +112,10 @@ for i in 6, j in 1:N
   ΔE_nfe[j] = E_nfe_alloy - x[1]*E_nfe[i] - x[2]*E_nfe[j]
 end
 
-plot(X, E_alloy, label="total", m=:o, xl="Fe-X", yl="E (a.u. / atom)")
+plot(X, E_alloy, label="total", m=:o, xl="Fe-X", yl="E (a.u. / atom)", ylims=:auto)
 png(joinpath(resdir, "E_alloy"))
 
-plot(X, [ΔE_bond, ΔE_rep, ΔE_nfe, ΔE_bond + ΔE_rep + ΔE_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="Fe-X", yl="Emix (a.u. / atom)")
+plot(X, [ΔE_bond, ΔE_rep, ΔE_nfe, ΔE_bond + ΔE_rep + ΔE_nfe], labels=["bond" "rep" "nfe" "total"], m=:o, xl="Fe-X", yl="Emix (a.u. / atom)", ylims=:auto)
 png(joinpath(resdir, "Emix"))
 
 @testset "TM HHTB" begin

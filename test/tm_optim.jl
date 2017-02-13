@@ -43,15 +43,9 @@ p[:T] = convert(DataArrays.DataArray{Float64,1}, p[:T])
 #
 # Prepare TPTSystem for each system
 #
-ahs = Vector{TPT.AHS}(N)
-wca = Vector{TPT.LWCA}(N)
-tb = Vector{TPT.WHTB}(N)
-
-for i in 1:N
-  ahs[i] = TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i])
-  wca[i] = TPT.LWCA(ahs[i], p[:T][i], struct=:full)
-  tb[i] = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
-end
+ahs = [ TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i]) for i in 1:N ]
+wca = [ TPT.LWCA(ahs[i], p[:T][i], struct=:full) for i in 1:N ]
+tb = [ TPT.HHTB(p[:zd][i], p[:Ed][i], p[:Wd][i], p[:R0][i]) for i in 1:N ]
 
 a₀ = p[:a]
 a = zeros(N)
@@ -105,20 +99,20 @@ Threads.@threads for i in 1:N
   #
   # Density dependency of free-energy
   #
-  F[i] = Vector{Float64}(5)
-  for k in 1:5
-    ρₖ = (0.8 + (k-1)*0.1) * p[:ρ][i]
-
-    ahsₖ = TPT.AHS(σ = p[:σ][i], ρ = ρₖ)
-    wcaₖ = TPT.LWCA(ahsₖ, p[:T][i], struct=:full)
-    tbₖ = TPT.WHTB(p[:zd][i], p[:rd][i], version=:modified)
-    pseₖ = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a[i])
-    nfeₖ = TPT.NFE(wcaₖ, pseₖ)
-    nfetbₖ = TPT.NFETB(nfeₖ, tbₖ)
-    sysₖ = TPT.TPTSystem(wcaₖ, nfetbₖ, m = p[:m][i])
-
-    F[i][k] = TPT.helmholtz(sysₖ)
-  end
+  # F[i] = Vector{Float64}(5)
+  # for k in 1:5
+  #   ρ = (0.8 + (k-1)*0.1) * p[:ρ][i]
+  #
+  #   ahs = TPT.AHS(σ = p[:σ][i], ρ = ρ)
+  #   wca = TPT.LWCA(ahs, p[:T][i], struct=:full)
+  #   tb = TPT.WHTB(p[:zd][i], p[:rd][i], version=:original)
+  #   pse = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a[i])
+  #   nfe = TPT.NFE(wca, pse)
+  #   nfetb = TPT.NFETB(nfe, tb)
+  #   sys = TPT.TPTSystem(wca, nfetb, m = p[:m][i])
+  #
+  #   F[i][k] = TPT.helmholtz(sys)
+  # end
 end
 
 
@@ -181,10 +175,10 @@ for i in 1:N
 end
 
 # 3. Density dependency of free-energy
-for i in 1:N
-  plot(0.8:0.1:1.2, 2625.5*F[i], xlabel="Relative density", ylabel="F (kJ/mol)", ylims=:auto)
-  png(joinpath(resdir, "$(i)-$(p[:X][i])_F"))
-end
+# for i in 1:N
+#   plot(0.8:0.1:1.2, 2625.5*F[i], xlabel="Relative density", ylabel="F (kJ/mol)", ylims=:auto)
+#   png(joinpath(resdir, "$(i)-$(p[:X][i])_F"))
+# end
 
 
 #

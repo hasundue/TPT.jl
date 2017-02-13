@@ -133,7 +133,7 @@ Threads.@threads for k in 1:(M^2)
     return norm(R)
   end
 
-  opt = Optim.optimize(fopt, σ₀, g_tol = 1e-3)
+  opt = Optim.optimize(fopt, σ₀, g_tol = 1e-5)
 
   (σ₁_ahs, σ₂_ahs) = Optim.minimizer(opt)
   σ_ahs = [σ₁_ahs, σ₂_ahs]
@@ -148,12 +148,15 @@ Threads.@threads for k in 1:(M^2)
   rc = [p[:rc][a], p[:rc][b]]
   pa = [p[:a][a], p[:a][b]]
   zd = [p[:zd][a], p[:zd][b]]
+  Ed = [p[:Ed][a], p[:Ed][b]]
+  Wd = [p[:Wd][a], p[:Wd][b]]
   rd = [p[:rd][a], p[:rd][b]]
+  r0 = [p[:R0][a], p[:R0][b]]
 
   # pse = TPT.Ashcroft(zs, rc)
   pse = TPT.BretonnetSilbert(zs, rc, pa)
   nfe = TPT.NFE(ahs[a,b], pse)
-  tb = TPT.WHTB(zd, rd, c, version=:original)
+  tb = TPT.HHTB(c, zd, Ed, Wd, r0)
   nfetb = TPT.NFETB(nfe, tb)
   wca = TPT.LWCA(ahs[a,b], T, struct=:full)
 

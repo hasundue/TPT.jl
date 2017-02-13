@@ -39,7 +39,7 @@ for B in 3:M
 
   T = float(p[:T][A])
 
-  for x in [:σ, :ρ, :m, :zs, :rc, :a, :zd, :rd]
+  for x in [:σ, :ρ, :m, :zs, :rc, :a, :zd, :rd, :Ed, :Wd, :R0]
     v = [ p[x][A], p[x][B] ]
     @eval ($x) = $v
   end
@@ -52,8 +52,10 @@ for B in 3:M
 
   res = Vector{TPT.TPTSystem}(11)
 
-  Threads.@threads for i in 1:11
+  # Threads.@threads for i in 1:11
+  for i in 1:11
     x₂ = (i-1) / 10
+    @show x₂
 
     ρ₀ = (1-x₂)*ρ[1] + x₂*ρ[2]
     c = [1-x₂, x₂]
@@ -63,7 +65,7 @@ for B in 3:M
 
     pse = TPT.BretonnetSilbert(zs, rc, a)
     nfe = TPT.NFE(ahs, pse)
-    tb = TPT.WHTB(zd, rd, c, version=:original)
+    tb = TPT.HHTB(c, zd, Ed, Wd, R0)
     nfetb = TPT.NFETB(nfe, tb)
 
     sys = TPT.TPTSystem(wca, nfetb, m = m)
@@ -71,22 +73,25 @@ for B in 3:M
 
     U_nfe[i] = TPT.internal_pair(sys.pert.nfe, sys.ref)
     U_tb[i] = TPT.internal(sys.pert.tb, sys.ref)
-    U_bond[i] = TPT.internal_band(sys.pert.tb, sys.ref)
+    U_bond[i] = TPT.internal(sys.ref, tb, TPT.pairpotential_bond(tb))
     U_es[i] = TPT.internal_es(sys.pert.nfe, sys.ref)
 
     U[i] = U_nfe[i] + U_tb[i] + U_es[i]
 
     S_gas[i] = TPT.entropy_gas(sys)
     S_conf[i] = TPT.entropy_conf(sys)
-    S_ref[i] = TPT.entropy(sys.ref)
+    # S_ref[i] = TPT.entropy(sys.ref)
+    S_ref[i] = 0.
     S_nfe[i] = TPT.entropy(nfetb.nfe, sys.ref, T)
-    S_tb[i] = TPT.entropy(nfetb.tb, sys.ref, T)
+    # S_tb[i] = TPT.entropy(nfetb.tb, sys.ref, T)
+    S_tb[i] = 0.
 
     S[i] = S_gas[i] + S_conf[i] + S_ref[i] + S_nfe[i] + S_tb[i]
 
     K = TPT.kinetic(sys) # this can be omitted
 
     F[i] = K + U[i] - kB*T*S[i]
+    @show F[i]
   end
 
   for i in 1:11

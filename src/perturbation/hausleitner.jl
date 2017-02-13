@@ -92,15 +92,22 @@ function transfermatrix(hhtb::HHTB)::Matrix{Function}
   @attach(hhtb, Z, N, x, Ed, p)
   h::Matrix{Float64} = nntransferintegral(hhtb)
   ret = Matrix{Function}(N,N)
-  if N == 1
+  if N == 1 || prod(x) == 0
+    α = findfirst(x -> x ≠ 0, x)
     function S(E::Real)
-      A₂ = Z*h[1,1]
-      A₁ = -(E - Ed[1])
-      A₀ = h[1,1]
+      A₂ = Z*h[α,α]
+      A₁ = -(E - Ed[α])
+      A₀ = h[α,α]
       roots = Polynomials.roots( Poly([A₀, A₁, A₂]) )
       roots[1]
     end
-    ret[1,1] = S
+    ret[α,α] = S
+    if N == 2
+      β = findfirst(x -> x == 0, x)
+      ret[α,β] = E -> h[α,β]/h[α,α]*ret[α,α](E)
+      ret[β,α] = E -> 0.
+      ret[β,β] = E -> 0.
+    end
     return ret
   end
   function S₁₁(E::Real)

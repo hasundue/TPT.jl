@@ -52,10 +52,8 @@ for B in 3:M
 
   res = Vector{TPT.TPTSystem}(11)
 
-  # Threads.@threads for i in 1:11
-  for i in 1:11
+  Threads.@threads for i in 1:11
     x₂ = (i-1) / 10
-    @show x₂
 
     ρ₀ = (1-x₂)*ρ[1] + x₂*ρ[2]
     c = [1-x₂, x₂]
@@ -91,7 +89,6 @@ for B in 3:M
     K = TPT.kinetic(sys) # this can be omitted
 
     F[i] = K + U[i] - kB*T*S[i]
-    @show F[i]
   end
 
   for i in 1:11

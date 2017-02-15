@@ -47,8 +47,6 @@ ahs = [ TPT.AHS(σ = p[:σ][i], ρ = p[:ρ][i]) for i in 1:N ]
 wca = [ TPT.LWCA(ahs[i], p[:T][i], struct=:full) for i in 1:N ]
 tb = [ TPT.HHTB(p[:zd][i], p[:Ed][i], p[:Wd][i], p[:R0][i]) for i in 1:N ]
 
-rc₀ = p[:rc]
-rc = zeros(N)
 a₀ = p[:a]
 a = zeros(N)
 res = zeros(N)
@@ -59,9 +57,9 @@ F = Vector{Vector{Float64}}(N)
 # Performe optimization of rc
 #
 Threads.@threads for i in 1:N
-  function fopt(rc::Float64)::Float64
-    pse = TPT.Ashcroft(p[:zs][i], rc)
-    nfe = TPT.NFE(wca[i], pse, :IU)
+  function fopt(a::Float64)::Float64
+    pse = TPT.BretonnetSilbert(p[:zs][i], p[:rc][i], a)
+    nfe = TPT.NFE(wca[i], pse)
     nfetb = TPT.NFETB(nfe, tb[i])
     sys[i] = TPT.TPTSystem(wca[i], nfetb)
 
@@ -92,11 +90,11 @@ Threads.@threads for i in 1:N
   # rc[i] = xmin[1]
   # fopt(xmin)
 
-  result = Optim.optimize(fopt, 0.5, 2.0, rel_tol = 1e-3)
-  rc[i] = Optim.minimizer(result)
+  result = Optim.optimize(fopt, 0.25, 0.35, rel_tol = 1e-3)
+  a[i] = Optim.minimizer(result)
   res[i] = Optim.minimum(result)
 
-  fopt(rc[i])
+  fopt(a[i])
 
   #
   # Density dependency of free-energy
@@ -121,9 +119,9 @@ end
 #
 # Print the numerical results to console
 #
-println("The optimized values of rc:")
+println("The optimized values of a:")
 for i in 1:N
-  @printf "  %2s: %1.3f\n" p[:X][i] rc[i]
+  @printf "  %2s: %1.3f\n" p[:X][i] a[i]
 end
 
 rmin = zeros(N)
@@ -144,11 +142,11 @@ end
 #
 # Save the numerical results as a csv file
 #
-df = DataFrame(X = p[:X], rc = round(a, 3), res = round(res, 1), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
+df = DataFrame(X = p[:X], a = round(a, 3), res = round(res, 1), rmin = round(rmin, 3), σ_hs = round(σ_hs, 3))
 writetable(joinpath(resdir, "results.csv"), df)
 
 # Overwrite the parameters for the subsequent tests
-p[:rc] = round(rc, 3)
+p[:a] = round(a, 3)
 writetable(joinpath("data", "parameters", "tm_optim.csv"), p)
 
 #

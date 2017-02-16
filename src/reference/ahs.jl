@@ -155,7 +155,7 @@ function pairpotential(ahs::AHS)::Array{Function,2}
   return ret
 end
 
-# Ref: A. Meyer et al. CHemical Physics 49 (1980) 147-152
+# Ref: A. Meyer et al. Chemical Physics 49 (1980) 147-152
 function contactvaluePY(ahs::AHS)::Matrix{Float64}
   N = ncomp(ahs)
   if N > 1

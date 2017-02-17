@@ -49,12 +49,12 @@ function TPTSystem(wca::WCA{AHS}, pert::Perturbation; kwargs...)
   function fopt(σ::Vector{Float64}, g)::Float64
     ahs = AHS(approx, σ::Vector, ρ₀::Vector)
     u_hs::Array{Function,2} = pairpotential(ahs)
-    g_hs::Array{Function,2} = paircorrelation(ahs)
+    y_hs::Array{Function,2} = cavityfunction(ahs)
 
     for i in 1:N
-      y_hs::Function = spline(g_hs[i,i], σ[i], rmin[i,i], 8, bc="extrapolate")
+      ys::Function = spline(y_hs[i,i], rcore[i,i], rmin[i,i], 8)
       us::Function = spline(u₀[i,i], rcore[i,i], rmin[i,i], 8)
-      B(r) = y_hs(r) * (exp(-β*us(r)) - exp(-β*u_hs[i,i](r)))
+      B(r) = ys(r) * (exp(-β*us(r)) - exp(-β*u_hs[i,i](r)))
 
       I[i] = ∫(r -> B(r)*r^2, rcore[i,i], rmin[i,i])
     end
@@ -88,16 +88,16 @@ function blipfunction(wca::OptimizedWCA)::Array{Function,2}
   σ::Array{Float64,2} = hsdiameter(wca.trial)
   rmin::Array{Float64,2} = wca.rmin
 
-  u₀::Array{Function,2} = repulsivepotential(wca)
-  u_hs::Array{Function,2} = pairpotential(wca.trial)
-  g_hs::Array{Function,2} = paircorrelation(wca.trial)
+  u₀::Matrix{Function} = repulsivepotential(wca)
+  u_hs::Matrix{Function} = pairpotential(wca.trial)
+  y_hs::Matrix{Function} = cavityfunction(wca.trial)
+  g_hs::Matrix{Function} = paircorrelation(wca.trial)
 
   ret = Array{Function,2}(N,N)
 
   for i in 1:N, j in 1:N
     i > j && continue
-    y_hs::Function = spline(g_hs[i,j], σ[i,j], rmin[i,j], 8, bc="extrapolate")
-    B(r) = y_hs(r) * (exp(-β*u₀[i,j](r)) - exp(-β*u_hs[i,j](r)))
+    B(r) = y_hs[i,j](r) * (exp(-β*u₀[i,j](r)) - exp(-β*u_hs[i,j](r)))
     ret[i,j] = ret[j,i] = B
   end
 
@@ -114,6 +114,7 @@ function paircorrelation(wca::OptimizedWCA)
   rmin::Array{Float64,2} = wca.rmin
   u₀::Array{Function,2} = repulsivepotential(wca)
   g_hs::Array{Function,2} = paircorrelation(wca.trial)
+  y_hs::Array{Function,2} = cavityfunction(wca.trial)
 
   ret = Array{Function}(N,N)
 
@@ -122,13 +123,11 @@ function paircorrelation(wca::OptimizedWCA)
 
     rcut = 0.5σ₀[i,j]
 
-    y_hs = spline(g_hs[i,j], σ₀[i,j], rmin[i,j], 8, bc="extrapolate")
-
     function g(r)::Float64
       if r < rcut
         0
       elseif r < σ₀[i,j]
-        y_hs(r) * exp(-β*u₀[i,j](r))
+        y_hs[i,j](r) * exp(-β*u₀[i,j](r))
       elseif r < rmin[i,j]
         g_hs[i,j](r) * exp(-β*u₀[i,j](r))
       else

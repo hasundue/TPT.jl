@@ -70,5 +70,5 @@ F2 = TPT.helmholtz(sys2)
   @test isapprox(σ2, 4.26, atol=1e-2)
   @test isapprox(σ3, 4.26, atol=1e-2)
   @test isapprox(F1, -0.876, atol=1e-3)
-  @test isapprox(F2, -0.886, atol=1e-3)
+  @test isapprox(F2, -0.884, atol=1e-3)
 end

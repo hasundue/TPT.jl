@@ -155,6 +155,83 @@ function pairpotential(ahs::AHS)::Array{Function,2}
   return ret
 end
 
+function zeta(ahs::AHS, n::Int)::Float64
+  N = ncomp(ahs)
+  sum(ahs.ρ[i] * ahs.σ[i]^n for i = 1:N)
+end
+
+@doc doc"""
+pressure(ahs::AHS)::Float64
+
+Returns pressure of an additive hard-sphere system multiplied by inverse
+temperature based on BMCSL equation of state.
+
+""" ->
+function pressure(ahs::AHS)::Float64
+  ρ = totalnumberdensity(ahs)
+  η = totalpackingfraction(ahs)
+  ζ₁ = zeta(ahs, 1)
+  ζ₂ = zeta(ahs, 2)
+
+  ρ/(1-η) + π/2*ζ₁*ζ₂/(1-η)^2 + π^2/36*ζ₂^3*(3-η)/(1-η)^3
+end
+
+@doc doc"""
+chemicalpotential(ahs::AHS)::Vector{Float64}
+
+Returns a vector of excess (residual) chemical potential of each specie
+multiplied by inverse temperature.
+
+""" ->
+function chemicalpotential(ahs::AHS)::Vector{Float64}
+  N = ncomp(ahs)
+  c = composition(ahs)
+  σ = ahs.σ
+  ρ = totalnumberdensity(ahs)
+
+  R = σ/2
+  S = π * σ.^2
+  V = π/6 * σ.^3
+
+  v = ρ * sum(c .* V)
+  s = ρ * sum(c .* S)
+  q = ρ * sum(c .* R.^2)
+  r = ρ * sum(c .* R)
+
+  βΔμ = Vector{Float64}(N)
+  for i in 1:N
+    βΔμ[i] = -log(1-v) + (R[i]*s + S[i]*r + V[i]*ρ)/(1-v) +
+             (R[i]^2*s^2 + 2S[i]*q*s + 6V[i]*r*s)/6/(1-v)^2 +
+             V[i]*q*s^2*(2 - v/3)/9/(1-v)^3
+  end
+
+  return βΔμ
+end
+
+function chemicalpotentialPYC(ahs::AHS)::Vector{Float64}
+  N = ncomp(ahs)
+  σ = hsdiameter(ahs)
+  ρ = numberdensity(ahs)
+  η = π/6*ρ
+  ξ = sum( η[i]*σ[i,i]^3 for i in 1:N )
+  X = sum( η[i]*σ[i,i]^2 for i in 1:N )
+  Y = sum( η[i]*σ[i,i]^1 for i in 1:N )
+
+  βp = ( sum(ρ)*(1 + ξ + ξ^2) -
+         18/π * sum( η[i]*η[j]*(σ[i,i] - σ[j,j])^2*(2σ[i,j] + σ[i,i]*σ[j,j]*X)
+                     for i in 1:N, j in 1:N if i < j )
+       ) / (1-ξ)^3
+
+  βΔμ = Vector{Float64}(N)
+  for i in 1:N
+    βΔμ[i] = log(1-ξ) + π/6*βp*σ[i,i]^3 + σ[i,i]^2/(1-ξ)^3 *
+             ( 3Y*(1-2ξ) + 9/2*X^2*(1-ξ) + 3ξ^2*Y ) +
+             σ[i,i]/(1-ξ)^3*(3X - 6ξ*X + 3ξ^2*X)
+  end
+
+  return βΔμ
+end
+
 # Ref: A. Meyer et al. Chemical Physics 49 (1980) 147-152
 function contactvaluePY(ahs::AHS)::Matrix{Float64}
   N = ncomp(ahs)
@@ -489,6 +566,43 @@ function paircorrelation(ahs::AHS)::Array{Function,2}
     end
 
     ret[i,j] = ret[j,i] = g
+  end
+
+  return ret
+end
+
+function cavityfunction(ahs::AHS)
+  N = ncomp(ahs)
+  δ = eye(N,N)
+  σ = hsdiameter(ahs)
+  ρ = numberdensity(ahs)
+  g₀ = contactvalue(ahs)
+
+  M = chemicalpotential(ahs)
+  S = [ -π*δ[i,j] * sum(ρ[k]*σ[k,j]^2*g₀[k,j] for k in 1:N) for i in 1:N, j in 1:N ]
+  Y = contactvalue(ahs)
+  Y′ = contactgradient(ahs)
+  a = [ abs(σ[i,i] - σ[j,j]) / 2 for i in 1:N, j in 1:N ]
+
+  ret = Matrix{Function}(N,N)
+  for i in 1:N, j in 1:N
+    i > j && continue
+    s = σ[i,j] - a[i,j]
+    α = Vector{Float64}(4)
+    α[1] = M[i]
+    α[2] = S[i,j]
+    α[3] = s^-2 * ( 3log(Y[i,j]) - s*Y′[i,j]/Y[i,j] - 3α[1] - 2s*α[2] )
+    α[4] = s^-3 * ( -2log(Y[i,j]) + s*Y′[i,j]/Y[i,j] + 2α[1] + s*α[2] )
+    function y(r::Real)::Float64
+      if r < a[i,j]
+        exp(M[i])
+      elseif r < σ[i,j]
+        exp(sum( α[k]*(r - a[i,j])^(k-1) for k in 1:4 ))
+      else
+        paircorrelation(ahs)[i,j](r)
+      end
+    end
+    ret[i,j] = ret[j,i] = y
   end
 
   return ret

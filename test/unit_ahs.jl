@@ -2,7 +2,9 @@ import TPT
 
 using Base.Test
 
-using Plots; pyplot()
+using Calculus
+using Plots
+pyplot()
 
 println("--- Unit AHS ---")
 
@@ -16,6 +18,19 @@ resdir = joinpath("results", "unit_ahs")
 
 # default settings for plots
 default(xlabel = "r", ylabel = "g(r)", label = "")
+
+#
+# Tests of cavity functions
+# Ref: E. W. Grundke and D. Henderson: Mol. Phys. 24 (1972) 269-281.
+#
+ahs = TPT.AHS(η = 0.5068, σ = [1.0, 3.0], c = [0.5, 0.5])
+ρ₀ = TPT.totalnumberdensity(ahs)
+y = TPT.cavityfunction(ahs)
+y1 = y[1,1](0)
+y2 = y[2,2](0)
+logy = [ r -> log10(y[i,j](r)) for i in 1:2, j in 1:2 ]
+plot([logy[1,1], logy[1,2], logy[2,2]], 0, 5, ylims=(0, 5))
+png(joinpath(resdir, "y"))
 
 #
 # A binary hard-sphere mixture
@@ -64,6 +79,8 @@ ahs3 = TPT.AHS(η = 0.49, σ = [1.0, 0.3, 0.1], c = [1/102, 1/102, 100/102],
 α3 = ahs3.α
 
 @testset "Unit AHS" begin
+  @test isapprox(y1, 24.0, rtol=1e-1)
+  @test isapprox(y2, 4.45e+9, rtol=1e-3)
   @test isapprox(α1, 0.01886, atol=1e-5)
   @test isapprox(α2, 0.02784, atol=1e-5)
   @test isapprox(α3, 0.01837, atol=1e-5)

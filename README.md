@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/hasundue/TPT.jl.svg?token=Bc5JTjkpgq1XmP3wKNoJ&branch=master)](https://travis-ci.com/hasundue/TPT.jl)
 
+**WARNING: This package was developed just for my personal use and is not maintained anymore.**
+
 TPT.jl is a framework for calculation related to thermodynamic perturbation theory (TPT) in Julia.
 
 This package is at the beginning stage of development, and doesn't have enough features for practical use.
